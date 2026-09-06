@@ -1,0 +1,126 @@
+name: Release on PR Merge
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: read
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  release:
+    name: Conventional Commits Release & Build
+    if: github.event.pull_request.merged == true
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Analyze Conventional Commits & Determine Version
+        id: semver
+        run: |
+          python scripts/release_helper.py --event-path "$env:GITHUB_EVENT_PATH" --output-file "$env:GITHUB_OUTPUT" --changelog-file "changelog.md" --update-title
+
+      - name: Log Release Decision
+        run: |
+          Write-Host "Should Release: ${{ steps.semver.outputs.should_release }}"
+          if ("${{ steps.semver.outputs.should_release }}" -eq "true") {
+            Write-Host "New Version: ${{ steps.semver.outputs.version }}"
+            Write-Host "Tag Name: ${{ steps.semver.outputs.tag_name }}"
+            Write-Host "Bump Type: ${{ steps.semver.outputs.bump_type }}"
+            Write-Host "Previous Tag: ${{ steps.semver.outputs.previous_tag }}"
+            Write-Host "--- Updated texts/title.txt ---"
+            Get-Content -Path "texts/title.txt"
+            Write-Host "--- Changelog Preview ---"
+            Get-Content -Path "changelog.md"
+          } else {
+            Write-Host "Skipping release: No releasing conventional commit types (feat/fix/breaking) found."
+          }
+
+      - name: Commit & Push updated title.txt to main
+        if: steps.semver.outputs.should_release == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add texts/title.txt
+          $status = git status --porcelain
+          if ($status) {
+            git commit -m "chore(release): bump title.txt version to ${{ steps.semver.outputs.version }} [skip ci]"
+            git push origin main
+          } else {
+            Write-Host "No changes in texts/title.txt to commit."
+          }
+
+      - name: Install GNU Make
+        if: steps.semver.outputs.should_release == 'true'
+        run: choco install make -y
+
+      - name: Install Mad-Assembler (MADS)
+        if: steps.semver.outputs.should_release == 'true'
+        run: |
+          $madsDir = "C:\Apps\Mad-Assembler-2.1.6\bin\windows_x86_64"
+          New-Item -ItemType Directory -Force -Path $madsDir | Out-Null
+          curl.exe -L -f -s -S "https://raw.githubusercontent.com/tebe6502/Mad-Assembler/2.1.6/bin/windows_x86_64/mads.exe" -o "$madsDir\mads.exe"
+          if (!(Test-Path "$madsDir\mads.exe")) { throw "MADS download failed" }
+
+      - name: Install ASAP and rmt2atasm
+        if: steps.semver.outputs.should_release == 'true'
+        run: |
+          New-Item -ItemType Directory -Force -Path "C:\Apps" | Out-Null
+
+          $asapDir = "C:\Apps\ASAP"
+          New-Item -ItemType Directory -Force -Path $asapDir | Out-Null
+          curl.exe -L -f -s -S "https://sourceforge.net/projects/asap/files/asap/8.0.0/asap-8.0.0-win64.zip/download" -o "asap.zip"
+          Expand-Archive -Path "asap.zip" -DestinationPath "asap_extracted" -Force
+          $asapconv = Get-ChildItem -Path "asap_extracted" -Recurse -Filter "asapconv.exe" | Select-Object -First 1
+          if (-not $asapconv) { throw "asapconv.exe not found in ASAP archive" }
+          Copy-Item $asapconv.FullName -Destination "$asapDir\asapconv.exe" -Force
+
+          curl.exe -L -f -s -S "https://github.com/CycoPH/rmt2atasm/releases/download/Version1/rmt2atasm.exe" -o "C:\Apps\rmt2atasm.exe"
+          if (!(Test-Path "C:\Apps\rmt2atasm.exe")) { throw "rmt2atasm.exe download failed" }
+
+      - name: Run Tests & Build Atari XEX
+        if: steps.semver.outputs.should_release == 'true'
+        run: |
+          make all
+          if (!(Test-Path "dziki_zgon.xex")) {
+            Write-Error "Build failed: dziki_zgon.xex was not generated!"
+            exit 1
+          }
+          Write-Host "Successfully built dziki_zgon.xex (`$((Get-Item dziki_zgon.xex).Length) bytes)"
+
+      - name: Create GitHub Release
+        if: steps.semver.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.semver.outputs.tag_name }}
+          name: ${{ steps.semver.outputs.release_title }}
+          body_path: changelog.md
+          files: |
+            dziki_zgon.xex
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
