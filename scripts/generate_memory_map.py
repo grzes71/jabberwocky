@@ -208,6 +208,7 @@ def choose_best_segment_name(
         good_candidates = candidates
 
     chosen = good_candidates[0] if good_candidates else f"SEG_{start_addr:04X}"
+    chosen_name = chosen
 
     upper_name = chosen.upper()
     if "DLIST" in upper_name or "DL_" in upper_name:
@@ -220,6 +221,7 @@ def choose_best_segment_name(
         seg_type = "data"
     elif "FONT" in upper_name or "CHAR" in upper_name:
         seg_type = "data"
+        chosen_name = "FONT" if "FONT" in upper_name else chosen
     elif start_addr >= 0x0400:
         seg_type = "code"
         if "CODE" in upper_name or "START" in upper_name or "MAIN" in upper_name:
@@ -343,14 +345,25 @@ def extract_zero_page_vars(
                 )
         elif 0x0080 <= addr <= 0x00FF:
             if (
-                name.startswith("SPRITE_COL")
+                name.startswith("SPRITE_")
+                or name.startswith("DRAGON_")
                 or name.startswith("COLOR_")
                 or name.startswith("STATE_")
                 or name.startswith("DL_")
+                or name.startswith("VRAM_")
                 or name in ANTIC_DL_CONSTANTS
             ):
                 continue
-            if name not in zp_map:
+            is_user_var = (
+                name in zp_map
+                or name.startswith("ZP_")
+                or name.startswith("PTR_")
+                or name.startswith("VAR_")
+                or name.startswith("USER_")
+                or name.startswith("MY_")
+                or (not zp_asm_path and not name.isupper())
+            )
+            if is_user_var and name not in zp_map:
                 size = 2 if name.startswith("PTR_") else 1
                 zp_map[name] = (addr, size, "User Zero Page Variable")
 

@@ -11,6 +11,9 @@ CODE_ADDR       = $3000
 DLIST_ADDR      = $3E80
 VRAM_ADDR       = $4000
 STUB_VRAM       = $5C00             ; 960-byte text buffer ($5C00-$5FBF)
+GAME_ACTION_VRAM = $6000            ; 440-byte action playfield ($6000-$61B7, 11 lines Antic 5)
+GAME_STATUS_VRAM = $6200            ; 80-byte status bar ($6200-$624F, 2 lines Antic 2)
+FONT_ADDR       = $7000             ; 1024-byte font ($7000-$73FF, 1KB aligned)
 
 PM_ADDR         = $2000             ; 2KB aligned PMG buffer ($2000-$27FF)
 P0_ADDR         = PM_ADDR + $0400   ; Player 0 buffer
@@ -37,6 +40,11 @@ STATE_GAME_OVER = 3
 start
     ; Enable interrupts for OS VBLANK / RTCLOK
     cli
+
+    ; Set default text font ($7000)
+    lda #>FONT_ADDR
+    sta CHBASE
+    sta CHBAS
 
     ; Initialize state machine
     lda #STATE_TITLE
@@ -147,6 +155,9 @@ scene_run_tbl
     icl 'scenes/game.asm'
     icl 'scenes/gameover.asm'
 
+; ---- Include Generated Assets ----
+    icl 'gen/dragon_sprite.asm'
+
 ; ==============================================================================
 ; DISPLAY LIST SEGMENTS (within $3E80 - $3FFF, never crossing 1KB boundary)
 ; ==============================================================================
@@ -179,12 +190,56 @@ dlist_stub
 
     dta DL_JVB, a(dlist_stub)
 
+; Display list for Intro Scene (ANTIC Mode 2, 40x24 with 4 DLIs before text lines)
+dlist_intro
+    dta DL_BLANK8
+    dta DL_BLANK8
+    dta DL_BLANK8
+
+    dta DL_MODE_2 | DL_LMS, a(STUB_VRAM)
+    :7 dta DL_MODE_2
+    dta DL_MODE_2 | DL_DLI      ; Row 8: DLI 1 triggers before row 9
+    dta DL_MODE_2               ; Row 9: Text line 1
+    dta DL_MODE_2 | DL_DLI      ; Row 10: DLI 2 triggers before row 11
+    dta DL_MODE_2               ; Row 11: Text line 2
+    dta DL_MODE_2 | DL_DLI      ; Row 12: DLI 3 triggers before row 13
+    dta DL_MODE_2               ; Row 13: Text line 3
+    dta DL_MODE_2 | DL_DLI      ; Row 14: DLI 4 triggers before row 15
+    dta DL_MODE_2               ; Row 15: Text line 4
+    :8 dta DL_MODE_2            ; Rows 16..23
+
+    dta DL_JVB, a(dlist_intro)
+
+; Display list for Main Game Screen (11 lines ANTIC 5 + 2 lines ANTIC 2)
+dlist_game
+    dta DL_BLANK8
+    dta DL_BLANK8
+    dta DL_BLANK8
+
+    ; 11 lines of ANTIC Mode 5 (Action playfield: 40x11, 16 scanlines each)
+    dta DL_MODE_5 | DL_LMS, a(GAME_ACTION_VRAM)
+    :10 dta DL_MODE_5
+
+    ; 2 lines of ANTIC Mode 2 (Status bar: 40x2, 8 scanlines each)
+    dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM)
+    dta DL_MODE_2
+
+    dta DL_JVB, a(dlist_game)
+
 ; ==============================================================================
 ; SCREEN MEMORY (VRAM)
 ; Title image: 7,016 bytes ($4000-$5B67)
 ; ==============================================================================
     org VRAM_ADDR
     ins 'gen/title.bin'
+
+; ==============================================================================
+; DEFAULT FONT DATA
+; 1024-byte character set ($7000-$73FF, 1KB aligned)
+; ==============================================================================
+    org FONT_ADDR
+font_data
+    ins 'fonts/text.fnt'
 
 ; ==============================================================================
 ; RUN ADDRESS VECTOR

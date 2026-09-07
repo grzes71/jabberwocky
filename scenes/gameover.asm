@@ -11,9 +11,10 @@ gameover_init
     ; Reset PMG
     jsr disable_pmg
 
-    ; Use OS ROM font ($E000)
-    lda #$E0
+    ; Use default text font ($7000)
+    lda #>FONT_ADDR
     sta CHBASE
+    sta CHBAS
 
     ; Set DLIST pointer to stub text display list
     lda #<dlist_stub

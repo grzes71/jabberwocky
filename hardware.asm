@@ -117,6 +117,11 @@ CH          = $02FC     ; Kod ostatnio wciśniętego klawisza ($FF = brak)
 RUNAD       = $02E0     ; Wektor uruchomienia pliku binarnego DOS
 INITAD      = $02E2     ; Wektor inicjalizacji pliku binarnego DOS
 
+; --- OS ROM Entry Points ---
+SETVBV      = $E45C     ; Ustawienie wektora VBLANK (A=tryb, X/Y=adres)
+SYSVBV      = $E45F     ; Wyjście z VBLANK Stage 1 (Immediate)
+XITVBV      = $E462     ; Wyjście z VBLANK Stage 2 (Deferred)
+
 ; --- ANTIC Display List Instructions & Modes ---
 DL_BLANK1   = $00       ; 1 pusta linia rastra
 DL_BLANK2   = $10       ; 2 puste linie

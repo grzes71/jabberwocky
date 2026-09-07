@@ -105,11 +105,11 @@ jobs:
         if: steps.semver.outputs.should_release == 'true'
         run: |
           make all
-          if (!(Test-Path "dziki_zgon.xex")) {
-            Write-Error "Build failed: dziki_zgon.xex was not generated!"
+          if (!(Test-Path "jabberwocky.xex")) {
+            Write-Error "Build failed: jabberwocky.xex was not generated!"
             exit 1
           }
-          Write-Host "Successfully built dziki_zgon.xex (`$((Get-Item dziki_zgon.xex).Length) bytes)"
+          Write-Host "Successfully built jabberwocky.xex (`$((Get-Item jabberwocky.xex).Length) bytes)"
 
       - name: Create GitHub Release
         if: steps.semver.outputs.should_release == 'true'
@@ -119,7 +119,7 @@ jobs:
           name: ${{ steps.semver.outputs.release_title }}
           body_path: changelog.md
           files: |
-            dziki_zgon.xex
+            jabberwocky.xex
           draft: false
           prerelease: false
         env:

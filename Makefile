@@ -27,12 +27,18 @@ ASM_MAIN       := main.asm
 ASM_HW         := hardware.asm
 ASM_ZP         := zeropage.asm
 ASM_SCENES     := $(wildcard scenes/*.asm)
+FONT_DEFAULT   := fonts/text.fnt
+TEXT_TITLE     := texts/title.txt
 XEX_OUT        := jabberwocky.xex
 GEN_DIR        := gen
 
 IMG_TITLE      := img/title.png
 TITLE_BIN      := $(GEN_DIR)/title.bin
 CONVERT_SCRIPT := scripts/convert_image.py
+
+SPRITE_JSON    := sprites/jabberwocky.json
+DRAGON_ASM     := $(GEN_DIR)/dragon_sprite.asm
+SPRITE_SCRIPT  := scripts/compile_sprites.py
 
 # ---- Cele ----
 .PHONY: all xex check_memory clean run test help
@@ -50,7 +56,11 @@ $(TITLE_BIN): $(IMG_TITLE) $(CONVERT_SCRIPT)
 	@echo === Konwersja $(IMG_TITLE) do $(TITLE_BIN) (atari-image-converter, ANTIC F 320x175) ===
 	$(PYTHON) $(CONVERT_SCRIPT) -i $(IMG_TITLE) -o $(TITLE_BIN) --width 320 --height 175 --mode F
 
-$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(TITLE_BIN)
+$(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
+	@echo === Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ===
+	$(PYTHON) $(SPRITE_SCRIPT) -i $(SPRITE_JSON) -o $(DRAGON_ASM)
+
+$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_TITLE)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 

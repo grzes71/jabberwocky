@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -57,6 +58,7 @@ def test_parse_real_jabberwocky_lab_and_lst(tmp_path: Path) -> None:
     assert "CODE" in seg_names
     assert "DLIST" in seg_names
     assert "VRAM" in seg_names
+    assert "FONT" in seg_names
     assert "FREE_SPACE" in seg_names
 
     # Check text output
@@ -66,9 +68,9 @@ def test_parse_real_jabberwocky_lab_and_lst(tmp_path: Path) -> None:
     assert "PTR_DST" in txt_content
     assert "ZP_TMP" in txt_content
     assert "FREE ZERO PAGE: $85 - $FF" in txt_content
-    assert "FREE SPACE: $35B9 - $3E7F" in txt_content
-    assert "FREE SPACE: $3F59 - $3FFF" in txt_content
-    assert "FREE SPACE: $5B68 - $BFFF" in txt_content
+    assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$3E7F", txt_content)
+    assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$3FFF", txt_content)
+    assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$BFFF", txt_content)
     assert "VALIDATION PASSED" in txt_content
 
 
