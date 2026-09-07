@@ -22,7 +22,6 @@ Thumbs.db
 .idea/
 
 # Other resources that are not needed in the repository
-/docs/
 /out/
 /rgb2a8/
 .venv/

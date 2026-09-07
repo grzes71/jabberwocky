@@ -35,11 +35,16 @@ TITLE_BIN      := $(GEN_DIR)/title.bin
 CONVERT_SCRIPT := scripts/convert_image.py
 
 # ---- Cele ----
-.PHONY: all xex clean run help
+.PHONY: all xex check_memory clean run test help
 
-all: $(XEX_OUT)
+all: $(XEX_OUT) check_memory
 
 xex: $(XEX_OUT)
+
+MAP_SCRIPT     := scripts/generate_memory_map.py
+DOCS_DIR       := docs
+MAP_TXT        := $(DOCS_DIR)/memory_map.txt
+MAP_JSON       := $(DOCS_DIR)/memory_map.json
 
 $(TITLE_BIN): $(IMG_TITLE) $(CONVERT_SCRIPT)
 	@echo === Konwersja $(IMG_TITLE) do $(TITLE_BIN) (atari-image-converter, ANTIC F 320x175) ===
@@ -48,6 +53,14 @@ $(TITLE_BIN): $(IMG_TITLE) $(CONVERT_SCRIPT)
 $(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(TITLE_BIN)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
+
+check_memory: $(XEX_OUT) $(MAP_SCRIPT)
+	@echo === Weryfikacja i generowanie mapy pamieci ===
+	$(PYTHON) $(MAP_SCRIPT) --input $(GEN_DIR)/jabberwocky.lab --out-text $(MAP_TXT) --out-json $(MAP_JSON)
+
+test:
+	@echo === Uruchamianie testow pytest ===
+	$(PYTHON) -m pytest tests -v
 
 run: $(XEX_OUT)
 	@echo === Uruchamianie w emulatorze Altirra ===
@@ -65,7 +78,9 @@ endif
 
 help:
 	@echo Dostępne cele:
-	@echo   make        - buduje obraz tła i kompiluje $(XEX_OUT)
-	@echo   make clean  - usuwa wygenerowane pliki ($(XEX_OUT), $(GEN_DIR)/)
-	@echo   make run    - uruchamia $(XEX_OUT) w Altirra
-	@echo   make help   - ta pomoc
+	@echo   make              - buduje $(XEX_OUT) oraz weryfikuje mape pamieci
+	@echo   make check_memory - generuje i weryfikuje docs/memory_map.txt i json
+	@echo   make test         - uruchamia testy jednostkowe (pytest)
+	@echo   make clean        - usuwa wygenerowane pliki ($(XEX_OUT), $(GEN_DIR)/)
+	@echo   make run          - uruchamia $(XEX_OUT) w Altirra
+	@echo   make help         - ta pomoc

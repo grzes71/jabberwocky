@@ -1,0 +1,58 @@
+[
+  {
+    "name": "RUNAD",
+    "start_address": "$02E0",
+    "end_address": "$02E1",
+    "size": 2,
+    "type": "vector"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$0800",
+    "end_address": "$2FFF",
+    "size": 10240,
+    "type": "free"
+  },
+  {
+    "name": "CODE",
+    "start_address": "$3000",
+    "end_address": "$35B8",
+    "size": 1465,
+    "type": "code"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$35B9",
+    "end_address": "$3E7F",
+    "size": 2247,
+    "type": "free"
+  },
+  {
+    "name": "DLIST",
+    "start_address": "$3E80",
+    "end_address": "$3F58",
+    "size": 217,
+    "type": "display_list"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$3F59",
+    "end_address": "$3FFF",
+    "size": 167,
+    "type": "free"
+  },
+  {
+    "name": "VRAM",
+    "start_address": "$4000",
+    "end_address": "$5B67",
+    "size": 7016,
+    "type": "data"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$5B68",
+    "end_address": "$BFFF",
+    "size": 25752,
+    "type": "free"
+  }
+]
