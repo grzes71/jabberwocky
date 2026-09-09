@@ -56,7 +56,7 @@ game_init
     sta HPOSP0
     lda #0
     sta SIZEP0              ; Normal width (8 color clocks)
-    lda #DRAGON_COLOR
+    lda pal_action_dragon
     sta PCOLR0
     sta COLPM0
 
@@ -115,36 +115,33 @@ game_init
     sta SDLSTH
     sta DLISTH
 
-    ; Set Colors:
-    ; Action screen background & border: Black ($00)
-    ; Status screen (Mode 2): Black background ($00), White text ($0E)
-    ; Missiles (5th Player mode): Fiery Gold/Orange ($28)
-    lda #$00
+    ; Initialize hardware and shadow color registers from palette memory cells
+    lda pal_action_pf0
     sta COLOR0
     sta COLPF0
+    lda pal_action_pf1
+    sta COLOR1
+    sta COLPF1
+    lda pal_action_pf2
     sta COLOR2
     sta COLPF2
+    lda pal_action_breath
+    sta COLOR3
+    sta COLPF3
+    lda pal_action_bk
     sta COLOR4
     sta COLBK
 
-    lda #$28            ; Fiery gold/orange for missiles
-    sta COLOR3
-    sta COLPF3
-
     ; Set fallback player/missile colors
-    lda #$36            ; Flame red/orange
+    lda pal_action_p1
     sta PCOLR1
     sta COLPM1
-    lda #$28            ; Gold/orange
+    lda pal_action_p2
     sta PCOLR2
     sta COLPM2
-    lda #$1A            ; Bright flame yellow
+    lda pal_action_p3
     sta PCOLR3
     sta COLPM3
-
-    lda #$0E
-    sta COLOR1
-    sta COLPF1
 
     ; Clear 440 bytes of action playfield ($6000-$61B7) with empty tiles (0)
     lda #0
@@ -163,8 +160,8 @@ game_init
     dex
     bpl @-
 
-    ; Clear status bar row 1 ($6228-$624F) with $80 (inverted space)
-    lda #$80
+    ; Clear status bar row 1 ($6228-$624F) with 0 (normal space)
+    lda #0
     ldx #39
 @   sta GAME_STATUS_VRAM+40,x
     dex
@@ -174,18 +171,22 @@ game_init
     lda #2
     sta CHACTL
 
-    ; Initialize 40 bytes of time bar (row 0) with full bar character (82, normal video)
+    ; Initialize time bar (row 0): 39 full characters (82) + end of bar (83)
+    ; The end of the bar NEVER has character 82; it always displays 83..90!
     lda #82
-    ldx #39
+    ldx #38
 @   sta GAME_STATUS_VRAM,x
     dex
     bpl @-
+    lda #83
+    sta GAME_STATUS_VRAM+39
 
     ; Initialize time bar counters & game over reason
     lda #40
     sta COUNTER_FULL
-    lda #0
+    lda #83                     ; End of bar starts at 83 (never 82!)
     sta COUNTER_EIGHT
+    lda #0
     sta GAME_OVER_REASON
     sta time_acc_lo
     sta time_acc_hi
@@ -628,8 +629,7 @@ print_status_line
     ldy #1
 @   lda (PTR_SRC),y
     dey
-    ora #$80            ; Always display in inverse video (bit 7 = 1)
-    sta (PTR_DST),y
+    sta (PTR_DST),y     ; Normal video text (bit 7 = 0)
     iny
     iny
     dex
@@ -829,48 +829,55 @@ render_fire
 dli_game_top
     pha                         ; [3] (3) Save accumulator
     sta WSYNC                   ; [4] (7) Wait for horizontal sync
-    lda #$0A                    ; [2] (9) Top status text: white text
-    sta COLPF1                  ; [4] (11) In Mode 2 (normal text): COLPF1 = character luminance
-    lda #$70                    ; [2] (13) Top status background: blue
-    sta COLPF2                  ; [4] (15) In Mode 2 (normal text): COLPF2 = background
-    lda #<dli_game_action       ; [2] (17) Chain to DLI 2 (restore action palette)
-    sta VDSLST                  ; [4] (21)
-    lda #>dli_game_action       ; [2] (23)
-    sta VDSLST+1                ; [4] (27)
-    pla                         ; [4] (31) Restore accumulator
-    rti                         ; [6] (37) Return from interrupt
+    lda pal_top_text            ; [4] (11) Top status text: white text
+    sta COLPF1                  ; [4] (15) In Mode 2 (normal text): COLPF1 = character luminance
+    lda pal_top_bk              ; [4] (19) Top status background: blue
+    sta COLPF2                  ; [4] (23) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_action       ; [2] (25) Chain to DLI 2 (restore action palette)
+    sta VDSLST                  ; [4] (29)
+    lda #>dli_game_action       ; [2] (31)
+    sta VDSLST+1                ; [4] (35)
+    pla                         ; [4] (39) Restore accumulator
+    rti                         ; [6] (45) Return from interrupt
 
 dli_game_action
     pha                         ; [3] (3) Save accumulator
     sta WSYNC                   ; [4] (7) Wait for horizontal sync
-    lda #$0E                    ; [2] (9) Action playfield text/lum
-    sta COLPF1                  ; [4] (13)
-    lda #$28                    ; [2] (15) Missiles fiery gold/orange (5th player)
-    sta COLPF3                  ; [4] (19)
-    lda #$00                    ; [2] (21) Action background & playfield black
-    sta COLPF0                  ; [4] (25)
-    sta COLPF2                  ; [4] (29)
-    sta COLBK                   ; [4] (33)
-    lda #<dli_game_bottom       ; [2] (35) Chain to DLI 3 (bottom status)
-    sta VDSLST                  ; [4] (39)
-    lda #>dli_game_bottom       ; [2] (41)
-    sta VDSLST+1                ; [4] (45)
-    pla                         ; [4] (49) Restore accumulator
-    rti                         ; [6] (55) Return from interrupt
+
+    ; Restore entire action playfield palette from memory cells
+    lda pal_action_dragon       ; [4] (11) Player 0: Dragon body
+    sta COLPM0                  ; [4] (15)
+    lda pal_action_breath       ; [4] (19) Missiles (5th player): Dragon breath / flame
+    sta COLPF3                  ; [4] (23)
+    lda pal_action_pf0          ; [4] (27) Playfield color 0
+    sta COLPF0                  ; [4] (31)
+    lda pal_action_pf1          ; [4] (35) Playfield color 1
+    sta COLPF1                  ; [4] (39)
+    lda pal_action_pf2          ; [4] (43) Playfield color 2
+    sta COLPF2                  ; [4] (47)
+    lda pal_action_bk           ; [4] (51) Background color & border
+    sta COLBK                   ; [4] (55)
+
+    lda #<dli_game_bottom       ; [2] (57) Chain to DLI 3 (bottom status)
+    sta VDSLST                  ; [4] (61)
+    lda #>dli_game_bottom       ; [2] (63)
+    sta VDSLST+1                ; [4] (67)
+    pla                         ; [4] (71) Restore accumulator
+    rti                         ; [6] (77) Return from interrupt
 
 dli_game_bottom
     pha                         ; [3] (3) Save accumulator
     sta WSYNC                   ; [4] (7) Wait for horizontal sync
-    lda #$00
-    sta COLPF1                  ; [4] (11) Black background
-    lda #$38                    ; [2] (9) Bottom status text: Orange
-    sta COLPF2                  ; [4] (13) Hardware register
-    lda #<dli_game_top          ; [2] (15) Reset DLI vector to top handler for next frame
-    sta VDSLST                  ; [4] (19)
-    lda #>dli_game_top          ; [2] (21)
-    sta VDSLST+1                ; [4] (25)
-    pla                         ; [4] (29) Restore accumulator
-    rti                         ; [6] (35) Return from interrupt
+    lda pal_bottom_text         ; [4] (11) Bottom status text: Orange
+    sta COLPF1                  ; [4] (15) In Mode 2 (normal text): COLPF1 = character luminance
+    lda pal_bottom_bk           ; [4] (19) Bottom status background: black
+    sta COLPF2                  ; [4] (23) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_top          ; [2] (25) Reset DLI vector to top handler for next frame
+    sta VDSLST                  ; [4] (29)
+    lda #>dli_game_top          ; [2] (31)
+    sta VDSLST+1                ; [4] (35)
+    pla                         ; [4] (39) Restore accumulator
+    rti                         ; [6] (45) Return from interrupt
 
 ; ==============================================================================
 ; VBLANK ROUTINE — Runs during deferred vertical blank (Type 7)
@@ -889,21 +896,24 @@ vblank_game
 
 ; ==============================================================================
 ; TIME BAR UPDATE ROUTINE — Executed once per VBLANK
-; Counts down time across 40 bar characters (each character has 8 sub-steps: 0..8)
-; Timing: Bresenham rate accumulator calibrated for 1 minute per stage (PAL: 3000f, NTSC: 3600f)
-; Character base: 82 (decimal)
+; Counts down time across 40 bar characters (each character animates codes 83..90)
+; Total sub-steps = 40 * 8 = 320 steps.
+; Base character: 82 (full bar), Animation: 83..90, Cleared: 0
 ; ==============================================================================
 update_time_bar
     lda GAME_OVER_REASON
-    bne @tb_done            ; If game over already triggered, do nothing
+    beq @tb_run
+    rts
 
-    ; Advance Bresenham accumulator by total bar steps (360)
+@tb_run
+
+    ; Advance Bresenham accumulator by total bar steps (320 = 40 chars * 8 anim steps)
     lda time_acc_lo
     clc
-    adc #<360
+    adc #<320
     sta time_acc_lo
     lda time_acc_hi
-    adc #>360
+    adc #>320
     sta time_acc_hi
 
     ; Compare time_acc with current stage total frames
@@ -923,51 +933,56 @@ update_time_bar
     sbc stage_frames_hi,x
     sta time_acc_hi
 
-    ; Advance COUNTER_EIGHT (0..8)
+    ; Safety check: if COUNTER_FULL is already 0, trigger game over
+    lda COUNTER_FULL
+    beq @tb_time_up
+
+    ; Sprawdzamy czy ostatni znak osiągnął 90 (koniec cyklu 8 znaków)
+    lda COUNTER_EIGHT
+    cmp #90
+    beq @tb_cycle_done
+
+    ; Zwiększamy znak animacji o 1 (83 -> 84 -> ... -> 90)
     inc COUNTER_EIGHT
-    lda COUNTER_EIGHT
-    cmp #9
-    bcc @tb_draw            ; If <= 8, update current character
-
-    ; COUNTER_EIGHT wrapped back to 0
-    lda #0
-    sta COUNTER_EIGHT
-
-    ; Clear the previously completed character to empty space ($80)
-    lda COUNTER_FULL
-    beq @tb_check_end
-    sec
-    sbc #1
-    tax
-    lda #0                  ; Empty space (normal video)
-    sta GAME_STATUS_VRAM,x
-
-    ; Decrement full characters count
-    dec COUNTER_FULL
-
-@tb_check_end
-    ; Check if both COUNTER_FULL and COUNTER_EIGHT are 0
-    lda COUNTER_FULL
-    bne @tb_draw
-    lda COUNTER_EIGHT
-    bne @tb_draw
-
-    ; Time ran out! Trigger Game Over
-    lda #REASON_TIME_UP
-    sta GAME_OVER_REASON
-    rts
 
 @tb_draw
-    ; On position (COUNTER_FULL - 1), display character = 82 + COUNTER_EIGHT (normal video)
-    lda COUNTER_FULL
-    beq @tb_done
+    ; On position (COUNTER_FULL - 1), display character = COUNTER_EIGHT (83..90)
     sec
+    lda COUNTER_FULL
     sbc #1
     tax                     ; X = column 0..39
-    lda #82
-    clc
-    adc COUNTER_EIGHT
+    lda COUNTER_EIGHT
     sta GAME_STATUS_VRAM,x
+    rts
+
+@tb_cycle_done
+    ; W momencie gdy ostatni znak na barze jest czyszczony:
+    ; 1. Czyścimy ostatni znak na barze (pozycja COUNTER_FULL - 1)
+    sec
+    lda COUNTER_FULL
+    sbc #1
+    tax
+    lda #0                  ; Pusta spacja (wyczyszczenie znaku)
+    sta GAME_STATUS_VRAM,x
+
+    ; 2. COUNTER_FULL jest zmniejszany o 1
+    dec COUNTER_FULL
+    beq @tb_time_up         ; Jeśli 0, cały pasek wyczerpany -> koniec gry!
+
+    ; 3. Znak 83 jest kopiowany na koniec baru (nowa pozycja COUNTER_FULL - 1)
+    lda #83
+    sta COUNTER_EIGHT
+    sec
+    lda COUNTER_FULL
+    sbc #1
+    tax                     ; X = nowy koniec baru
+    lda #83
+    sta GAME_STATUS_VRAM,x  ; Kopiowanie znaku 83 na koniec baru
+    rts
+
+@tb_time_up
+    lda #REASON_TIME_UP
+    sta GAME_OVER_REASON
 
 @tb_done
     rts
@@ -1044,13 +1059,13 @@ calc_stage_frames
     bne @sec_loop
 @sec_done
 
-    ; Safety: ensure stage has at least 360 frames
+    ; Safety: ensure stage has at least 320 frames
     lda stage_frames_lo,x
     ora stage_frames_hi,x
     bne @next_stage
-    lda #<360
+    lda #<320
     sta stage_frames_lo,x
-    lda #>360
+    lda #>320
     sta stage_frames_hi,x
 
 @next_stage
@@ -1064,9 +1079,33 @@ calc_fps_min_hi     dta 0
 calc_fps_sec        dta 0
 calc_temp           dta 0
 
+; ==============================================================================
+; PALETTE CONFIGURATION CELLS (editable during development / tuning)
+; All colors used across the game screen and DLI interrupts
+; ==============================================================================
+
+; --- Action Screen Palette (set in dli_game_action & game_init) ---
+pal_action_dragon   dta $C6         ; COLPM0: Smok (Player 0) - domyślnie zielony (Hue $C, Lum 6)
+pal_action_breath   dta $28         ; COLPF3: Zianie ogniem / pociski (5th player) - złoto-pomarańczowy
+pal_action_bk       dta $00         ; COLBK:  Tło ekranu akcji i ramka - czarny
+pal_action_pf0      dta $00         ; COLPF0: Pole gry 0 (np. przeszkody/ziemia) - czarny
+pal_action_pf1      dta $0E         ; COLPF1: Pole gry 1 (jasne elementy/tekst) - biały
+pal_action_pf2      dta $00         ; COLPF2: Pole gry 2 - czarny
+pal_action_p1       dta $36         ; COLPM1: Gracz 1 (np. pociski wroga) - czerwony
+pal_action_p2       dta $28         ; COLPM2: Gracz 2 - złoty
+pal_action_p3       dta $1A         ; COLPM3: Gracz 3 - jasnożółty
+
+; --- Top Status Bar Palette (dli_game_top, normal text) ---
+pal_top_text        dta $0A         ; COLPF1: Tekst i pasek czasu - jasny biały
+pal_top_bk          dta $70         ; COLPF2: Tło górnej linii - niebieski
+
+; --- Bottom Status Bar Palette (dli_game_bottom, normal text) ---
+pal_bottom_text     dta $0A        ; COLPF1: Tekst dolnej linii - biały
+pal_bottom_bk       dta $30         ; COLPF2: Tło dolnej linii - fioletowy
+
 ; --- Time Bar & Game Over State ---
-COUNTER_FULL        dta 40          ; Remaining full characters on the bar (40..0)
-COUNTER_EIGHT       dta 0           ; Sub-step counter (0..8)
+COUNTER_FULL        dta 40          ; Remaining characters on the bar (40..0)
+COUNTER_EIGHT       dta 83          ; Current animation character code at end of bar (strictly 83..90)
 GAME_OVER_REASON    dta 0           ; Reason game ended
 current_stage       dta 0           ; Current game stage (0..2)
 time_acc_lo         dta 0           ; 16-bit Bresenham time accumulator low

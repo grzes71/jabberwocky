@@ -308,14 +308,7 @@ intro_fade_line     dta 0
 intro_fade_timer    dta FADE_IN_DELAY
 intro_fade_mode     dta FADE_MODE_IN
 
-; --- Text Data (Length prefix + ANTIC display codes) ---
-intro_txt_line1
-    dta 34, d'By', 67, d'o smaszno, a jaszmije smukwijne'
-intro_txt_line2
-    dta 33, 79, d'widrokr', 66, d'tnie na zegwniku w', 66, 71, d'a', 67, d'y,'
-intro_txt_line3
-    dta 29, d'Peliczaple sta', 67, d'y smutcholijne'
-intro_txt_line4
-    dta 27, d'I zb', 67, 64, d'kinie ryko', 70, d'wist', 64, d'ka', 67, d'y.'
+; --- Text Data (Included from generated text compiler) ---
+    icl 'gen/intro_text.asm'
 
 

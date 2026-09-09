@@ -7,7 +7,7 @@
     icl 'zeropage.asm'
 
 ; ---- Memory Map Equates ----
-CODE_ADDR       = $3000
+CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
 DLIST_ADDR      = $3E80
 VRAM_ADDR       = $4000
 STUB_VRAM       = $5C00             ; 960-byte text buffer ($5C00-$5FBF)
@@ -177,6 +177,15 @@ dlist_title
     ; Second 4KB segment (LMS at $5000): 73 lines of ANTIC Mode F (73 * 40 = 2920 bytes)
     dta DL_MODE_F | DL_LMS, a(VRAM_ADDR + $1000)
     :72 dta DL_MODE_F
+
+    ; Blank spacing lines between Mode F graphics and scroll line
+    dta DL_BLANK4
+
+    ; 1 blank scanline with DLI right before ANTIC Mode 2 scroll line
+    dta DL_BLANK1 | DL_DLI
+
+    ; 1 line ANTIC Mode 2 (40 chars visible, 48 fetched with DL_HSCROL)
+    dta DL_MODE_2 | DL_LMS | DL_HSCROL, a(title_scroll_vram)
 
     dta DL_JVB, a(dlist_title)
 

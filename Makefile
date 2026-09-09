@@ -52,6 +52,15 @@ DOCS_DIR       := docs
 MAP_TXT        := $(DOCS_DIR)/memory_map.txt
 MAP_JSON       := $(DOCS_DIR)/memory_map.json
 
+TEXT_DIR       := texts
+TEXT_SRC       := $(wildcard $(TEXT_DIR)/*.txt)
+TEXT_SCRIPT    := scripts/compile_texts.py
+TEXT_GEN_ASM   := $(GEN_DIR)/intro_text.asm $(GEN_DIR)/title_scroll_text.asm
+
+$(TEXT_GEN_ASM): $(TEXT_SRC) $(TEXT_SCRIPT)
+	@echo === Kompilacja tekstów $(TEXT_DIR)/ do $(GEN_DIR)/ (scripts/compile_texts.py) ===
+	$(PYTHON) $(TEXT_SCRIPT) --texts-dir $(TEXT_DIR) --gen-dir $(GEN_DIR)
+
 $(TITLE_BIN): $(IMG_TITLE) $(CONVERT_SCRIPT)
 	@echo === Konwersja $(IMG_TITLE) do $(TITLE_BIN) (atari-image-converter, ANTIC F 320x175) ===
 	$(PYTHON) $(CONVERT_SCRIPT) -i $(IMG_TITLE) -o $(TITLE_BIN) --width 320 --height 175 --mode F
@@ -60,7 +69,7 @@ $(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
 	@echo === Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ===
 	$(PYTHON) $(SPRITE_SCRIPT) -i $(SPRITE_JSON) -o $(DRAGON_ASM)
 
-$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_TITLE)
+$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 
