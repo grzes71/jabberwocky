@@ -215,14 +215,17 @@ dlist_intro
 dlist_game
     dta DL_BLANK8
     dta DL_BLANK8
-    dta DL_BLANK8
+    dta DL_BLANK8 | DL_DLI      ; DLI 1: triggers before top status line (sets text color $FA)
 
     ; Top status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
-    dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM)
+    dta DL_MODE_2 | DL_LMS | DL_DLI, a(GAME_STATUS_VRAM) ; DLI 2: triggers after top status line (restores action palette)
 
     ; Action playfield: 11 lines of ANTIC Mode 5 (40x11, 16 scanlines each)
     dta DL_MODE_5 | DL_LMS, a(GAME_ACTION_VRAM)
     :10 dta DL_MODE_5
+
+    ; 1 blank line with DLI before bottom status bar
+    dta DL_BLANK1 | DL_DLI      ; DLI 3: triggers before bottom status line (sets text color $34)
 
     ; Bottom status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
     dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM + 40)

@@ -58,6 +58,7 @@ TRIG0       = $D010     ; Przycisk FIRE joysticka 0 (bit 0=0 wciśnięty)
 TRIG1       = $D011     ; Przycisk FIRE joysticka 1
 TRIG2       = $D012     ; Przycisk FIRE joysticka 2
 TRIG3       = $D013     ; Przycisk FIRE joysticka 3
+PAL         = $D014     ; Rejestr systemu TV (NTSC=$0F, PAL=$01; bit 3=0 dla PAL)
 
 ; --- PIA Hardware Registers ---
 PORTA       = $D300     ; Port joysticków 0 i 1 (kierunki)

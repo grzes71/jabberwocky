@@ -156,38 +156,94 @@ game_init
 @   inx
     bne @-1
 
-    ; Clear 80 bytes of status bar ($6200-$624F) with 0 (space)
+    ; Clear status bar row 0 ($6200-$6227) with 0 (normal space)
     lda #0
-    ldx #79
+    ldx #39
 @   sta GAME_STATUS_VRAM,x
     dex
     bpl @-
 
-    ; Print status bar title (row 0)
-    lda #<status_txt_row0
-    sta PTR_SRC
-    lda #>status_txt_row0
-    sta PTR_SRC+1
-    ldx #0
-    jsr print_status_line
+    ; Clear status bar row 1 ($6228-$624F) with $80 (inverted space)
+    lda #$80
+    ldx #39
+@   sta GAME_STATUS_VRAM+40,x
+    dex
+    bpl @-
 
+    ; Enable inverse video in CHACTL
+    lda #2
+    sta CHACTL
+
+    ; Initialize 40 bytes of time bar (row 0) with full bar character (82, normal video)
+    lda #82
+    ldx #39
+@   sta GAME_STATUS_VRAM,x
+    dex
+    bpl @-
+
+    ; Initialize time bar counters & game over reason
+    lda #40
+    sta COUNTER_FULL
+    lda #0
+    sta COUNTER_EIGHT
+    sta GAME_OVER_REASON
+    sta time_acc_lo
+    sta time_acc_hi
+
+    ; Compute stage frame counts based on stage1..3_min/sec and PAL/NTSC detection
+    jsr calc_stage_frames
     ; Print initial status bar speed (row 1)
     jsr update_status_speed_display
 
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon
 
+    ; Set initial DLI vector (points to top status bar handler)
+    lda #<dli_game_top
+    sta VDSLST
+    lda #>dli_game_top
+    sta VDSLST+1
+
+    ; Install Deferred VBLANK vector via OS SETVBV
+    ldy #<vblank_game
+    ldx #>vblank_game
+    lda #7                      ; Type 7 = Deferred VBLANK
+    jsr SETVBV
+
     ; Enable playfield DMA + single-line PMG + Player DMA + Missile DMA (%00111110 = $3E)
     lda #$3E
     sta SDMCTL
     sta DMACTL
+
+    ; Enable NMI: VBLANK ($40) + DLI ($80) = $C0
+    lda #$C0
+    sta NMIEN
     rts
 
 game_run
-    ; 1. Check START console key to exit to Game Over
+    ; 1. Check if time ran out
+    lda GAME_OVER_REASON
+    bne @exit_to_game_over
+
+    ; 2. Check START console key to exit to Game Over
     lda CONSOL
     and #$01
     bne @not_start
+
+    lda #REASON_PLAYER_QUIT
+    sta GAME_OVER_REASON
+
+@exit_to_game_over
+    ; Disable DLI before leaving scene
+    lda #$40                    ; VBLANK only, DLI disabled
+    sta NMIEN
+
+    ; Restore default deferred VBLANK vector
+    ldy #<XITVBV
+    ldx #>XITVBV
+    lda #7                      ; Deferred VBLANK
+    jsr SETVBV
+
     jsr disable_pmg
     lda #STATE_GAME_OVER
     sta game_state
@@ -572,6 +628,7 @@ print_status_line
     ldy #1
 @   lda (PTR_SRC),y
     dey
+    ora #$80            ; Always display in inverse video (bit 7 = 1)
     sta (PTR_DST),y
     iny
     iny
@@ -761,6 +818,281 @@ render_fire
 @m3_off
     sta HPOSM3
     rts
+
+; ==============================================================================
+; DLI ROUTINES FOR GAMEPLAY SCREEN
+; DLI 1: Before top status bar -> Set text color to $FA (yellow-orange)
+; DLI 2: After top status bar -> Restore action playfield palette (colors 0..4)
+; DLI 3: Before bottom status bar -> Set text color to $34 (red-orange)
+; ==============================================================================
+
+dli_game_top
+    pha                         ; [3] (3) Save accumulator
+    sta WSYNC                   ; [4] (7) Wait for horizontal sync
+    lda #$0A                    ; [2] (9) Top status text: white text
+    sta COLPF1                  ; [4] (11) In Mode 2 (normal text): COLPF1 = character luminance
+    lda #$70                    ; [2] (13) Top status background: blue
+    sta COLPF2                  ; [4] (15) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_action       ; [2] (17) Chain to DLI 2 (restore action palette)
+    sta VDSLST                  ; [4] (21)
+    lda #>dli_game_action       ; [2] (23)
+    sta VDSLST+1                ; [4] (27)
+    pla                         ; [4] (31) Restore accumulator
+    rti                         ; [6] (37) Return from interrupt
+
+dli_game_action
+    pha                         ; [3] (3) Save accumulator
+    sta WSYNC                   ; [4] (7) Wait for horizontal sync
+    lda #$0E                    ; [2] (9) Action playfield text/lum
+    sta COLPF1                  ; [4] (13)
+    lda #$28                    ; [2] (15) Missiles fiery gold/orange (5th player)
+    sta COLPF3                  ; [4] (19)
+    lda #$00                    ; [2] (21) Action background & playfield black
+    sta COLPF0                  ; [4] (25)
+    sta COLPF2                  ; [4] (29)
+    sta COLBK                   ; [4] (33)
+    lda #<dli_game_bottom       ; [2] (35) Chain to DLI 3 (bottom status)
+    sta VDSLST                  ; [4] (39)
+    lda #>dli_game_bottom       ; [2] (41)
+    sta VDSLST+1                ; [4] (45)
+    pla                         ; [4] (49) Restore accumulator
+    rti                         ; [6] (55) Return from interrupt
+
+dli_game_bottom
+    pha                         ; [3] (3) Save accumulator
+    sta WSYNC                   ; [4] (7) Wait for horizontal sync
+    lda #$00
+    sta COLPF1                  ; [4] (11) Black background
+    lda #$38                    ; [2] (9) Bottom status text: Orange
+    sta COLPF2                  ; [4] (13) Hardware register
+    lda #<dli_game_top          ; [2] (15) Reset DLI vector to top handler for next frame
+    sta VDSLST                  ; [4] (19)
+    lda #>dli_game_top          ; [2] (21)
+    sta VDSLST+1                ; [4] (25)
+    pla                         ; [4] (29) Restore accumulator
+    rti                         ; [6] (35) Return from interrupt
+
+; ==============================================================================
+; VBLANK ROUTINE — Runs during deferred vertical blank (Type 7)
+; Resets initial DLI vector for the upcoming frame & updates time bar
+; ==============================================================================
+vblank_game
+    lda #<dli_game_top
+    sta VDSLST
+    lda #>dli_game_top
+    sta VDSLST+1
+
+    ; Update time bar counter during VBLANK
+    jsr update_time_bar
+
+    jmp XITVBV
+
+; ==============================================================================
+; TIME BAR UPDATE ROUTINE — Executed once per VBLANK
+; Counts down time across 40 bar characters (each character has 8 sub-steps: 0..8)
+; Timing: Bresenham rate accumulator calibrated for 1 minute per stage (PAL: 3000f, NTSC: 3600f)
+; Character base: 82 (decimal)
+; ==============================================================================
+update_time_bar
+    lda GAME_OVER_REASON
+    bne @tb_done            ; If game over already triggered, do nothing
+
+    ; Advance Bresenham accumulator by total bar steps (360)
+    lda time_acc_lo
+    clc
+    adc #<360
+    sta time_acc_lo
+    lda time_acc_hi
+    adc #>360
+    sta time_acc_hi
+
+    ; Compare time_acc with current stage total frames
+    ldx current_stage
+    lda time_acc_lo
+    cmp stage_frames_lo,x
+    lda time_acc_hi
+    sbc stage_frames_hi,x
+    bcc @tb_done            ; If time_acc < stage_frames, not yet time to step
+
+    ; time_acc >= stage_frames: subtract stage_frames
+    lda time_acc_lo
+    sec
+    sbc stage_frames_lo,x
+    sta time_acc_lo
+    lda time_acc_hi
+    sbc stage_frames_hi,x
+    sta time_acc_hi
+
+    ; Advance COUNTER_EIGHT (0..8)
+    inc COUNTER_EIGHT
+    lda COUNTER_EIGHT
+    cmp #9
+    bcc @tb_draw            ; If <= 8, update current character
+
+    ; COUNTER_EIGHT wrapped back to 0
+    lda #0
+    sta COUNTER_EIGHT
+
+    ; Clear the previously completed character to empty space ($80)
+    lda COUNTER_FULL
+    beq @tb_check_end
+    sec
+    sbc #1
+    tax
+    lda #0                  ; Empty space (normal video)
+    sta GAME_STATUS_VRAM,x
+
+    ; Decrement full characters count
+    dec COUNTER_FULL
+
+@tb_check_end
+    ; Check if both COUNTER_FULL and COUNTER_EIGHT are 0
+    lda COUNTER_FULL
+    bne @tb_draw
+    lda COUNTER_EIGHT
+    bne @tb_draw
+
+    ; Time ran out! Trigger Game Over
+    lda #REASON_TIME_UP
+    sta GAME_OVER_REASON
+    rts
+
+@tb_draw
+    ; On position (COUNTER_FULL - 1), display character = 82 + COUNTER_EIGHT (normal video)
+    lda COUNTER_FULL
+    beq @tb_done
+    sec
+    sbc #1
+    tax                     ; X = column 0..39
+    lda #82
+    clc
+    adc COUNTER_EIGHT
+    sta GAME_STATUS_VRAM,x
+
+@tb_done
+    rts
+
+; ==============================================================================
+; calc_stage_frames
+; Calculates 16-bit total frame count (stage_frames_lo/hi) for all 3 stages:
+; total_frames = (minutes * frames_per_min) + (seconds * frames_per_sec)
+; Calibrated dynamically for PAL (50Hz) or NTSC (60Hz).
+; ==============================================================================
+calc_stage_frames
+    lda PAL
+    and #$08
+    bne @is_ntsc
+    ; PAL (50Hz: 3000 frames/min, 50 frames/sec)
+    lda #<3000
+    sta calc_fps_min_lo
+    lda #>3000
+    sta calc_fps_min_hi
+    lda #50
+    sta calc_fps_sec
+    jmp @setup_done
+
+@is_ntsc
+    ; NTSC (60Hz: 3600 frames/min, 60 frames/sec)
+    lda #<3600
+    sta calc_fps_min_lo
+    lda #>3600
+    sta calc_fps_min_hi
+    lda #60
+    sta calc_fps_sec
+
+@setup_done
+    ldx #0
+@stage_loop
+    txa
+    asl
+    tay                     ; Y = stage index * 2 (offset in stage_times)
+
+    ; Initialize frame count to 0
+    lda #0
+    sta stage_frames_lo,x
+    sta stage_frames_hi,x
+
+    ; Add minutes * fps_min
+    lda stage_times,y       ; Stage minutes
+    beq @min_done
+    sta calc_temp
+@min_loop
+    clc
+    lda stage_frames_lo,x
+    adc calc_fps_min_lo
+    sta stage_frames_lo,x
+    lda stage_frames_hi,x
+    adc calc_fps_min_hi
+    sta stage_frames_hi,x
+    dec calc_temp
+    bne @min_loop
+@min_done
+
+    ; Add seconds * fps_sec
+    lda stage_times+1,y     ; Stage seconds
+    beq @sec_done
+    sta calc_temp
+@sec_loop
+    clc
+    lda stage_frames_lo,x
+    adc calc_fps_sec
+    sta stage_frames_lo,x
+    lda stage_frames_hi,x
+    adc #0
+    sta stage_frames_hi,x
+    dec calc_temp
+    bne @sec_loop
+@sec_done
+
+    ; Safety: ensure stage has at least 360 frames
+    lda stage_frames_lo,x
+    ora stage_frames_hi,x
+    bne @next_stage
+    lda #<360
+    sta stage_frames_lo,x
+    lda #>360
+    sta stage_frames_hi,x
+
+@next_stage
+    inx
+    cpx #3
+    bne @stage_loop
+    rts
+
+calc_fps_min_lo     dta 0
+calc_fps_min_hi     dta 0
+calc_fps_sec        dta 0
+calc_temp           dta 0
+
+; --- Time Bar & Game Over State ---
+COUNTER_FULL        dta 40          ; Remaining full characters on the bar (40..0)
+COUNTER_EIGHT       dta 0           ; Sub-step counter (0..8)
+GAME_OVER_REASON    dta 0           ; Reason game ended
+current_stage       dta 0           ; Current game stage (0..2)
+time_acc_lo         dta 0           ; 16-bit Bresenham time accumulator low
+time_acc_hi         dta 0           ; 16-bit Bresenham time accumulator high
+
+; --- Stage Duration Configuration (editable during development) ---
+; 2 dedicated memory cells per stage (minutes, seconds)
+stage_times
+stage1_min          dta 1           ; Stage 1: minutes
+stage1_sec          dta 20          ; Stage 1: seconds
+
+stage2_min          dta 1           ; Stage 2: minutes
+stage2_sec          dta 0           ; Stage 2: seconds
+
+stage3_min          dta 1           ; Stage 3: minutes
+stage3_sec          dta 0           ; Stage 3: seconds
+
+; Stage frame duration tables (computed at runtime by calc_stage_frames)
+stage_frames_lo     dta <3000, <3000, <3000
+stage_frames_hi     dta >3000, >3000, >3000
+
+; Game Over Reason Constants
+REASON_NONE         = 0
+REASON_TIME_UP      = 1             ; Czas się skończył
+REASON_LIVES_OUT    = 2             ; Skończyły się życia
+REASON_PLAYER_QUIT  = 3             ; Gracz zakończył grę (START)
 
 status_line_lo
     dta <GAME_STATUS_VRAM, <(GAME_STATUS_VRAM + 40)
