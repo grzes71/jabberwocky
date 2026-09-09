@@ -16,29 +16,29 @@
   {
     "name": "CODE",
     "start_address": "$3000",
-    "end_address": "$3A82",
-    "size": 2691,
+    "end_address": "$3C7E",
+    "size": 3199,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3A83",
+    "start_address": "$3C7F",
     "end_address": "$3E7F",
-    "size": 1021,
+    "size": 513,
     "type": "free"
   },
   {
     "name": "DLIST",
     "start_address": "$3E80",
-    "end_address": "$3F8F",
-    "size": 272,
+    "end_address": "$3F91",
+    "size": 274,
     "type": "display_list"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3F90",
+    "start_address": "$3F92",
     "end_address": "$3FFF",
-    "size": 112,
+    "size": 110,
     "type": "free"
   },
   {

@@ -16,6 +16,7 @@ GAME_STATUS_VRAM = $6200            ; 80-byte status bar ($6200-$624F, 2 lines A
 FONT_ADDR       = $7000             ; 1024-byte font ($7000-$73FF, 1KB aligned)
 
 PM_ADDR         = $2000             ; 2KB aligned PMG buffer ($2000-$27FF)
+M_ADDR          = PM_ADDR + $0300   ; Missiles buffer ($2300-$23FF, 256 bytes)
 P0_ADDR         = PM_ADDR + $0400   ; Player 0 buffer
 P1_ADDR         = PM_ADDR + $0500   ; Player 1 buffer
 P2_ADDR         = PM_ADDR + $0600   ; Player 2 buffer
@@ -210,19 +211,21 @@ dlist_intro
 
     dta DL_JVB, a(dlist_intro)
 
-; Display list for Main Game Screen (11 lines ANTIC 5 + 2 lines ANTIC 2)
+; Display list for Main Game Screen (1 line ANTIC 2 + 11 lines ANTIC 5 + 1 line ANTIC 2)
 dlist_game
     dta DL_BLANK8
     dta DL_BLANK8
     dta DL_BLANK8
 
-    ; 11 lines of ANTIC Mode 5 (Action playfield: 40x11, 16 scanlines each)
+    ; Top status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
+    dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM)
+
+    ; Action playfield: 11 lines of ANTIC Mode 5 (40x11, 16 scanlines each)
     dta DL_MODE_5 | DL_LMS, a(GAME_ACTION_VRAM)
     :10 dta DL_MODE_5
 
-    ; 2 lines of ANTIC Mode 2 (Status bar: 40x2, 8 scanlines each)
-    dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM)
-    dta DL_MODE_2
+    ; Bottom status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
+    dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM + 40)
 
     dta DL_JVB, a(dlist_game)
 

@@ -1,14 +1,14 @@
 ; ==============================================================================
 ; SCENES/GAME.ASM — Main Gameplay Scene
-; Target: 11 lines ANTIC Mode 5 (Action) + 2 lines ANTIC Mode 2 (Status)
+; Target: 1 line ANTIC Mode 2 (Top Status) + 11 lines ANTIC Mode 5 (Action) + 1 line ANTIC Mode 2 (Bottom Status)
 ; Sprite: Animated Jabberwocky dragon (Player 0) with 16-bit Phase Accumulator
 ; ==============================================================================
 
 ; --- Dragon Configuration Constants ---
 DRAGON_START_X          = 64            ; Left side of action playfield
-DRAGON_START_Y          = 99            ; Centered vertically in ANTIC 5 (24..199, H=26)
-DRAGON_MIN_Y            = 24            ; Top boundary (first scanline of ANTIC 5)
-DRAGON_MAX_Y            = 173           ; Bottom boundary (199 - 26 = 173, above status)
+DRAGON_START_Y          = 107           ; Centered vertically in ANTIC 5 (32..207, H=26)
+DRAGON_MIN_Y            = 40            ; Top boundary (first scanline of ANTIC 5, below top status)
+DRAGON_MAX_Y            = 190           ; Bottom boundary (207 - 26 = 181, above bottom status)
 DRAGON_COLOR            = $C6           ; Dragon green (Hue $C, Lum 6)
 
 ; --- Dragon Vertical Physics & Inertia (8.8 Fixed-Point) ---
@@ -42,6 +42,11 @@ game_init
     inx
     bne @-
 
+    ; Clear Missiles buffer ($2300-$23FF)
+@   sta M_ADDR,x
+    inx
+    bne @-
+
     ; Set PMBASE (page $20 = $2000)
     lda #>PM_ADDR
     sta PMBASE
@@ -55,15 +60,27 @@ game_init
     sta PCOLR0
     sta COLPM0
 
-    ; Priority: Player 0 in front of playfield
-    lda #$01
+    ; Priority: Player 0 in front of playfield + 5th player mode for missiles ($09)
+    lda #$09
     sta GPRIOR
     sta PRIOR
 
-    ; Enable player display in GTIA
-    lda #2
+    ; Enable player and missile display in GTIA (bit 0=missiles, bit 1=players)
+    lda #3
     sta GRACTL
     sta HITCLR
+
+    ; Reset missile hardware registers and fire state
+    lda #0
+    sta HPOSM0
+    sta HPOSM1
+    sta HPOSM2
+    sta HPOSM3
+    sta SIZEM
+    sta fire_state
+    sta fire_frame
+    sta fire_timer
+    sta fire_prev_y
 
     ; Initialize Dragon vertical physics variables
     lda #DRAGON_START_Y
@@ -101,15 +118,29 @@ game_init
     ; Set Colors:
     ; Action screen background & border: Black ($00)
     ; Status screen (Mode 2): Black background ($00), White text ($0E)
+    ; Missiles (5th Player mode): Fiery Gold/Orange ($28)
     lda #$00
     sta COLOR0
     sta COLPF0
     sta COLOR2
     sta COLPF2
-    sta COLOR3
-    sta COLPF3
     sta COLOR4
     sta COLBK
+
+    lda #$28            ; Fiery gold/orange for missiles
+    sta COLOR3
+    sta COLPF3
+
+    ; Set fallback player/missile colors
+    lda #$36            ; Flame red/orange
+    sta PCOLR1
+    sta COLPM1
+    lda #$28            ; Gold/orange
+    sta PCOLR2
+    sta COLPM2
+    lda #$1A            ; Bright flame yellow
+    sta PCOLR3
+    sta COLPM3
 
     lda #$0E
     sta COLOR1
@@ -146,22 +177,31 @@ game_init
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon
 
-    ; Enable playfield DMA + single-line PMG + Player DMA (%00111010 = $3A)
-    lda #$3A
+    ; Enable playfield DMA + single-line PMG + Player DMA + Missile DMA (%00111110 = $3E)
+    lda #$3E
     sta SDMCTL
     sta DMACTL
     rts
 
 game_run
-    ; 1. Check FIRE button to exit to Game Over
-    lda fire_pressed
-    beq @not_fire
-    lda #0
-    sta fire_pressed
+    ; 1. Check START console key to exit to Game Over
+    lda CONSOL
+    and #$01
+    bne @not_start
     jsr disable_pmg
     lda #STATE_GAME_OVER
     sta game_state
     rts
+
+@not_start
+    ; 2. Check FIRE button to trigger fire breathing
+    lda fire_pressed
+    beq @not_fire
+    lda #0
+    sta fire_pressed
+    lda fire_state
+    bne @not_fire           ; If already firing, ignore subsequent press
+    jsr start_fire
 
 @not_fire
     ; 2. Read Joystick 0 (STICK0) — Vertical movement with acceleration & inertia
@@ -374,8 +414,12 @@ game_run
     ; Update status bar display if speed tier changed
     jsr update_status_speed_display
 
-    ; 5. Commit/render sprite to Player 0 buffer (during VBLANK phase)
+    ; Update fire breathing animation
+    jsr update_fire
+
+    ; 5. Commit/render sprite to Player 0 buffer & missiles to M_ADDR
     jsr render_dragon
+    jsr render_fire
     rts
 
 ; ==============================================================================
@@ -522,7 +566,7 @@ print_status_line
 
     ldy #0
     lda (PTR_SRC),y
-    beq @done
+    beq @print_done
     tax                 ; X = length counter
 
     ldy #1
@@ -534,18 +578,303 @@ print_status_line
     dex
     bne @-
 
-@done
+@print_done
+    rts
+
+; ==============================================================================
+; FIRE BREATHING SYSTEM (4 PMG Missiles M0..M3)
+; ==============================================================================
+
+start_fire
+    lda #1
+    sta fire_state          ; State: 1 = EXPANDING
+    lda #0
+    sta fire_frame          ; Start at Frame 0
+    tax
+    lda fire_duration_tbl,x ; Initial frame duration (7 frames)
+    sta fire_timer
+    rts
+
+update_fire
+    lda fire_state
+    bne @uf_active
+    rts
+
+@uf_active
+    dec fire_timer
+    bne @uf_done
+
+    ; Timer expired, advance state machine
+    lda fire_state
+    cmp #1                  ; Expanding?
+    beq @advance_expand
+    cmp #2                  ; Peak hold?
+    beq @advance_peak
+    ; Otherwise: Retracting (3)
+    jmp @advance_retract
+
+@advance_expand
+    inc fire_frame
+    lda fire_frame
+    cmp #7
+    bne @set_expand_timer
+    ; Reached frame 7 (Peak!)
+    lda #2
+    sta fire_state          ; State: 2 = PEAK HOLD
+    lda #2
+    sta fire_timer          ; Hold peak for 2 frames
+    rts
+
+@set_expand_timer
+    ldx fire_frame
+    lda fire_duration_tbl,x
+    sta fire_timer
+    rts
+
+@advance_peak
+    ; Peak hold finished, start retracting
+    lda #3
+    sta fire_state          ; State: 3 = RETRACTING
+    lda #6
+    sta fire_frame
+    ldx #6
+    lda fire_duration_tbl,x ; 1 frame
+    sta fire_timer
+    rts
+
+@advance_retract
+    lda fire_frame
+    beq @retract_done       ; Frame 0 finished -> extinguish
+    dec fire_frame
+    ldx fire_frame
+    lda fire_duration_tbl,x
+    sta fire_timer
+    rts
+
+@retract_done
+    lda #0
+    sta fire_state
+    rts
+
+@uf_done
+    rts
+
+; Render fire: updates M_ADDR and GTIA registers (HPOSM0..3, SIZEM)
+render_fire
+    ; If fire was previously rendered, clear previous 7 lines in M_ADDR
+    lda fire_prev_y
+    beq @check_active
+    tax
+    lda #0
+    ldy #7
+@   sta M_ADDR,x
+    inx
+    dey
+    bne @-
+    lda #0
+    sta fire_prev_y
+
+@check_active
+    lda fire_state
+    bne @render_active
+    ; Inactive: clear HPOSM0..3 and SIZEM
+    lda #0
+    sta HPOSM0
+    sta HPOSM1
+    sta HPOSM2
+    sta HPOSM3
+    sta SIZEM
+    rts
+
+@render_active
+    ; Compute destination Y = dragon_y + 10
+    lda dragon_y
+    clc
+    adc #10
+    sta fire_prev_y
+    tax
+
+    ; Fetch flame pattern start index
+    ldy fire_frame
+    lda fire_pattern_idx,y
+    tay
+
+    ; Copy 7 scanlines into M_ADDR
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+    inx
+    iny
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+    inx
+    iny
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+    inx
+    iny
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+    inx
+    iny
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+    inx
+    iny
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+    inx
+    iny
+    lda fire_pattern_data,y
+    sta M_ADDR,x
+
+    ; Set SIZEM from table
+    ldx fire_frame
+    lda fire_sizem_tbl,x
+    sta SIZEM
+
+    ; Compute and set HPOSM0..3 = dragon_x + offset (or 0 if inactive)
+    lda fire_off_m0,x
+    beq @m0_off
+    clc
+    adc dragon_x
+@m0_off
+    sta HPOSM0
+
+    lda fire_off_m1,x
+    beq @m1_off
+    clc
+    adc dragon_x
+@m1_off
+    sta HPOSM1
+
+    lda fire_off_m2,x
+    beq @m2_off
+    clc
+    adc dragon_x
+@m2_off
+    sta HPOSM2
+
+    lda fire_off_m3,x
+    beq @m3_off
+    clc
+    adc dragon_x
+@m3_off
+    sta HPOSM3
     rts
 
 status_line_lo
     dta <GAME_STATUS_VRAM, <(GAME_STATUS_VRAM + 40)
 
-; --- Dragon Vertical State Variables ---
+; --- Dragon State Variables ---
+dragon_x            dta DRAGON_START_X
 dragon_y            dta DRAGON_START_Y
 dragon_prev_y       dta DRAGON_START_Y
 dragon_sub_y        dta 0
 dragon_vel_lo       dta 0
 dragon_vel_hi       dta 0
+
+; --- Fire Breathing State Variables ---
+fire_state          dta 0           ; 0 = inactive, 1 = expanding, 2 = peak, 3 = retracting
+fire_frame          dta 0           ; Frame 0..7
+fire_timer          dta 0           ; Countdown timer in frames
+fire_prev_y         dta 0           ; Previous scanline Y rendered in M_ADDR
+
+; --- Fire Animation & Geometry Tables (8 frames) ---
+; Ease-in durations: Frame 0 longest (7 frames), Frame 6 shortest (1 frame)
+fire_duration_tbl
+    dta 7, 5, 4, 3, 2, 2, 1, 2
+
+; SIZEM: 2-bits per missile (M3..M0): $00, $01, $05, $07, $17, $1F, $5F, $7F
+fire_sizem_tbl
+    dta $00, $01, $05, $07, $17, $1F, $5F, $7F
+
+; Horizontal offsets from dragon_x for M0..M3 (0 = inactive/offscreen)
+fire_off_m0
+    dta 8, 8, 8, 8, 8, 8, 8, 8
+fire_off_m1
+    dta 0, 12, 12, 16, 16, 16, 16, 16
+fire_off_m2
+    dta 0, 0, 16, 20, 20, 24, 24, 24
+fire_off_m3
+    dta 0, 0, 0, 0, 24, 28, 28, 32
+
+; Pattern byte offset per frame (7 bytes per frame)
+fire_pattern_idx
+    dta 0, 7, 14, 21, 28, 35, 42, 49
+
+; 7 scanlines per frame (M3=bits 7-6, M2=bits 5-4, M1=bits 3-2, M0=bits 1-0)
+fire_pattern_data
+    ; Frame 0: tiny spark at mouth (~1 line height)
+    dta %00000000
+    dta %00000000
+    dta %00000000
+    dta %00000011
+    dta %00000000
+    dta %00000000
+    dta %00000000
+
+    ; Frame 1: M0 2x, M1 emerging (~2-3 lines height)
+    dta %00000000
+    dta %00000000
+    dta %00000101
+    dta %00001111
+    dta %00000110
+    dta %00000000
+    dta %00000000
+
+    ; Frame 2: M0 2x, M1 2x, M2 emerging (~3 lines height)
+    dta %00000000
+    dta %00000000
+    dta %00011101
+    dta %00111111
+    dta %00011110
+    dta %00000000
+    dta %00000000
+
+    ; Frame 3: M0 4x, M1 2x, M2 1x (~4 lines height)
+    dta %00000000
+    dta %00010100
+    dta %00111101
+    dta %00111111
+    dta %00111111
+    dta %00010100
+    dta %00000000
+
+    ; Frame 4: M0 4x, M1 2x, M2 2x, M3 emerging (~5 lines height)
+    dta %00000000
+    dta %01110100
+    dta %11111101
+    dta %11111111
+    dta %11111110
+    dta %01110100
+    dta %00000000
+
+    ; Frame 5: M0 4x, M1 4x, M2 2x, M3 1x (~6 lines height)
+    dta %01010000
+    dta %11110100
+    dta %11111101
+    dta %11111111
+    dta %11111111
+    dta %11111100
+    dta %01010000
+
+    ; Frame 6: M0 4x, M1 4x, M2 2x, M3 2x (flickering flame tongue, ~7 lines)
+    dta %01100000
+    dta %11110100
+    dta %10111101
+    dta %11111111
+    dta %11111110
+    dta %11111100
+    dta %10010000
+
+    ; Frame 7: Full flame tongue, organic jagged edges (7 lines height)
+    dta %10110000
+    dta %11110100
+    dta %11111101
+    dta %11111111
+    dta %11111111
+    dta %11111101
+    dta %01110000
 
 ; --- 16-bit Animation & Scroll Variables ---
 ANIM_PHASE          dta a(0)        ; 16-bit Phase Accumulator: low=fraction, high=frame (0..5)
@@ -564,12 +893,12 @@ status_txt_row0
     dta 40, d' JABBERWOCKY - GAMEPLAY ARENA (ANTIC 5) '
 
 speed_txt_0
-    dta 40, d' SPEED: HOVER (BASE)     >> FIRE: EXIT <<'
+    dta 40, d' SPEED: HOVER (BASE)    >> START: EXIT <<'
 speed_txt_1
-    dta 40, d' SPEED: CRUISE 1         >> FIRE: EXIT <<'
+    dta 40, d' SPEED: CRUISE 1        >> START: EXIT <<'
 speed_txt_2
-    dta 40, d' SPEED: CRUISE 2         >> FIRE: EXIT <<'
+    dta 40, d' SPEED: CRUISE 2        >> START: EXIT <<'
 speed_txt_3
-    dta 40, d' SPEED: CRUISE 3         >> FIRE: EXIT <<'
+    dta 40, d' SPEED: CRUISE 3        >> START: EXIT <<'
 speed_txt_4
-    dta 40, d' SPEED: FULL FLAP (MAX)  >> FIRE: EXIT <<'
+    dta 40, d' SPEED: FULL FLAP (MAX) >> START: EXIT <<'

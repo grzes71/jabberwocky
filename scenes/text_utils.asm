@@ -29,6 +29,11 @@ disable_pmg
     sta HPOSP1
     sta HPOSP2
     sta HPOSP3
+    sta HPOSM0
+    sta HPOSM1
+    sta HPOSM2
+    sta HPOSM3
+    sta SIZEM
     rts
 
 ; Print text string at (X = row 0..23, Y = col 0..39)

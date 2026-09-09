@@ -86,14 +86,16 @@ title_init
     sta DLISTH
 
     ; Colors for Graphics 8 / ANTIC Mode F:
-    lda #$0E
+    lda #$ca
     sta COLOR2
     sta COLPF2
+    
+    lda #$c0
+    sta COLOR4
 
     lda #$00
     sta COLOR1
     sta COLPF1
-    sta COLOR4
     sta COLBK
 
     ; Enable playfield DMA + single-line PMG + Player DMA (%00111010 = $3A)
