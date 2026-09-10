@@ -8,8 +8,9 @@
 DRAGON_START_X          = 64            ; Left side of action playfield
 DRAGON_START_Y          = 107           ; Centered vertically in ANTIC 5 (32..207, H=26)
 DRAGON_MIN_Y            = 40            ; Top boundary (first scanline of ANTIC 5, below top status)
-DRAGON_MAX_Y            = 190           ; Bottom boundary (207 - 26 = 181, above bottom status)
+DRAGON_MAX_Y            = 190           ; Bottom boundary (above bottom status)
 DRAGON_COLOR            = $C6           ; Dragon green (Hue $C, Lum 6)
+BOTTOM_BAR_P0_X         = 48            ; Left edge of normal playfield text (column 0)
 
 ; --- Dragon Vertical Physics & Inertia (8.8 Fixed-Point) ---
 DRAGON_MAX_VEL          = $0180         ; Max vertical velocity (1.5 px/frame)
@@ -41,6 +42,14 @@ game_init
 @   sta P0_ADDR,x
     inx
     bne @-
+
+    ; Fill 8 lines of Player 0 with $FF for bottom status bar overlay (lines 217..224)
+    lda #$FF
+    ldx #7
+@fill_p0_bot
+    sta P0_ADDR + 217,x
+    dex
+    bpl @fill_p0_bot
 
     ; Clear Missiles buffer ($2300-$23FF)
 @   sta M_ADDR,x
@@ -77,6 +86,11 @@ game_init
     sta HPOSM2
     sta HPOSM3
     sta SIZEM
+    sta AUDCTL
+    sta AUDC1
+    sta AUDC2
+    sta AUDC3
+    sta AUDC4
     sta fire_state
     sta fire_frame
     sta fire_timer
@@ -160,8 +174,8 @@ game_init
     dex
     bpl @-
 
-    ; Clear status bar row 1 ($6228-$624F) with 0 (normal space)
-    lda #0
+    ; Clear status bar row 1 ($6228-$624F) with $80 (inverse space)
+    lda #$80
     ldx #39
 @   sta GAME_STATUS_VRAM+40,x
     dex
@@ -471,8 +485,9 @@ game_run
     ; Update status bar display if speed tier changed
     jsr update_status_speed_display
 
-    ; Update fire breathing animation
+    ; Update fire breathing animation & sound
     jsr update_fire
+    jsr update_fire_sound
 
     ; 5. Commit/render sprite to Player 0 buffer & missiles to M_ADDR
     jsr render_dragon
@@ -561,6 +576,14 @@ render_dragon
     iny
     cpy #26                         ; Exactly 26 bytes copied
     bne @-
+
+    ; Ensure bottom status bar overlay (lines 217..224) stays $FF
+    lda #$FF
+    ldx #7
+@keep_p0_bot
+    sta P0_ADDR + 217,x
+    dex
+    bpl @keep_p0_bot
     rts
 
 ; ==============================================================================
@@ -628,8 +651,9 @@ print_status_line
 
     ldy #1
 @   lda (PTR_SRC),y
+    ora #$80            ; Inverted video text (bit 7 = 1)
     dey
-    sta (PTR_DST),y     ; Normal video text (bit 7 = 0)
+    sta (PTR_DST),y     ; Store inverted character in VRAM
     iny
     iny
     dex
@@ -820,6 +844,45 @@ render_fire
     rts
 
 ; ==============================================================================
+; FIRE BREATHING SOUND SYSTEM (POKEY Channels 1 & 2)
+; Channel 1: Low-frequency roaring rumble (5-bit + 17-bit noise, distortion $0x)
+; Channel 2: Rushing flame burst / wind hiss (17-bit noise, distortion $8x)
+; Dynamic volume and frequency tracking fire_frame with micro-jitter turbulence
+; ==============================================================================
+update_fire_sound
+    lda fire_state
+    bne @snd_active
+
+    ; Silence both fire sound channels when fire is inactive
+    lda #0
+    sta AUDC1
+    sta AUDC2
+    rts
+
+@snd_active
+    ldx fire_frame                  ; Current animation frame (0..7)
+
+    ; --- Channel 1: Deep Roaring Rumble ---
+    lda RTCLOK+2
+    and #$03                        ; 0..3 micro-jitter for organic turbulence
+    clc
+    adc fire_snd_audf1,x
+    sta AUDF1
+    lda fire_snd_audc1,x            ; Volume (0..15) with distortion $00
+    sta AUDC1
+
+    ; --- Channel 2: Rushing Flame Hiss ---
+    lda RTCLOK+2
+    eor #$05
+    and #$03                        ; Independent micro-jitter
+    clc
+    adc fire_snd_audf2,x
+    sta AUDF2
+    lda fire_snd_audc2,x            ; Volume (0..15) with distortion $80
+    sta AUDC2
+    rts
+
+; ==============================================================================
 ; DLI ROUTINES FOR GAMEPLAY SCREEN
 ; DLI 1: Before top status bar -> Set 8-scanline color bar gradient for text/bar
 ; DLI 2: After top status bar -> Restore action playfield palette (colors 0..4)
@@ -856,26 +919,32 @@ dli_game_action
     pha                         ; [3] (3) Save accumulator
     sta WSYNC                   ; [4] (7) Wait for horizontal sync
 
-    ; Restore entire action playfield palette from memory cells
-    lda pal_action_dragon       ; [4] (11) Player 0: Dragon body
-    sta COLPM0                  ; [4] (15)
-    lda pal_action_breath       ; [4] (19) Missiles (5th player): Dragon breath / flame
-    sta COLPF3                  ; [4] (23)
-    lda pal_action_pf0          ; [4] (27) Playfield color 0
-    sta COLPF0                  ; [4] (31)
-    lda pal_action_pf1          ; [4] (35) Playfield color 1
-    sta COLPF1                  ; [4] (39)
-    lda pal_action_pf2          ; [4] (43) Playfield color 2
-    sta COLPF2                  ; [4] (47)
-    lda pal_action_bk           ; [4] (51) Background color & border
-    sta COLBK                   ; [4] (55)
+    ; Restore Player 0 hardware registers for dragon
+    lda dragon_x                ; [4] (11) Player 0 position
+    sta HPOSP0                  ; [4] (15)
+    lda #0                      ; [2] (17) Normal width (1x)
+    sta SIZEP0                  ; [4] (21)
 
-    lda #<dli_game_bottom       ; [2] (57) Chain to DLI 3 (bottom status)
-    sta VDSLST                  ; [4] (61)
-    lda #>dli_game_bottom       ; [2] (63)
-    sta VDSLST+1                ; [4] (67)
-    pla                         ; [4] (71) Restore accumulator
-    rti                         ; [6] (77) Return from interrupt
+    ; Restore entire action playfield palette from memory cells
+    lda pal_action_dragon       ; [4] (25) Player 0: Dragon body
+    sta COLPM0                  ; [4] (29)
+    lda pal_action_breath       ; [4] (33) Missiles (5th player): Dragon breath / flame
+    sta COLPF3                  ; [4] (37)
+    lda pal_action_pf0          ; [4] (41) Playfield color 0
+    sta COLPF0                  ; [4] (45)
+    lda pal_action_pf1          ; [4] (49) Playfield color 1
+    sta COLPF1                  ; [4] (53)
+    lda pal_action_pf2          ; [4] (57) Playfield color 2
+    sta COLPF2                  ; [4] (61)
+    lda pal_action_bk           ; [4] (65) Background color & border
+    sta COLBK                   ; [4] (69)
+
+    lda #<dli_game_bottom       ; [2] (71) Chain to DLI 3 (bottom status)
+    sta VDSLST                  ; [4] (75)
+    lda #>dli_game_bottom       ; [2] (77)
+    sta VDSLST+1                ; [4] (81)
+    pla                         ; [4] (85) Restore accumulator
+    rti                         ; [6] (91) Return from interrupt
 
 dli_game_bottom
     pha                         ; [3] (3) Save accumulator
@@ -889,10 +958,18 @@ dli_game_bottom
     lda #>dli_game_top          ; [2] (24)
     sta VDSLST+1                ; [4] (28)
 
-    ldx #0                      ; [2] (30) Initialize scanline index (0..7)
+    ; Reconfigure Player 0 for bottom status overlay (x4 width, left edge, color $00)
+    lda #BOTTOM_BAR_P0_X        ; [2] (30) Left edge of playfield (48 / $30)
+    sta HPOSP0                  ; [4] (34)
+    lda #3                      ; [2] (36) Quadruple width (x4)
+    sta SIZEP0                  ; [4] (40)
+    lda #0                      ; [2] (42) Color $00
+    sta COLPM0                  ; [4] (46)
+
+    ldx #0                      ; [2] (48) Initialize scanline index (0..7)
 @bot_bar_loop
-    lda pal_bottom_bar,x        ; [4] (34) Load color value for current scanline
-    sta WSYNC                   ; [4] (38) Wait for horizontal sync
+    lda pal_bottom_bar,x        ; [4] (52) Load color value for current scanline
+    sta WSYNC                   ; [4] (56) Wait for horizontal sync
     sta COLPF1                  ; [4] (4)  Set character luminance at start of scanline
     inx                         ; [2] (6)
     cpx #8                      ; [2] (8)
@@ -912,6 +989,14 @@ vblank_game
     sta VDSLST
     lda #>dli_game_top
     sta VDSLST+1
+
+    ; Restore Player 0 registers for dragon at start of frame
+    lda dragon_x
+    sta HPOSP0
+    lda #0
+    sta SIZEP0
+    lda pal_action_dragon
+    sta COLPM0
 
     ; Update time bar counter during VBLANK
     jsr update_time_bar
@@ -1180,6 +1265,12 @@ fire_prev_y         dta 0           ; Previous scanline Y rendered in M_ADDR
 ; Ease-in durations: Frame 0 longest (7 frames), Frame 6 shortest (1 frame)
 fire_duration_tbl
     dta 7, 5, 4, 3, 2, 2, 1, 2
+
+; --- Fire Breath Sound Tables (POKEY Channels 1 & 2 across 8 frames) ---
+fire_snd_audf1      dta $3C, $34, $2C, $24, $20, $1C, $1A, $18 ; Ch 1 Pitch (lower = deeper roar)
+fire_snd_audc1      dta $04, $06, $08, $0A, $0C, $0D, $0E, $0F ; Ch 1 Volume (distortion $00 = complex noise)
+fire_snd_audf2      dta $30, $28, $20, $1C, $18, $16, $14, $12 ; Ch 2 Pitch (white noise rate)
+fire_snd_audc2      dta $83, $85, $87, $89, $8B, $8C, $8D, $8E ; Ch 2 Volume (distortion $80 = white noise hiss)
 
 ; SIZEM: 2-bits per missile (M3..M0): $00, $01, $05, $07, $17, $1F, $5F, $7F
 fire_sizem_tbl

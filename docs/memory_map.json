@@ -16,15 +16,15 @@
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3802",
-    "size": 4099,
+    "end_address": "$38B1",
+    "size": 4274,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3803",
+    "start_address": "$38B2",
     "end_address": "$3E7F",
-    "size": 1661,
+    "size": 1486,
     "type": "free"
   },
   {
