@@ -4,6 +4,11 @@
 ; Sprite: Animated Jabberwocky dragon (Player 0) with 16-bit Phase Accumulator
 ; ==============================================================================
 
+; --- System & OS Registers ---
+.ifndef ATRACT
+ATRACT                  = $4D           ; OS Attract Mode timer ($4D)
+.endif
+
 ; --- Dragon Configuration Constants ---
 DRAGON_START_X          = 64            ; Left side of action playfield
 DRAGON_START_Y          = 107           ; Centered vertically in ANTIC 5 (32..207, H=26)
@@ -23,7 +28,7 @@ DRAGON_FRICTION         = $0014         ; Deceleration / coasting drag (inertia)
 ; At 50 fps, 30 frames for a hover cycle -> $0600 / 30 = 51.2 = $0033 per tick.
 BASE_HOVER_SPEED        = $0033         ; Base hover rate (~5 video frames per animation frame)
 MOMENTUM_DIVISOR        = 4             ; Division by 4 for scroll momentum (via 2x LSR)
-SCROLL_MAX_SPEED        = $0400         ; Max horizontal scroll velocity (4.0 px/frame)
+SCROLL_MAX_SPEED        = $0300         ; Max horizontal scroll velocity (3.0 px/frame)
 SCROLL_ACCEL            = $0010         ; Scroll acceleration rate when holding Right
 SCROLL_BRAKE            = $0024         ; Scroll braking rate when holding Left
 SCROLL_DRAG             = $0006         ; Momentum decay towards hover when neutral
@@ -37,24 +42,27 @@ game_init
     ; Reset PMG
     jsr disable_pmg
 
-    ; Clear Player 0 buffer ($2400-$24FF)
-    tax
+    ; Clear Player 0, 1, 2 buffers ($2400-$26FF) and Missiles ($2300-$23FF)
+    ldx #0
+    lda #0
 @   sta P0_ADDR,x
+    sta P1_ADDR,x
+    sta P2_ADDR,x
+    sta M_ADDR,x
     inx
     bne @-
 
-    ; Fill 8 lines of Player 0 with $FF for bottom status bar overlay (lines 217..224)
+    ; Fill 8 lines of Player 0, 1, 2 with $FF for bottom status bar overlay
+    ldx bot_bar_pmg_y
+    ldy #7
     lda #$FF
-    ldx #7
-@fill_p0_bot
-    sta P0_ADDR + 217,x
-    dex
-    bpl @fill_p0_bot
-
-    ; Clear Missiles buffer ($2300-$23FF)
-@   sta M_ADDR,x
+@fill_p_bot
+    sta P0_ADDR,x
+    sta P1_ADDR,x
+    sta P2_ADDR,x
     inx
-    bne @-
+    dey
+    bpl @fill_p_bot
 
     ; Set PMBASE (page $20 = $2000)
     lda #>PM_ADDR
@@ -110,8 +118,6 @@ game_init
     sta ANIM_PHASE+1
     sta SCROLL_SPEED
     sta SCROLL_SPEED+1
-    lda #$FF
-    sta last_status_tier
 
     ; Calculate initial ANIM_SPEED = BASE_HOVER_SPEED + (0 / 4)
     jsr update_anim_speed
@@ -207,8 +213,20 @@ game_init
 
     ; Compute stage frame counts based on stage1..3_min/sec and PAL/NTSC detection
     jsr calc_stage_frames
-    ; Print initial status bar speed (row 1)
-    jsr update_status_speed_display
+    ; Initialize game status values (LEVEL, LIVES, SCORE)
+    lda #1
+    sta LEVEL
+    lda #3
+    sta LIVES
+    lda #0
+    ldx #5
+@init_score
+    sta SCORE,x
+    dex
+    bpl @init_score
+
+    ; Draw initial bottom status bar (row 1)
+    jsr draw_bottom_status
 
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon
@@ -275,6 +293,10 @@ game_run
     jsr start_fire
 
 @not_fire
+    ; Reset OS Attract Mode timer to prevent color shifting during gameplay
+    lda #0
+    sta ATRACT
+
     ; 2. Read Joystick 0 (STICK0) — Vertical movement with acceleration & inertia
     ; Bit 0 = 0: UP pushed -> Accelerate UP (subtract ACCEL from velocity)
     lda STICK0
@@ -425,7 +447,7 @@ game_run
     adc #>SCROLL_ACCEL
     sta SCROLL_SPEED+1
 
-    ; Clamp to SCROLL_MAX_SPEED ($0400 = 4.0 px/frame)
+    ; Clamp to SCROLL_MAX_SPEED ($0300 = 3.0 px/frame)
     cmp #>SCROLL_MAX_SPEED
     bne @chk_scr_hi
     lda SCROLL_SPEED
@@ -482,8 +504,8 @@ game_run
     ; 4. Recalculate dynamic ANIM_SPEED = BASE_HOVER_SPEED + (SCROLL_SPEED / 4)
     jsr update_anim_speed
 
-    ; Update status bar display if speed tier changed
-    jsr update_status_speed_display
+    ; Update bottom status bar display
+    jsr update_bottom_status
 
     ; Update fire breathing animation & sound
     jsr update_fire
@@ -577,63 +599,79 @@ render_dragon
     cpy #26                         ; Exactly 26 bytes copied
     bne @-
 
-    ; Ensure bottom status bar overlay (lines 217..224) stays $FF
+    ; Ensure bottom status bar overlay stays $FF for Players 0, 1, 2
+    ldx bot_bar_pmg_y
+    ldy #7
     lda #$FF
-    ldx #7
-@keep_p0_bot
-    sta P0_ADDR + 217,x
-    dex
-    bpl @keep_p0_bot
+@keep_p_bot
+    sta P0_ADDR,x
+    sta P1_ADDR,x
+    sta P2_ADDR,x
+    inx
+    dey
+    bpl @keep_p_bot
     rts
 
 ; ==============================================================================
-; UPDATE STATUS BAR SPEED DISPLAY
-; Maps SCROLL_SPEED to 5 informative status tiers (0..4) and redraws row 1
+; BOTTOM STATUS BAR SYSTEM
+; Displays LEVEL, SCORE (6 digits), and LIVES on status bar row 1
+; Layout: " LEVEL: 1     SCORE: 000000    LIVES: 3 " (40 chars)
 ; ==============================================================================
-update_status_speed_display
-    ; Determine speed tier (0 = Hover, 1..3 = Cruise, 4 = Max)
-    lda SCROLL_SPEED+1
-    bne @chk_high_tiers
-    lda SCROLL_SPEED
-    beq @tier_0
-    cmp #$80
-    bcc @tier_1
-    jmp @tier_2
-
-@chk_high_tiers
-    cmp #$02
-    bcc @tier_2
-    beq @tier_3
-    jmp @tier_4
-
-@tier_0
-    ldx #0
-    jmp @draw_tier
-@tier_1
-    ldx #1
-    jmp @draw_tier
-@tier_2
-    ldx #2
-    jmp @draw_tier
-@tier_3
-    ldx #3
-    jmp @draw_tier
-@tier_4
-    ldx #4
-
-@draw_tier
-    cpx last_status_tier
-    beq @tier_done                  ; Already displaying this tier, skip redraw
-    stx last_status_tier
-
-    lda status_speed_tbl_lo,x
+draw_bottom_status
+    lda #<status_bottom_txt
     sta PTR_SRC
-    lda status_speed_tbl_hi,x
+    lda #>status_bottom_txt
     sta PTR_SRC+1
     ldx #1
     jsr print_status_line
+    ; Fall through to update_bottom_status
 
-@tier_done
+update_bottom_status
+    ; Update LEVEL digit (column 8)
+    lda LEVEL
+    cmp #10
+    bcc @lvl_single
+    ldx #0
+@div10
+    sec
+    sbc #10
+    inx
+    cmp #10
+    bcs @div10
+    tay
+    txa
+    clc
+    adc #$90
+    sta GAME_STATUS_VRAM + 48
+    tya
+    clc
+    adc #$90
+    sta GAME_STATUS_VRAM + 49
+    jmp @lvl_done
+@lvl_single
+    clc
+    adc #$90
+    sta GAME_STATUS_VRAM + 48
+    lda #$80                    ; Blank space after single digit
+    sta GAME_STATUS_VRAM + 49
+@lvl_done
+
+    ; Update SCORE 6 digits (columns 21..26)
+    ldx #0
+@score_loop
+    lda SCORE,x
+    clc
+    adc #$90
+    sta GAME_STATUS_VRAM + 61,x
+    inx
+    cpx #6
+    bne @score_loop
+
+    ; Update LIVES digit (column 38)
+    lda LIVES
+    clc
+    adc #$90
+    sta GAME_STATUS_VRAM + 78
     rts
 
 ; Print text string to status bar row (X = 0 or 1)
@@ -919,11 +957,15 @@ dli_game_action
     pha                         ; [3] (3) Save accumulator
     sta WSYNC                   ; [4] (7) Wait for horizontal sync
 
-    ; Restore Player 0 hardware registers for dragon
+    ; Restore Player 0 hardware registers for dragon & disable P1/P2 in action area
     lda dragon_x                ; [4] (11) Player 0 position
     sta HPOSP0                  ; [4] (15)
-    lda #0                      ; [2] (17) Normal width (1x)
+    lda #0                      ; [2] (17) Normal width (1x) & offscreen for unused sprites
     sta SIZEP0                  ; [4] (21)
+    sta SIZEP1                  ; [4] (25)
+    sta SIZEP2                  ; [4] (29)
+    sta HPOSP1                  ; [4] (33) Inactive in action area
+    sta HPOSP2                  ; [4] (37) Inactive in action area
 
     ; Restore entire action playfield palette from memory cells
     lda pal_action_dragon       ; [4] (25) Player 0: Dragon body
@@ -958,13 +1000,25 @@ dli_game_bottom
     lda #>dli_game_top          ; [2] (24)
     sta VDSLST+1                ; [4] (28)
 
-    ; Reconfigure Player 0 for bottom status overlay (x4 width, left edge, color $00)
-    lda #BOTTOM_BAR_P0_X        ; [2] (30) Left edge of playfield (48 / $30)
+    ; Reconfigure Players 0, 1, 2 for bottom status overlay (x4 width)
+    lda bot_bar_p0_x            ; [4] (30) Left edge of playfield (48 / $30)
     sta HPOSP0                  ; [4] (34)
-    lda #3                      ; [2] (36) Quadruple width (x4)
-    sta SIZEP0                  ; [4] (40)
-    lda #0                      ; [2] (42) Color $00
-    sta COLPM0                  ; [4] (46)
+    lda bot_bar_p1_x            ; [4] (38) Centered for "SCORE:"
+    sta HPOSP1                  ; [4] (42)
+    lda bot_bar_p2_x            ; [4] (46) Right side for "LIVES:"
+    sta HPOSP2                  ; [4] (50)
+
+    lda #3                      ; [2] (52) Quadruple width (x4)
+    sta SIZEP0                  ; [4] (56)
+    sta SIZEP1                  ; [4] (60)
+    sta SIZEP2                  ; [4] (64)
+
+    lda pal_bottom_p0           ; [4] (68) Color P0 (black)
+    sta COLPM0                  ; [4] (72)
+    lda pal_bottom_p1           ; [4] (76) Color P1 (green)
+    sta COLPM1                  ; [4] (80)
+    lda pal_bottom_p2           ; [4] (84) Color P2 (yellow)
+    sta COLPM2                  ; [4] (88)
 
     ldx #0                      ; [2] (48) Initialize scanline index (0..7)
 @bot_bar_loop
@@ -990,13 +1044,22 @@ vblank_game
     lda #>dli_game_top
     sta VDSLST+1
 
-    ; Restore Player 0 registers for dragon at start of frame
+    ; Restore Player registers at start of frame
     lda dragon_x
     sta HPOSP0
     lda #0
     sta SIZEP0
+    sta SIZEP1
+    sta SIZEP2
+    sta HPOSP1
+    sta HPOSP2
+    sta ATRACT                  ; Reset OS Attract Mode timer (prevent color shift)
     lda pal_action_dragon
     sta COLPM0
+    lda pal_action_p1
+    sta COLPM1
+    lda pal_action_p2
+    sta COLPM2
 
     ; Update time bar counter during VBLANK
     jsr update_time_bar
@@ -1214,6 +1277,15 @@ pal_bottom_bar      dta $06, $08, $0a, $0c, $0c, $0a, $08, $06 ; COLPF1: Dolny p
 pal_bottom_text     dta $0A         ; COLPF1: Domyślny kolor tekstu (legacy)
 pal_bottom_bk       dta $30         ; COLPF2: Tło dolnej linii - fioletowy
 
+; --- Bottom Status Bar Sprite Overlay Configuration ---
+bot_bar_p0_x        dta BOTTOM_BAR_P0_X ; Pozycja X Sprite 0 (48: lewa krawędź)
+bot_bar_p1_x        dta 100             ; Pozycja X Sprite 1 (100: wycentrowany, "SCORE:")
+bot_bar_p2_x        dta 168             ; Pozycja X Sprite 2 (168: prawa strona, "LIVES:")
+bot_bar_pmg_y       dta 218             ; Pozycja pionowa Y paska PMG (indeks linii 0..255 w buforze)
+pal_bottom_p0       dta $A0             ; Kolor Sprite 0 (cyan)
+pal_bottom_p1       dta $90             ; Kolor Sprite 1 (blue-cyan)
+pal_bottom_p2       dta $10             ; Kolor Sprite 2 (żółty)
+
 ; --- Time Bar & Game Over State ---
 COUNTER_FULL        dta 40          ; Remaining characters on the bar (40..0)
 COUNTER_EIGHT       dta 83          ; Current animation character code at end of bar (strictly 83..90)
@@ -1221,6 +1293,11 @@ GAME_OVER_REASON    dta 0           ; Reason game ended
 current_stage       dta 0           ; Current game stage (0..2)
 time_acc_lo         dta 0           ; 16-bit Bresenham time accumulator low
 time_acc_hi         dta 0           ; 16-bit Bresenham time accumulator high
+
+; --- Game Status & Score Variables ---
+LEVEL               dta 1           ; Current level (1 byte, 1..255)
+LIVES               dta 3           ; Remaining lives (1 byte, 0..255)
+SCORE               dta 0, 0, 0, 0, 0, 0 ; Score: 6 decimal digits (each 0..9)
 
 ; --- Stage Duration Configuration (editable during development) ---
 ; 2 dedicated memory cells per stage (minutes, seconds)
@@ -1368,25 +1445,7 @@ fire_pattern_data
 ANIM_PHASE          dta a(0)        ; 16-bit Phase Accumulator: low=fraction, high=frame (0..5)
 ANIM_SPEED          dta a(BASE_HOVER_SPEED) ; 16-bit Animation rate: BASE_HOVER_SPEED + (SCROLL_SPEED / 4)
 SCROLL_SPEED        dta a(0)        ; 16-bit Horizontal scroll speed (8.8 fixed-point)
-last_status_tier    dta $FF         ; Cached tier (0..4) to avoid redrawing status every frame
-
-; --- Status Bar Speed Text Pointers (SoA) ---
-status_speed_tbl_lo
-    dta <speed_txt_0, <speed_txt_1, <speed_txt_2, <speed_txt_3, <speed_txt_4
-status_speed_tbl_hi
-    dta >speed_txt_0, >speed_txt_1, >speed_txt_2, >speed_txt_3, >speed_txt_4
 
 ; --- Status Bar Text Data (ANTIC display codes) ---
-status_txt_row0
-    dta 40, d' JABBERWOCKY - GAMEPLAY ARENA (ANTIC 5) '
-
-speed_txt_0
-    dta 40, d' SPEED: HOVER (BASE)    >> START: EXIT <<'
-speed_txt_1
-    dta 40, d' SPEED: CRUISE 1        >> START: EXIT <<'
-speed_txt_2
-    dta 40, d' SPEED: CRUISE 2        >> START: EXIT <<'
-speed_txt_3
-    dta 40, d' SPEED: CRUISE 3        >> START: EXIT <<'
-speed_txt_4
-    dta 40, d' SPEED: FULL FLAP (MAX) >> START: EXIT <<'
+status_bottom_txt
+    dta 40, d' LEVEL: 1     SCORE: 000000    LIVES: 3 '

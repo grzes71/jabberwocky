@@ -235,6 +235,7 @@ dlist_game
 
     ; 1 blank line with DLI before bottom status bar
     dta DL_BLANK1 | DL_DLI      ; DLI 3: triggers before bottom status line (sets text color $34)
+    dta DL_BLANK1 ; 1 empty line
 
     ; Bottom status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
     dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM + 40)
