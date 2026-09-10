@@ -821,24 +821,36 @@ render_fire
 
 ; ==============================================================================
 ; DLI ROUTINES FOR GAMEPLAY SCREEN
-; DLI 1: Before top status bar -> Set text color to $FA (yellow-orange)
+; DLI 1: Before top status bar -> Set 8-scanline color bar gradient for text/bar
 ; DLI 2: After top status bar -> Restore action playfield palette (colors 0..4)
-; DLI 3: Before bottom status bar -> Set text color to $34 (red-orange)
+; DLI 3: Before bottom status bar -> Set 8-scanline color bar gradient for bottom status
 ; ==============================================================================
 
 dli_game_top
     pha                         ; [3] (3) Save accumulator
-    sta WSYNC                   ; [4] (7) Wait for horizontal sync
-    lda pal_top_text            ; [4] (11) Top status text: white text
-    sta COLPF1                  ; [4] (15) In Mode 2 (normal text): COLPF1 = character luminance
-    lda pal_top_bk              ; [4] (19) Top status background: blue
-    sta COLPF2                  ; [4] (23) In Mode 2 (normal text): COLPF2 = background
-    lda #<dli_game_action       ; [2] (25) Chain to DLI 2 (restore action palette)
-    sta VDSLST                  ; [4] (29)
-    lda #>dli_game_action       ; [2] (31)
-    sta VDSLST+1                ; [4] (35)
-    pla                         ; [4] (39) Restore accumulator
-    rti                         ; [6] (45) Return from interrupt
+    txa                         ; [2] (5)
+    pha                         ; [3] (8) Save X register
+
+    lda pal_top_bk              ; [4] (12) Top status background: blue
+    sta COLPF2                  ; [4] (16) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_action       ; [2] (18) Chain to DLI 2 (restore action palette)
+    sta VDSLST                  ; [4] (22)
+    lda #>dli_game_action       ; [2] (24)
+    sta VDSLST+1                ; [4] (28)
+
+    ldx #0                      ; [2] (30) Initialize scanline index (0..7)
+@top_bar_loop
+    lda pal_top_bar,x           ; [4] (34) Load color value for current scanline
+    sta WSYNC                   ; [4] (38) Wait for horizontal sync
+    sta COLPF1                  ; [4] (4)  Set character luminance at start of scanline
+    inx                         ; [2] (6)
+    cpx #8                      ; [2] (8)
+    bne @top_bar_loop           ; [3/2] (11/10) Loop across 8 scanlines of Mode 2
+
+    pla                         ; [4] (14)
+    tax                         ; [2] (16) Restore X register
+    pla                         ; [4] (20) Restore accumulator
+    rti                         ; [6] (26) Return from interrupt
 
 dli_game_action
     pha                         ; [3] (3) Save accumulator
@@ -867,17 +879,29 @@ dli_game_action
 
 dli_game_bottom
     pha                         ; [3] (3) Save accumulator
-    sta WSYNC                   ; [4] (7) Wait for horizontal sync
-    lda pal_bottom_text         ; [4] (11) Bottom status text: Orange
-    sta COLPF1                  ; [4] (15) In Mode 2 (normal text): COLPF1 = character luminance
-    lda pal_bottom_bk           ; [4] (19) Bottom status background: black
-    sta COLPF2                  ; [4] (23) In Mode 2 (normal text): COLPF2 = background
-    lda #<dli_game_top          ; [2] (25) Reset DLI vector to top handler for next frame
-    sta VDSLST                  ; [4] (29)
-    lda #>dli_game_top          ; [2] (31)
-    sta VDSLST+1                ; [4] (35)
-    pla                         ; [4] (39) Restore accumulator
-    rti                         ; [6] (45) Return from interrupt
+    txa                         ; [2] (5)
+    pha                         ; [3] (8) Save X register
+
+    lda pal_bottom_bk           ; [4] (12) Bottom status background: black/purple
+    sta COLPF2                  ; [4] (16) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_top          ; [2] (18) Reset DLI vector to top handler for next frame
+    sta VDSLST                  ; [4] (22)
+    lda #>dli_game_top          ; [2] (24)
+    sta VDSLST+1                ; [4] (28)
+
+    ldx #0                      ; [2] (30) Initialize scanline index (0..7)
+@bot_bar_loop
+    lda pal_bottom_bar,x        ; [4] (34) Load color value for current scanline
+    sta WSYNC                   ; [4] (38) Wait for horizontal sync
+    sta COLPF1                  ; [4] (4)  Set character luminance at start of scanline
+    inx                         ; [2] (6)
+    cpx #8                      ; [2] (8)
+    bne @bot_bar_loop           ; [3/2] (11/10) Loop across 8 scanlines of Mode 2
+
+    pla                         ; [4] (14)
+    tax                         ; [2] (16) Restore X register
+    pla                         ; [4] (20) Restore accumulator
+    rti                         ; [6] (26) Return from interrupt
 
 ; ==============================================================================
 ; VBLANK ROUTINE — Runs during deferred vertical blank (Type 7)
@@ -1096,11 +1120,13 @@ pal_action_p2       dta $28         ; COLPM2: Gracz 2 - złoty
 pal_action_p3       dta $1A         ; COLPM3: Gracz 3 - jasnożółty
 
 ; --- Top Status Bar Palette (dli_game_top, normal text) ---
-pal_top_text        dta $0A         ; COLPF1: Tekst i pasek czasu - jasny biały
+pal_top_bar         dta $02, $04, $06, $08, $08, $06, $04, $02 ; COLPF1: Pasek czasu (color bar gradient 8 scanlines)
+pal_top_text        dta $0A         ; COLPF1: Domyślny kolor tekstu (legacy)
 pal_top_bk          dta $70         ; COLPF2: Tło górnej linii - niebieski
 
 ; --- Bottom Status Bar Palette (dli_game_bottom, normal text) ---
-pal_bottom_text     dta $0A        ; COLPF1: Tekst dolnej linii - biały
+pal_bottom_bar      dta $06, $08, $0a, $0c, $0c, $0a, $08, $06 ; COLPF1: Dolny pasek (color bar gradient 8 scanlines)
+pal_bottom_text     dta $0A         ; COLPF1: Domyślny kolor tekstu (legacy)
 pal_bottom_bk       dta $30         ; COLPF2: Tło dolnej linii - fioletowy
 
 ; --- Time Bar & Game Over State ---
