@@ -27,17 +27,17 @@ $02E0 - $02E1          2   RUNAD                vector
 Start - End     Size (B)   Segment / Name       Type
 --------------------------------------------------------------------------------
 [ FREE SPACE: $0800 - $27FF (8192 bytes) ]
-$2800 - $3E5C       5725   CODE                 code
-[ FREE SPACE: $3E5D - $3E7F (35 bytes) ]
-$3E80 - $3F99        282   DLIST                display_list
-[ FREE SPACE: $3F9A - $3FFF (102 bytes) ]
+$2800 - $3F38       5945   CODE                 code
+[ FREE SPACE: $3F39 - $3FFF (199 bytes) ]
 $4000 - $5B67       7016   VRAM                 data
-[ FREE SPACE: $5B68 - $6FFF (5272 bytes) ]
-$7000 - $80BB       4284   FONT                 data
-[ FREE SPACE: $80BC - $BFFF (16196 bytes) ]
+[ FREE SPACE: $5B68 - $67FF (3224 bytes) ]
+$6800 - $6919        282   DLIST                display_list
+[ FREE SPACE: $691A - $6FFF (1766 bytes) ]
+$7000 - $80C0       4289   FONT                 data
+[ FREE SPACE: $80C1 - $BFFF (16191 bytes) ]
 ================================================================================
-Total RAM Used:   17307 bytes
-Total Free RAM:   29797 bytes (63.3% free headroom)
+Total RAM Used:   17532 bytes
+Total Free RAM:   29572 bytes (62.8% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

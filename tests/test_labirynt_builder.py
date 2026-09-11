@@ -63,6 +63,11 @@ def test_labirynt_builder_cli(tmp_path):
     assert "screens_vram_lo" in content
     assert "screens_vram_hi" in content
     assert "labyrinths_screens_lo" in content
+    assert "world_color_bk      dta 0" in content
+    assert "world_color_pf0     dta 20" in content
+    assert "world_color_pf1     dta 24" in content
+    assert "world_color_pf2     dta 194" in content
+    assert "world_color_pf3     dta 130" in content
 
 
 def test_missing_files_error_handling(tmp_path):
@@ -76,3 +81,45 @@ def test_missing_files_error_handling(tmp_path):
     res = subprocess.run(cmd, capture_output=True, text=True)
     assert res.returncode == 1
     assert "Error: Project file not found" in res.stderr
+
+
+def test_custom_colors_cli(tmp_path):
+    """Weryfikuje poprawne kompilowanie niestandardowych kolorów z colors.yaml."""
+    colors_file = tmp_path / "custom_colors.yaml"
+    colors_file.write_text("""BACKGROUND:
+  atari: 14
+  rgb: [0, 0, 0]
+PF0:
+  atari: 45
+  rgb: [100, 100, 100]
+PF1:
+  atari: 78
+  rgb: [200, 200, 200]
+PF2:
+  atari: 155
+  rgb: [50, 150, 50]
+PF3_INV:
+  atari: 210
+  rgb: [10, 20, 200]
+""", encoding="utf-8")
+
+    out_asm = tmp_path / "world_with_colors.asm"
+    cmd = [
+        sys.executable,
+        "scripts/labirynt_builder.py",
+        "--project", "world/project.yaml",
+        "--objects", "world/objects.yaml",
+        "--colors", str(colors_file),
+        "--output", str(out_asm)
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    assert res.returncode == 0
+    assert out_asm.exists()
+
+    content = out_asm.read_text(encoding="utf-8")
+    assert "world_color_bk      dta 14" in content
+    assert "world_color_pf0     dta 45" in content
+    assert "world_color_pf1     dta 78" in content
+    assert "world_color_pf2     dta 155" in content
+    assert "world_color_pf3     dta 210" in content
+

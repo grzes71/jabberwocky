@@ -41,7 +41,7 @@ DRAGON_ASM     := $(GEN_DIR)/dragon_sprite.asm
 SPRITE_SCRIPT  := scripts/compile_sprites.py
 
 # ---- Cele ----
-.PHONY: all xex check_memory clean run test help
+.PHONY: all xex data check_memory clean run test help
 
 all: $(XEX_OUT) check_memory
 
@@ -71,13 +71,16 @@ $(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
 
 PROJECT_YAML    := world/project.yaml
 OBJECTS_YAML    := world/objects.yaml
+COLORS_YAML     := world/colors.yaml
 WORLD_SCRIPT    := scripts/labirynt_builder.py
 WORLD_GEN_ASM   := $(GEN_DIR)/world_data.asm
 FONT_GAME       := fonts/game.fnt
 
-$(WORLD_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(WORLD_SCRIPT)
+data: $(WORLD_GEN_ASM)
+
+$(WORLD_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(COLORS_YAML) $(WORLD_SCRIPT)
 	@echo === Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ===
-	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --output $(WORLD_GEN_ASM)
+	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --colors $(COLORS_YAML) --output $(WORLD_GEN_ASM)
 
 $(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===

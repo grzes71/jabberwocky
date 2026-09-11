@@ -68,8 +68,8 @@ def test_parse_real_jabberwocky_lab_and_lst(tmp_path: Path) -> None:
     assert "PTR_DST" in txt_content
     assert "ZP_TMP" in txt_content
     assert "FREE ZERO PAGE: $85 - $FF" in txt_content
-    assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$3E7F", txt_content)
     assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$3FFF", txt_content)
+    assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$6[0-9A-F]{3}", txt_content)
     assert re.search(r"FREE SPACE: \$[0-9A-F]{4} - \$BFFF", txt_content)
     assert "VALIDATION PASSED" in txt_content
 

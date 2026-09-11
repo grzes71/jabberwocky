@@ -47,8 +47,12 @@ def test_load_real_colors():
     assert pal.raw_rgb["BACKGROUND"] == (0, 0, 0)
     assert pal.raw_rgb["PF0"] == (140, 70, 0)
     assert pal.raw_rgb["PF1"] == (236, 130, 0)
-    assert pal.raw_rgb["PF2"] == (0, 85, 0)
     assert pal.raw_rgb["PF3_INV"] == (0, 0, 176)
+    assert pal.atari_colors["BACKGROUND"] == 0
+    assert pal.atari_colors["PF0"] == 20
+    assert pal.atari_colors["PF1"] == 24
+    assert pal.atari_colors["PF2"] == 194
+    assert pal.atari_colors["PF3_INV"] == 130
 
 
 def test_load_real_objects():

@@ -36,6 +36,7 @@ class AtariPalette:
                 return False
 
             new_raw: Dict[str, Tuple[int, int, int]] = {}
+            new_atari: Dict[str, int] = {}
             for reg in REGISTER_ORDER:
                 if reg in data and "rgb" in data[reg]:
                     rgb_list = data[reg]["rgb"]
@@ -46,7 +47,16 @@ class AtariPalette:
                 else:
                     new_raw[reg] = DEFAULT_RGB_PALETTE[reg]
 
+                if reg in data and "atari" in data[reg]:
+                    try:
+                        new_atari[reg] = int(data[reg]["atari"]) & 0xFF
+                    except (ValueError, TypeError):
+                        new_atari[reg] = 0
+                else:
+                    new_atari[reg] = 0
+
             self.raw_rgb = new_raw
+            self.atari_colors = new_atari
             self.colors = [QColor(*self.raw_rgb[reg]) for reg in REGISTER_ORDER]
             self.is_loaded = True
             return True

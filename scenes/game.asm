@@ -16,6 +16,7 @@ DRAGON_MIN_Y            = 40            ; Top boundary (first scanline of ANTIC 
 DRAGON_MAX_Y            = 190           ; Bottom boundary (above bottom status)
 DRAGON_COLOR            = $C6           ; Dragon green (Hue $C, Lum 6)
 BOTTOM_BAR_P0_X         = 48            ; Left edge of normal playfield text (column 0)
+BOTTOM_BAR_M_X          = 120           ; Left edge of score last 2 digits (column 18)
 DRAGON_DEATH_TARGET_X   = 48            ; Left edge of visible screen reached on death
 DRAGON_DEATH_DURATION   = 100           ; ~2 seconds death sequence (100 frames @ 50Hz)
 DEATH_STATE_INACTIVE    = 0             ; Normal gameplay / dragon active
@@ -51,17 +52,18 @@ game_init
     ; Reset PMG
     jsr disable_pmg
 
-    ; Clear Player 0, 1, 2 buffers ($2400-$26FF) and Missiles ($2300-$23FF)
+    ; Clear Player 0, 1, 2, 3 buffers ($2400-$27FF) and Missiles ($2300-$23FF)
     ldx #0
     lda #0
 @   sta P0_ADDR,x
     sta P1_ADDR,x
     sta P2_ADDR,x
+    sta P3_ADDR,x
     sta M_ADDR,x
     inx
     bne @-
 
-    ; Fill 8 lines of Player 0, 1, 2 with $FF for bottom status bar overlay
+    ; Fill 8 lines of Player 0, 1, 2, 3 and Missiles with $FF for bottom status bar overlay
     ldx bot_bar_pmg_y
     ldy #7
     lda #$FF
@@ -69,6 +71,8 @@ game_init
     sta P0_ADDR,x
     sta P1_ADDR,x
     sta P2_ADDR,x
+    sta P3_ADDR,x
+    sta M_ADDR,x
     inx
     dey
     bpl @fill_p_bot
@@ -149,20 +153,25 @@ game_init
     sta SDLSTH
     sta DLISTH
 
-    ; Initialize hardware and shadow color registers from palette memory cells
-    lda pal_action_pf0
+    ; Initialize action screen colors from compiled world/colors.yaml
+    lda world_color_pf0
+    sta pal_action_pf0
     sta COLOR0
     sta COLPF0
-    lda pal_action_pf1
+    lda world_color_pf1
+    sta pal_action_pf1
     sta COLOR1
     sta COLPF1
-    lda pal_action_pf2
+    lda world_color_pf2
+    sta pal_action_pf2
     sta COLOR2
     sta COLPF2
-    lda pal_action_breath
+    lda world_color_pf3
+    sta pal_action_breath
     sta COLOR3
     sta COLPF3
-    lda pal_action_bk
+    lda world_color_bk
+    sta pal_action_bk
     sta COLOR4
     sta COLBK
 
@@ -217,9 +226,10 @@ game_init
 
     ; Compute initial dragon energy frames (~30 seconds) based on PAL/NTSC
     jsr calc_energy_frames
-    ; Initialize game status values (LEVEL, LIVES, SCORE)
+    ; Initialize game status values (LEVEL, LIVES, SCORE, SHOTS)
     lda #1
     sta LEVEL
+    sta SHOTS                   ; Initial dragon fire shots = 1
     lda #3
     sta LIVES
     lda #LIVES_BLINK_PERIOD
@@ -227,7 +237,7 @@ game_init
     lda #0
     sta lives_blink_state
     lda #0
-    ldx #5
+    ldx #3                      ; Score is now 4 digits (0..3)
 @init_score
     sta SCORE,x
     dex
@@ -313,6 +323,10 @@ game_run
     sta fire_pressed
     lda fire_state
     bne @not_fire           ; If already firing, ignore subsequent press
+    lda SHOTS
+    beq @not_fire           ; If no shots remaining, cannot fire!
+    dec SHOTS
+    jsr update_bottom_status ; Update shots display immediately
     jsr start_fire
 
 @not_fire
@@ -673,7 +687,7 @@ render_dragon
     bne @-
 
 @keep_p_bot_overlay
-    ; Ensure bottom status bar overlay stays $FF for Players 0, 1, 2
+    ; Ensure bottom status bar overlay stays $FF for Players 0, 1, 2, 3 and Missiles
     ldx bot_bar_pmg_y
     ldy #7
     lda #$FF
@@ -681,6 +695,8 @@ render_dragon
     sta P0_ADDR,x
     sta P1_ADDR,x
     sta P2_ADDR,x
+    sta P3_ADDR,x
+    sta M_ADDR,x
     inx
     dey
     bpl @keep_p_bot
@@ -688,8 +704,8 @@ render_dragon
 
 ; ==============================================================================
 ; BOTTOM STATUS BAR SYSTEM
-; Displays LEVEL, SCORE (6 digits), and LIVES on status bar row 1
-; Layout: " LEVEL: 1     SCORE: 000000    LIVES: 3 " (40 chars)
+; Displays LEVEL, SCORE (4 digits), LIVES, and SHOTS on status bar row 1
+; Layout: "LEVEL:01  SCORE:0000  LIVES:03  SHOTS:01" (40 chars)
 ; ==============================================================================
 draw_bottom_status
     lda #<status_bottom_txt
@@ -701,47 +717,30 @@ draw_bottom_status
     ; Fall through to update_bottom_status
 
 update_bottom_status
-    ; Update LEVEL digit (column 8)
+    ; Update LEVEL 2 digits (columns 6..7 -> GAME_STATUS_VRAM + 46..47)
     lda LEVEL
-    cmp #10
-    bcc @lvl_single
-    ldx #0
-@div10
-    sec
-    sbc #10
-    inx
-    cmp #10
-    bcs @div10
-    tay
-    txa
-    clc
-    adc #$90
-    sta GAME_STATUS_VRAM + 48
-    tya
-    clc
-    adc #$90
-    sta GAME_STATUS_VRAM + 49
-    jmp @lvl_done
-@lvl_single
-    clc
-    adc #$90
-    sta GAME_STATUS_VRAM + 48
-    lda #$80                    ; Blank space after single digit
-    sta GAME_STATUS_VRAM + 49
-@lvl_done
+    jsr format_2digits
+    stx GAME_STATUS_VRAM + 46   ; Tens
+    sta GAME_STATUS_VRAM + 47   ; Units
 
-    ; Update SCORE 6 digits (columns 21..26)
+    ; Update SCORE 4 digits (columns 16..19 -> GAME_STATUS_VRAM + 56..59)
     ldx #0
 @score_loop
     lda SCORE,x
     clc
     adc #$90
-    sta GAME_STATUS_VRAM + 61,x
+    sta GAME_STATUS_VRAM + 56,x
     inx
-    cpx #6
+    cpx #4
     bne @score_loop
 
-    ; Update LIVES digit (column 38)
+    ; Update LIVES 2 digits (columns 28..29 -> GAME_STATUS_VRAM + 68..69)
+    lda LIVES
+    jsr format_2digits
+    stx GAME_STATUS_VRAM + 68   ; Tens
+    sta GAME_STATUS_VRAM + 69   ; Units
+
+    ; Check if LIVES == 1 for blinking
     lda LIVES
     cmp #1
     bne @lives_steady
@@ -761,14 +760,14 @@ update_bottom_status
 
     ; State 0: visible '1' ($91)
     lda #$91
-    sta GAME_STATUS_VRAM + 78
-    rts
+    sta GAME_STATUS_VRAM + 69
+    jmp @update_shots
 
 @lives_blank
     ; State 1: hidden / inverse blank space ($80)
     lda #$80
-    sta GAME_STATUS_VRAM + 78
-    rts
+    sta GAME_STATUS_VRAM + 69
+    jmp @update_shots
 
 @lives_steady
     ; LIVES != 1: always steady, reset blink state & timer
@@ -776,10 +775,35 @@ update_bottom_status
     sta lives_blink_timer
     lda #0
     sta lives_blink_state
-    lda LIVES
+
+@update_shots
+    ; Update SHOTS 2 digits (columns 38..39 -> GAME_STATUS_VRAM + 78..79)
+    lda SHOTS
+    jsr format_2digits
+    stx GAME_STATUS_VRAM + 78   ; Tens
+    sta GAME_STATUS_VRAM + 79   ; Units
+    rts
+
+; Helper subroutine: converts A (0..99) to inverted ANTIC display codes
+; Returns: X = tens digit ($90..$99), A = units digit ($90..$99)
+format_2digits
+    ldx #0
+@div10_loop
+    cmp #10
+    bcc @div10_done
+    sec
+    sbc #10
+    inx
+    bne @div10_loop
+@div10_done
+    tay                 ; Y = units (0..9)
+    txa                 ; A = tens (0..9)
     clc
     adc #$90
-    sta GAME_STATUS_VRAM + 78
+    tax                 ; X = inverted tens character code
+    tya                 ; A = units (0..9)
+    clc
+    adc #$90            ; A = inverted units character code
     rts
 
 ; Print text string to status bar row (X = 0 or 1)
@@ -906,6 +930,11 @@ render_fire
     bne @render_active
     ; Inactive: clear HPOSM0..3 and SIZEM
     lda #0
+    sta cur_hposm0
+    sta cur_hposm1
+    sta cur_hposm2
+    sta cur_hposm3
+    sta cur_sizem
     sta HPOSM0
     sta HPOSM1
     sta HPOSM2
@@ -957,6 +986,7 @@ render_fire
     ; Set SIZEM from table
     ldx fire_frame
     lda fire_sizem_tbl,x
+    sta cur_sizem
     sta SIZEM
 
     ; Compute and set HPOSM0..3 = dragon_x + offset (or 0 if inactive)
@@ -965,6 +995,7 @@ render_fire
     clc
     adc dragon_x
 @m0_off
+    sta cur_hposm0
     sta HPOSM0
 
     lda fire_off_m1,x
@@ -972,6 +1003,7 @@ render_fire
     clc
     adc dragon_x
 @m1_off
+    sta cur_hposm1
     sta HPOSM1
 
     lda fire_off_m2,x
@@ -979,6 +1011,7 @@ render_fire
     clc
     adc dragon_x
 @m2_off
+    sta cur_hposm2
     sta HPOSM2
 
     lda fire_off_m3,x
@@ -986,6 +1019,7 @@ render_fire
     clc
     adc dragon_x
 @m3_off
+    sta cur_hposm3
     sta HPOSM3
     rts
 
@@ -1076,15 +1110,29 @@ dli_game_action
     lda hscrol_fine             ; Fine horizontal scroll for action playfield
     sta HSCROL
 
-    ; Restore Player 0 hardware registers for dragon & disable P1/P2 in action area
+    ; Restore Player 0 hardware registers for dragon & disable P1/P2/P3 in action area
     lda dragon_x                ; [4] (17) Player 0 position
     sta HPOSP0                  ; [4] (21)
     lda #0                      ; [2] (23) Normal width (1x) & offscreen for unused sprites
     sta SIZEP0                  ; [4] (27)
     sta SIZEP1                  ; [4] (31)
     sta SIZEP2                  ; [4] (35)
+    sta SIZEP3
     sta HPOSP1                  ; [4] (39) Inactive in action area
     sta HPOSP2                  ; [4] (43) Inactive in action area
+    sta HPOSP3
+
+    ; Restore missiles from active fire state
+    lda cur_sizem
+    sta SIZEM
+    lda cur_hposm0
+    sta HPOSM0
+    lda cur_hposm1
+    sta HPOSM1
+    lda cur_hposm2
+    sta HPOSM2
+    lda cur_hposm3
+    sta HPOSM3
 
     ; Restore entire action playfield palette from memory cells
     lda pal_action_dragon       ; [4] (47) Player 0: Dragon body
@@ -1124,25 +1172,42 @@ dli_game_bottom
     lda #>dli_game_top          ; [2] (30)
     sta VDSLST+1                ; [4] (34)
 
-    ; Reconfigure Players 0, 1, 2 for bottom status overlay (x4 width)
-    lda bot_bar_p0_x            ; [4] (30) Left edge of playfield (48 / $30)
+    ; Reconfigure Players 0, 1, 2, 3 for bottom status overlay (x4 width)
+    lda bot_bar_p0_x            ; [4] (30) "LEVEL:01"
     sta HPOSP0                  ; [4] (34)
-    lda bot_bar_p1_x            ; [4] (38) Centered for "SCORE:"
+    lda bot_bar_p1_x            ; [4] (38) "SCORE:"
     sta HPOSP1                  ; [4] (42)
-    lda bot_bar_p2_x            ; [4] (46) Right side for "LIVES:"
+    lda bot_bar_p2_x            ; [4] (46) "LIVES:03"
     sta HPOSP2                  ; [4] (50)
+    lda bot_bar_p3_x            ; [4] (54) "SHOTS:01"
+    sta HPOSP3                  ; [4] (58)
 
-    lda #3                      ; [2] (52) Quadruple width (x4)
-    sta SIZEP0                  ; [4] (56)
-    sta SIZEP1                  ; [4] (60)
-    sta SIZEP2                  ; [4] (64)
+    lda #3                      ; [2] (60) Quadruple width (x4)
+    sta SIZEP0                  ; [4] (64)
+    sta SIZEP1                  ; [4] (68)
+    sta SIZEP2                  ; [4] (72)
+    sta SIZEP3                  ; [4] (76)
 
-    lda pal_bottom_p0           ; [4] (68) Color P0 (black)
-    sta COLPM0                  ; [4] (72)
-    lda pal_bottom_p1           ; [4] (76) Color P1 (green)
-    sta COLPM1                  ; [4] (80)
-    lda pal_bottom_p2           ; [4] (84) Color P2 (yellow)
-    sta COLPM2                  ; [4] (88)
+    lda pal_bottom_p0           ; [4] (80) Color P0 (cyan)
+    sta COLPM0                  ; [4] (84)
+    lda pal_bottom_p1           ; [4] (88) Color P1 (blue-cyan)
+    sta COLPM1                  ; [4] (92)
+    lda pal_bottom_p2           ; [4] (96) Color P2 (yellow)
+    sta COLPM2                  ; [4] (100)
+    lda pal_bottom_p3           ; [4] (104) Color P3 (orange/red)
+    sta COLPM3                  ; [4] (108)
+
+    ; Configure Missile 1 to cover last 2 digits of SCORE (cols 18..19, X=120)
+    lda bot_bar_m_x             ; [4] X = 120
+    sta HPOSM1                  ; [4]
+    lda #0                      ; [2]
+    sta HPOSM0                  ; [4]
+    sta HPOSM2                  ; [4]
+    sta HPOSM3                  ; [4]
+    lda #$0C                    ; [2] M1 quadruple width (%00001100)
+    sta SIZEM                   ; [4]
+    lda pal_bottom_m            ; [4] Color M1 (blue-cyan, matching SCORE)
+    sta COLPF3                  ; [4]
 
     ldx #0                      ; [2] (48) Initialize scanline index (0..7)
 @bot_bar_loop
@@ -1175,8 +1240,20 @@ vblank_game
     sta SIZEP0
     sta SIZEP1
     sta SIZEP2
+    sta SIZEP3
     sta HPOSP1
     sta HPOSP2
+    sta HPOSP3
+    lda cur_sizem
+    sta SIZEM
+    lda cur_hposm0
+    sta HPOSM0
+    lda cur_hposm1
+    sta HPOSM1
+    lda cur_hposm2
+    sta HPOSM2
+    lda cur_hposm3
+    sta HPOSM3
     sta ATRACT                  ; Reset OS Attract Mode timer (prevent color shift)
     lda pal_action_dragon
     sta COLPM0
@@ -1184,6 +1261,8 @@ vblank_game
     sta COLPM1
     lda pal_action_p2
     sta COLPM2
+    lda pal_action_p3
+    sta COLPM3
 
     ; Update dragon energy bar counter during VBLANK
     jsr update_energy_bar
@@ -1496,6 +1575,11 @@ respawn_dragon
     sta HPOSM2
     sta HPOSM3
     sta SIZEM
+    sta cur_hposm0
+    sta cur_hposm1
+    sta cur_hposm2
+    sta cur_hposm3
+    sta cur_sizem
 
     ; Reset horizontal scroll speed and momentum to base cruising speed
     lda #<SCROLL_BASE_SPEED
@@ -2017,13 +2101,7 @@ advance_to_next_level
 
 @have_another_level
     inc LEVEL
-    ; Update bottom status bar row 1 text directly:
-    ; " LEVEL: X" where 'X' is at offset 8 (0-indexed from GAME_STATUS_VRAM + 40)
-    lda LEVEL
-    clc
-    adc #$10                    ; ANTIC ASCII digit ('1' -> $11)
-    sta GAME_STATUS_VRAM + 48   ; Column 8 of row 1
-
+    jsr update_bottom_status
     jsr init_level_screens
     rts
 
@@ -2049,11 +2127,11 @@ current_screen_idx  dta 0
 
 ; --- Action Screen Palette (set in dli_game_action & game_init) ---
 pal_action_dragon   dta $C6         ; COLPM0: Smok (Player 0) - domyślnie zielony (Hue $C, Lum 6)
-pal_action_breath   dta $28         ; COLPF3: Zianie ogniem / pociski (5th player) - złoto-pomarańczowy
-pal_action_bk       dta $00         ; COLBK:  Tło ekranu akcji i ramka - czarny
-pal_action_pf0      dta $26         ; COLPF0: Pole gry 0 (pnie drzew/ziemia) - brązowy
-pal_action_pf1      dta $18         ; COLPF1: Pole gry 1 (jasne elementy/ścieżki) - złoto-żółty
-pal_action_pf2      dta $C4         ; COLPF2: Pole gry 2 (liście/korony drzew/woda) - soczysta zieleń
+pal_action_breath   dta 130         ; COLPF3: Zianie ogniem / pociski / PF3_INV (colors.yaml: 130)
+pal_action_bk       dta 0           ; COLBK:  Tło ekranu akcji i ramka (colors.yaml: 0)
+pal_action_pf0      dta 20          ; COLPF0: Pole gry 0 (colors.yaml: 20)
+pal_action_pf1      dta 24          ; COLPF1: Pole gry 1 (colors.yaml: 24)
+pal_action_pf2      dta 194         ; COLPF2: Pole gry 2 (colors.yaml: 194)
 pal_action_p1       dta $36         ; COLPM1: Gracz 1 (np. pociski wroga) - czerwony
 pal_action_p2       dta $28         ; COLPM2: Gracz 2 - złoty
 pal_action_p3       dta $1A         ; COLPM3: Gracz 3 - jasnożółty
@@ -2069,13 +2147,24 @@ pal_bottom_text     dta $0A         ; COLPF1: Domyślny kolor tekstu (legacy)
 pal_bottom_bk       dta $30         ; COLPF2: Tło dolnej linii - fioletowy
 
 ; --- Bottom Status Bar Sprite Overlay Configuration ---
-bot_bar_p0_x        dta BOTTOM_BAR_P0_X ; Pozycja X Sprite 0 (48: lewa krawędź)
-bot_bar_p1_x        dta 100             ; Pozycja X Sprite 1 (100: wycentrowany, "SCORE:")
-bot_bar_p2_x        dta 168             ; Pozycja X Sprite 2 (168: prawa strona, "LIVES:")
+bot_bar_p0_x        dta BOTTOM_BAR_P0_X ; Pozycja X Sprite 0 (48: "LEVEL:01")
+bot_bar_p1_x        dta 88              ; Pozycja X Sprite 1 (88: "SCORE:")
+bot_bar_m_x         dta BOTTOM_BAR_M_X  ; Pozycja X Missile 1 (120: dwa ostatnie zera SCORE "00")
+bot_bar_p2_x        dta 136             ; Pozycja X Sprite 2 (136: "LIVES:03")
+bot_bar_p3_x        dta 176             ; Pozycja X Sprite 3 (176: "SHOTS:01")
 bot_bar_pmg_y       dta 220           ; Pozycja pionowa Y paska PMG (indeks linii 0..255 w buforze)
 pal_bottom_p0       dta $A0             ; Kolor Sprite 0 (cyan)
 pal_bottom_p1       dta $90             ; Kolor Sprite 1 (blue-cyan)
+pal_bottom_m        dta $90             ; Kolor Missile 1 (blue-cyan - dopasowany do SCORE)
 pal_bottom_p2       dta $10             ; Kolor Sprite 2 (żółty)
+pal_bottom_p3       dta $20             ; Kolor Sprite 3 (ognisty pomarańczowy / fire orange)
+
+; --- Active Fire Missiles Shadow Registers ---
+cur_hposm0          dta 0
+cur_hposm1          dta 0
+cur_hposm2          dta 0
+cur_hposm3          dta 0
+cur_sizem           dta 0
 
 ; --- Dragon Energy & Game Over State ---
 COUNTER_FULL        dta 40          ; Remaining characters on the energy bar (40..0)
@@ -2099,7 +2188,8 @@ stage_frames_hi     = energy_frames_hi ; Compatibility alias
 ; --- Game Status & Score Variables ---
 LEVEL               dta 1           ; Current level (1 byte, 1..255)
 LIVES               dta 3           ; Remaining lives (1 byte, 0..255)
-SCORE               dta 0, 0, 0, 0, 0, 0 ; Score: 6 decimal digits (each 0..9)
+SCORE               dta 0, 0, 0, 0  ; Score: 4 decimal digits (each 0..9)
+SHOTS               dta 1           ; Dragon fire shots (1 byte, 0..255, initial: 1)
 
 ; --- Bottom Status Bar Blinking State ---
 LIVES_BLINK_PERIOD  = 25            ; 25 frames = 0.5s @ 50Hz (half second)
@@ -2266,4 +2356,4 @@ SCROLL_SPEED        dta a(0)        ; 16-bit Horizontal scroll speed (8.8 fixed-
 
 ; --- Status Bar Text Data (ANTIC display codes) ---
 status_bottom_txt
-    dta 40, d' LEVEL: 1     SCORE: 000000    LIVES: 3 '
+    dta 40, d'LEVEL:01  SCORE:0000  LIVES:03  SHOTS:01'

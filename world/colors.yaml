@@ -9,22 +9,22 @@ PF0:
   - 140
   - 70
   - 0
-  atari: 0
+  atari: 20
 PF1:
   rgb:
   - 236
   - 130
   - 0
-  atari: 0
+  atari: 24
 PF2:
   rgb:
   - 0
   - 85
   - 0
-  atari: 0
+  atari: 194
 PF3_INV:
   rgb:
   - 0
   - 0
   - 176
-  atari: 0
+  atari: 130

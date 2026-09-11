@@ -8,7 +8,7 @@
 
 ; ---- Memory Map Equates ----
 CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
-DLIST_ADDR      = $3E80
+DLIST_ADDR      = $6800
 VRAM_ADDR       = $4000
 STUB_VRAM       = $5C00             ; 960-byte text buffer ($5C00-$5FBF)
 GAME_ACTION_VRAM = $6000            ; 528-byte action playfield ($6000-$620F, 11 lines Antic 5 with HSCROL)
@@ -22,6 +22,7 @@ M_ADDR          = PM_ADDR + $0300   ; Missiles buffer ($2300-$23FF, 256 bytes)
 P0_ADDR         = PM_ADDR + $0400   ; Player 0 buffer
 P1_ADDR         = PM_ADDR + $0500   ; Player 1 buffer
 P2_ADDR         = PM_ADDR + $0600   ; Player 2 buffer
+P3_ADDR         = PM_ADDR + $0700   ; Player 3 buffer
 
 SPRITE_X        = 83                ; Horizontal position of Player 0
 SPRITE_W        = 32                ; Width in color clocks (8 pixels * 4)
@@ -162,7 +163,14 @@ scene_run_tbl
     icl 'gen/dragon_sprite.asm'
 
 ; ==============================================================================
-; DISPLAY LIST SEGMENTS (within $3E80 - $3FFF, never crossing 1KB boundary)
+; SCREEN MEMORY (VRAM)
+; Title image: 7,016 bytes ($4000-$5B67)
+; ==============================================================================
+    org VRAM_ADDR
+    ins 'gen/title.bin'
+
+; ==============================================================================
+; DISPLAY LIST SEGMENTS (within $6800 - $6BFF, never crossing 1KB boundary)
 ; ==============================================================================
     org DLIST_ADDR
 
@@ -244,13 +252,6 @@ dlist_game
     dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM + 40)
 
     dta DL_JVB, a(dlist_game)
-
-; ==============================================================================
-; SCREEN MEMORY (VRAM)
-; Title image: 7,016 bytes ($4000-$5B67)
-; ==============================================================================
-    org VRAM_ADDR
-    ins 'gen/title.bin'
 
 ; ==============================================================================
 ; DEFAULT FONT DATA

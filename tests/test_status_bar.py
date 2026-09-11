@@ -68,16 +68,17 @@ def labels(project_root: Path) -> Dict[str, int]:
 
 
 def test_status_symbols_exist(labels: Dict[str, int]):
-    """Verify that LEVEL, LIVES, and SCORE memory cells are defined."""
+    """Verify that LEVEL, LIVES, SCORE, and SHOTS memory cells are defined."""
     assert "LEVEL" in labels, "LEVEL symbol not found in label table"
     assert "LIVES" in labels, "LIVES symbol not found in label table"
     assert "SCORE" in labels, "SCORE symbol not found in label table"
+    assert "SHOTS" in labels, "SHOTS symbol not found in label table"
     assert "DRAW_BOTTOM_STATUS" in labels
     assert "UPDATE_BOTTOM_STATUS" in labels
 
 
 def test_initial_values_in_xex(project_root: Path, labels: Dict[str, int]):
-    """Verify initial memory values: LEVEL=1, LIVES=3, SCORE=6 zeroes."""
+    """Verify initial memory values: LEVEL=1, LIVES=3, SCORE=4 zeroes, SHOTS=1."""
     xex_path = project_root / "jabberwocky.xex"
     memory = bytearray(65536)
     load_xex(xex_path, memory)
@@ -85,11 +86,20 @@ def test_initial_values_in_xex(project_root: Path, labels: Dict[str, int]):
     level_addr = labels["LEVEL"]
     lives_addr = labels["LIVES"]
     score_addr = labels["SCORE"]
+    shots_addr = labels["SHOTS"]
 
     assert memory[level_addr] == 1, f"LEVEL initial value should be 1, got {memory[level_addr]}"
     assert memory[lives_addr] == 3, f"LIVES initial value should be 3, got {memory[lives_addr]}"
-    score_bytes = [memory[score_addr + i] for i in range(6)]
-    assert score_bytes == [0, 0, 0, 0, 0, 0], f"SCORE initial value should be 6 zeroes, got {score_bytes}"
+    score_bytes = [memory[score_addr + i] for i in range(4)]
+    assert score_bytes == [0, 0, 0, 0], f"SCORE initial value should be 4 zeroes, got {score_bytes}"
+    assert memory[shots_addr] == 1, f"SHOTS initial value should be 1, got {memory[shots_addr]}"
+
+    # Action screen playfield palette from world/colors.yaml
+    assert memory[labels["WORLD_COLOR_BK"]] == 0
+    assert memory[labels["WORLD_COLOR_PF0"]] == 20
+    assert memory[labels["WORLD_COLOR_PF1"]] == 24
+    assert memory[labels["WORLD_COLOR_PF2"]] == 194
+    assert memory[labels["WORLD_COLOR_PF3"]] == 130
 
 
 def test_draw_bottom_status_emulation(project_root: Path, labels: Dict[str, int]):
@@ -120,12 +130,12 @@ def test_draw_bottom_status_emulation(project_root: Path, labels: Dict[str, int]
     row1_bytes = [mpu.memory[vram_status_row1 + i] for i in range(40)]
     decoded_str = "".join(antic_inv_to_ascii(b) for b in row1_bytes)
 
-    expected = " LEVEL: 1     SCORE: 000000    LIVES: 3 "
+    expected = "LEVEL:01  SCORE:0000  LIVES:03  SHOTS:01"
     assert decoded_str == expected, f"VRAM row 1 mismatch:\nExpected: '{expected}'\nGot:      '{decoded_str}'"
 
 
 def test_update_bottom_status_dynamic(project_root: Path, labels: Dict[str, int]):
-    """Verify update_bottom_status dynamically reflects changes in LEVEL, SCORE, LIVES."""
+    """Verify update_bottom_status dynamically reflects changes in LEVEL, SCORE, LIVES, SHOTS."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
@@ -144,11 +154,13 @@ def test_update_bottom_status_dynamic(project_root: Path, labels: Dict[str, int]
     level_addr = labels["LEVEL"]
     lives_addr = labels["LIVES"]
     score_addr = labels["SCORE"]
+    shots_addr = labels["SHOTS"]
 
     mpu.memory[level_addr] = 5
     mpu.memory[lives_addr] = 2
-    for i, digit in enumerate([1, 2, 3, 4, 5, 6]):
+    for i, digit in enumerate([1, 2, 3, 4]):
         mpu.memory[score_addr + i] = digit
+    mpu.memory[shots_addr] = 8
 
     # Call update_bottom_status
     mpu.sp = 0xFD
@@ -160,7 +172,7 @@ def test_update_bottom_status_dynamic(project_root: Path, labels: Dict[str, int]
     row1_bytes = [mpu.memory[vram_status_row1 + i] for i in range(40)]
     decoded_str = "".join(antic_inv_to_ascii(b) for b in row1_bytes)
 
-    expected = " LEVEL: 5     SCORE: 123456    LIVES: 2 "
+    expected = "LEVEL:05  SCORE:1234  LIVES:02  SHOTS:08"
     assert decoded_str == expected, f"VRAM row 1 dynamic update mismatch:\nExpected: '{expected}'\nGot:      '{decoded_str}'"
 
 
@@ -169,23 +181,31 @@ def test_bottom_bar_sprites_config(project_root: Path, labels: Dict[str, int]):
     assert "BOT_BAR_P0_X" in labels
     assert "BOT_BAR_P1_X" in labels
     assert "BOT_BAR_P2_X" in labels
+    assert "BOT_BAR_P3_X" in labels
+    assert "BOT_BAR_M_X" in labels
     assert "BOT_BAR_PMG_Y" in labels
     assert "PAL_BOTTOM_P0" in labels
     assert "PAL_BOTTOM_P1" in labels
     assert "PAL_BOTTOM_P2" in labels
+    assert "PAL_BOTTOM_P3" in labels
+    assert "PAL_BOTTOM_M" in labels
 
     xex_path = project_root / "jabberwocky.xex"
     memory = bytearray(65536)
     load_xex(xex_path, memory)
 
     assert memory[labels["BOT_BAR_P0_X"]] == 48
-    assert memory[labels["BOT_BAR_P1_X"]] == 100
-    assert memory[labels["BOT_BAR_P2_X"]] == 168
+    assert memory[labels["BOT_BAR_P1_X"]] == 88
+    assert memory[labels["BOT_BAR_M_X"]] == 120
+    assert memory[labels["BOT_BAR_P2_X"]] == 136
+    assert memory[labels["BOT_BAR_P3_X"]] == 176
     assert memory[labels["BOT_BAR_PMG_Y"]] == 220
 
     assert memory[labels["PAL_BOTTOM_P0"]] == 0xA0  # Cyan
     assert memory[labels["PAL_BOTTOM_P1"]] == 0x90  # Blue-cyan
+    assert memory[labels["PAL_BOTTOM_M"]] == 0x90   # Blue-cyan (matches SCORE)
     assert memory[labels["PAL_BOTTOM_P2"]] == 0x10  # Yellow
+    assert memory[labels["PAL_BOTTOM_P3"]] == 0x20  # Fire orange
 
 
 def test_dragon_energy_symbols_exist(labels: Dict[str, int]):
@@ -393,7 +413,7 @@ def test_lives_one_blinking_on_bottom_status(project_root: Path, labels: Dict[st
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    vram_lives_digit = labels["GAME_STATUS_VRAM"] + 78
+    vram_lives_digit = labels["GAME_STATUS_VRAM"] + 69
 
     # Initial template draw
     mpu.sp = 0xFD
@@ -438,6 +458,50 @@ def test_lives_one_blinking_on_bottom_status(project_root: Path, labels: Dict[st
     mpu.memory[labels["LIVES"]] = 2
     step_update_status()
     assert mpu.memory[vram_lives_digit] == 0x92, "LIVES == 2 should display steady digit without blinking"
+
+
+def test_shots_display_and_mechanic(project_root: Path, labels: Dict[str, int]):
+    """Verify SHOTS values are formatted correctly as 2 digits in bottom status bar."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    vram_shots_tens = labels["GAME_STATUS_VRAM"] + 78
+    vram_shots_units = labels["GAME_STATUS_VRAM"] + 79
+
+    # Initial draw: SHOTS = 1 -> "01"
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.memory[0x0100] = 0x00
+    mpu.pc = labels["DRAW_BOTTOM_STATUS"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+
+    assert mpu.memory[vram_shots_tens] == 0x90  # '0' inverted
+    assert mpu.memory[vram_shots_units] == 0x91  # '1' inverted
+
+    # Update SHOTS to 0 -> "00"
+    mpu.memory[labels["SHOTS"]] = 0
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.pc = labels["UPDATE_BOTTOM_STATUS"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+
+    assert mpu.memory[vram_shots_tens] == 0x90  # '0' inverted
+    assert mpu.memory[vram_shots_units] == 0x90  # '0' inverted
+
+    # Update SHOTS to 15 -> "15"
+    mpu.memory[labels["SHOTS"]] = 15
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.pc = labels["UPDATE_BOTTOM_STATUS"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+
+    assert mpu.memory[vram_shots_tens] == 0x91  # '1' inverted
+    assert mpu.memory[vram_shots_units] == 0x95  # '5' inverted
+
 
 
 

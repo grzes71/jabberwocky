@@ -16,29 +16,15 @@
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3E5C",
-    "size": 5725,
+    "end_address": "$3F38",
+    "size": 5945,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3E5D",
-    "end_address": "$3E7F",
-    "size": 35,
-    "type": "free"
-  },
-  {
-    "name": "DLIST",
-    "start_address": "$3E80",
-    "end_address": "$3F99",
-    "size": 282,
-    "type": "display_list"
-  },
-  {
-    "name": "FREE_SPACE",
-    "start_address": "$3F9A",
+    "start_address": "$3F39",
     "end_address": "$3FFF",
-    "size": 102,
+    "size": 199,
     "type": "free"
   },
   {
@@ -51,22 +37,36 @@
   {
     "name": "FREE_SPACE",
     "start_address": "$5B68",
+    "end_address": "$67FF",
+    "size": 3224,
+    "type": "free"
+  },
+  {
+    "name": "DLIST",
+    "start_address": "$6800",
+    "end_address": "$6919",
+    "size": 282,
+    "type": "display_list"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$691A",
     "end_address": "$6FFF",
-    "size": 5272,
+    "size": 1766,
     "type": "free"
   },
   {
     "name": "FONT",
     "start_address": "$7000",
-    "end_address": "$80BB",
-    "size": 4284,
+    "end_address": "$80C0",
+    "size": 4289,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$80BC",
+    "start_address": "$80C1",
     "end_address": "$BFFF",
-    "size": 16196,
+    "size": 16191,
     "type": "free"
   }
 ]
