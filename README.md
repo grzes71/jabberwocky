@@ -166,7 +166,7 @@ Możesz je dostosować w pliku `Makefile` lub przekazać jako zmienne środowisk
 | :--- | :--- |
 | `make` / `make all` | Buduje zasoby, kompiluje świat gry, asembluje `jabberwocky.xex`, odpala testy i weryfikuje mapę pamięci |
 | `make assets` | Konwertuje grafiki, teksty i sprajty |
-| `make data` | Kompiluje `world/project.yaml` i `world/objects.yaml` do `gen/world_data.asm` |
+| `make data` | Kompiluje `world/project.yaml`, `world/objects.yaml` oraz `world/colors.yaml` do `gen/world_data.asm` |
 | `make xex` | Buduje sam plik binarny `jabberwocky.xex` |
 | `make check_memory` | Generuje raport pamięci `docs/memory_map.txt` oraz `docs/memory_map.json` |
 | `make test` | Uruchamia pełny zestaw testów `pytest` (w tym emulację py65) |
@@ -215,7 +215,8 @@ python -m sprite_studio.main
 
 ### Labirynt Builder (Kompilator świata)
 Skrypt `scripts/labirynt_builder.py` automatycznie wywoływany przez `make data`:
-- Parsuje `world/project.yaml` oraz `world/objects.yaml`.
+- Parsuje `world/project.yaml`, `world/objects.yaml` oraz `world/colors.yaml`.
+- Eksportuje definicje palety ekranu akcji (`world_color_bk`, `world_color_pf0`..`pf3`) z dziesiętnych wartości Atari podanych w `colors.yaml`.
 - Wypieka 440-bajtowe bufory znakowe VRAM każdego ekranu.
 - Generuje tablice SoA (Structure-of-Arrays) z kodami obiektów, spakowanymi współrzędnymi 2×2 oraz katalogiem labiryntów do `gen/world_data.asm`.
 
@@ -243,16 +244,16 @@ Projekt zachowuje pełną izolację pamięci OS oraz precyzyjną alokację bufor
 | `$85` – `$FF` | 123 B | **Wolna strona zerowa** |
 | `$0800` – `$1FFF` | ~6 KB | **Wolna pamięć RAM** |
 | `$2000` – `$27FF` | 2 KB | Bufor grafiki graczy i pocisków (PMG, wyrównany do 2 KB) |
-| `$2800` – `$3E23` | ~5.5 KB | Segment kodu i logiki gry (`main.asm`, sceny, silnik fizyki) |
-| `$3E80` – `$3F98` | 281 B | Segment Display List (niewykraczający poza granicę 1 KB) |
+| `$2800` – `$3F38` | ~5.8 KB | Segment kodu i logiki gry (`main.asm`, sceny, silnik fizyki) |
 | `$4000` – `$5B67` | ~7 KB | Bufor grafiki tytułowej VRAM (ANTIC F, 320×175) |
 | `$5C00` – `$5FBF` | 960 B | Bufor tekstu dla trybów znakowych ANTIC 2 (Intro, Game Over) |
 | `$6000` – `$620F` | 528 B | Bufor pola akcji w grze (11 linii ANTIC 5 z HSCROL, 48 B/wiersz) |
 | `$6300` – `$634F` | 80 B | Bufor paska statusu w grze (2 linie ANTIC 2) |
+| `$6800` – `$6919` | 282 B | Segment Display List (wyrównany z zapasem do granicy 1 KB) |
 | `$7000` – `$73FF` | 1024 B | Bufor czcionki tekstowej (`text.fnt`, wyrównany do 1 KB) |
 | `$7400` – `$77FF` | 1024 B | Bufor zestawu znaków kafli gry (`game.fnt`, wyrównany do 1 KB) |
-| `$7800` – `$80BB` | ~2.2 KB | Dane świata gry (`gen/world_data.asm`: ekrany, labirynty, obiekty) |
-| `$80BC` – `$BFFF` | ~16.2 KB | **Wolna pamięć RAM** (dostępna na kolejne etapy gry) |
+| `$7800` – `$80C0` | ~2.2 KB | Dane świata gry (`gen/world_data.asm`: ekrany, labirynty, obiekty, kolory) |
+| `$80C1` – `$BFFF` | ~16.2 KB | **Wolna pamięć RAM** (dostępna na kolejne etapy gry) |
 | `$C000` – `$DFFF` | — | **Naruszenie zabronione** (OS ROM / Rejestry sprzętowe) |
 
 Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w pliku [docs/memory_map.txt](docs/memory_map.txt).
@@ -261,14 +262,14 @@ Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w p
 
 ## Testy
 
-Projekt posiada 49 zautomatyzowanych testów weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
+Projekt posiada 52 zautomatyzowane testy weryfikujące poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
 - Testy kompilatora sprajtów, tekstów oraz labiryntów (`labirynt_builder`).
-- Testy spójności modeli danych i walidatorów `world/`.
+- Testy spójności modeli danych, kolorów i walidatorów `world/`.
 - Testy emulacyjne 6502 (py65) weryfikujące:
   - Sprzętowe płynne przewijanie ekranu (`HSCROL` $D404, cykl `3 -> 2 -> 1 -> 0 -> 3`).
   - Przesuwanie bufora VRAM i wstrzykiwanie kolumn ze strumienia świata.
-  - Wyliczanie czasu energii smoka, ubytek energii i procedurę śmierci.
-  - Rysowanie i dynamiczne odświeżanie dolnego paska stanu (LEVEL, SCORE, LIVES).
+  - Wyliczanie czasu energii smoka, ubytek energii i procedurę śmierci (restart od początku poziomu).
+  - Rysowanie i dynamiczne odświeżanie dolnego paska stanu (`LEVEL:01  SCORE:0000  LIVES:03  SHOTS:01`) z kolorowaniem za pomocą sprajtów i missila PMG (x4 width).
   - Przejście do stanu zakończenia gry z powodem VICTORY (`REASON_SUCCESS`).
 - Testy negatywne wykrywające próby kolizji i przekroczenia granic pamięci.
 
