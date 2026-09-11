@@ -35,9 +35,12 @@ DRAGON_FRICTION         = $0014         ; Deceleration / coasting drag (inertia)
 BASE_HOVER_SPEED        = $0033         ; Base hover rate (~5 video frames per animation frame)
 MOMENTUM_DIVISOR        = 4             ; Division by 4 for scroll momentum (via 2x LSR)
 SCROLL_MAX_SPEED        = $0300         ; Max horizontal scroll velocity (3.0 px/frame)
+SCROLL_BASE_SPEED       = $00C0         ; Base forward cruising speed (~0.75 px/frame)
+SCROLL_MIN_SPEED        = $0030         ; Minimum crawl speed when braking
 SCROLL_ACCEL            = $0010         ; Scroll acceleration rate when holding Right
 SCROLL_BRAKE            = $0024         ; Scroll braking rate when holding Left
 SCROLL_DRAG             = $0006         ; Momentum decay towards hover when neutral
+SCROLL_COL_THRESHOLD    = $0400         ; 4 color clocks (8 pixels) = 1 Mode 5 column
 
 game_init
     ; Blank DMA during reconfiguration
@@ -122,8 +125,13 @@ game_init
     ; Initialize 16-bit Animation & Scroll variables
     sta ANIM_PHASE
     sta ANIM_PHASE+1
+    lda #<SCROLL_BASE_SPEED
     sta SCROLL_SPEED
+    lda #>SCROLL_BASE_SPEED
     sta SCROLL_SPEED+1
+    lda #3
+    sta hscrol_fine
+    sta HSCROL
 
     ; Calculate initial ANIM_SPEED = BASE_HOVER_SPEED + (0 / 4)
     jsr update_anim_speed
@@ -169,9 +177,10 @@ game_init
     sta PCOLR3
     sta COLPM3
 
-    ; Load initial world screen (screen 0 = FOREST_01)
-    ldx #0
-    jsr load_world_screen
+    ; Initialize world level & screens streaming (starts with level 0)
+    lda #0
+    sta current_level_idx
+    jsr init_level_screens
 
     ; Clear status bar row 0 ($6200-$6227) with 0 (normal space)
     lda #0
@@ -464,11 +473,12 @@ game_run
     lda SCROLL_SPEED
     cmp #<SCROLL_MAX_SPEED
 @chk_scr_hi
-    bcc @scroll_updated
+    bcc @scroll_right_ok
     lda #<SCROLL_MAX_SPEED
     sta SCROLL_SPEED
     lda #>SCROLL_MAX_SPEED
     sta SCROLL_SPEED+1
+@scroll_right_ok
     jmp @scroll_updated
 
 @check_scroll_left
@@ -485,20 +495,55 @@ game_run
     lda SCROLL_SPEED+1
     sbc #>SCROLL_BRAKE
     sta SCROLL_SPEED+1
-    bpl @scroll_updated
-    lda #0
+
+    ; Clamp to minimum speed SCROLL_MIN_SPEED
+    lda SCROLL_SPEED+1
+    bmi @clamp_min_speed
+    bne @scroll_updated
+    lda SCROLL_SPEED
+    cmp #<SCROLL_MIN_SPEED
+    bcs @scroll_updated
+@clamp_min_speed
+    lda #<SCROLL_MIN_SPEED
     sta SCROLL_SPEED
+    lda #>SCROLL_MIN_SPEED
     sta SCROLL_SPEED+1
     jmp @scroll_updated
 
 @scroll_neutral
-    ; Neither Left nor Right held -> Coasting / momentum decay towards 0
+    ; Neither Left nor Right held -> Coasting / momentum decay towards SCROLL_BASE_SPEED
     lda SCROLL_SPEED+1
-    bne @apply_scroll_drag
+    cmp #>SCROLL_BASE_SPEED
+    bne @cmp_neutral_hi
     lda SCROLL_SPEED
-    beq @scroll_updated             ; Already 0 (stationary base hover)
+    cmp #<SCROLL_BASE_SPEED
+@cmp_neutral_hi
+    beq @scroll_updated             ; Exactly at base speed
+    bcs @drag_down                  ; Faster than base speed -> decelerate
 
-@apply_scroll_drag
+    ; Slower than base speed -> gently accelerate towards base speed
+    lda SCROLL_SPEED
+    clc
+    adc #<SCROLL_DRAG
+    sta SCROLL_SPEED
+    lda SCROLL_SPEED+1
+    adc #>SCROLL_DRAG
+    sta SCROLL_SPEED+1
+    ; Don't overshoot
+    lda SCROLL_SPEED+1
+    cmp #>SCROLL_BASE_SPEED
+    bne @chk_neutral_acc_hi
+    lda SCROLL_SPEED
+    cmp #<SCROLL_BASE_SPEED
+@chk_neutral_acc_hi
+    bcc @scroll_updated
+    lda #<SCROLL_BASE_SPEED
+    sta SCROLL_SPEED
+    lda #>SCROLL_BASE_SPEED
+    sta SCROLL_SPEED+1
+    jmp @scroll_updated
+
+@drag_down
     lda SCROLL_SPEED
     sec
     sbc #<SCROLL_DRAG
@@ -506,14 +551,25 @@ game_run
     lda SCROLL_SPEED+1
     sbc #>SCROLL_DRAG
     sta SCROLL_SPEED+1
-    bpl @scroll_updated
-    lda #0
+    ; Don't undershoot
+    lda SCROLL_SPEED+1
+    cmp #>SCROLL_BASE_SPEED
+    bne @chk_neutral_drag_hi
+    lda SCROLL_SPEED
+    cmp #<SCROLL_BASE_SPEED
+@chk_neutral_drag_hi
+    bcs @scroll_updated
+    lda #<SCROLL_BASE_SPEED
     sta SCROLL_SPEED
+    lda #>SCROLL_BASE_SPEED
     sta SCROLL_SPEED+1
 
 @scroll_updated
     ; 4. Recalculate dynamic ANIM_SPEED = BASE_HOVER_SPEED + (SCROLL_SPEED / 4)
     jsr update_anim_speed
+
+    ; Update world playfield scrolling & level streaming
+    jsr update_world_scrolling
 
     ; Update fire breathing animation & sound
     jsr update_fire
@@ -984,6 +1040,9 @@ dli_game_top
     txa                         ; [2] (5)
     pha                         ; [3] (8) Save X register
 
+    lda #0                      ; Reset HSCROL for top status bar
+    sta HSCROL
+
     lda #>FONT_ADDR             ; [2] (10) Text font for status bar
     sta CHBASE                  ; [4] (14)
     lda pal_top_bk              ; [4] (18) Top status background: blue
@@ -1013,6 +1072,9 @@ dli_game_action
 
     lda #>GAME_FONT_ADDR        ; [2] (9) Action playfield character set
     sta CHBASE                  ; [4] (13)
+
+    lda hscrol_fine             ; Fine horizontal scroll for action playfield
+    sta HSCROL
 
     ; Restore Player 0 hardware registers for dragon & disable P1/P2 in action area
     lda dragon_x                ; [4] (17) Player 0 position
@@ -1049,6 +1111,9 @@ dli_game_bottom
     pha                         ; [3] (3) Save accumulator
     txa                         ; [2] (5)
     pha                         ; [3] (8) Save X register
+
+    lda #0                      ; Reset HSCROL for bottom status bar
+    sta HSCROL
 
     lda #>FONT_ADDR             ; [2] (10) Restore text font for bottom status
     sta CHBASE                  ; [4] (14)
@@ -1405,7 +1470,8 @@ update_dragon_death
 
 ; ==============================================================================
 ; respawn_dragon
-; Resets dragon position, state, full luminance, and refills energy bar.
+; Resets dragon position, state, full luminance, refills energy bar,
+; and restarts the current level from the very beginning.
 ; Called when dragon died but player still has lives remaining.
 ; ==============================================================================
 respawn_dragon
@@ -1416,23 +1482,50 @@ respawn_dragon
     sta dragon_sub_y
     sta dragon_vel_lo
     sta dragon_vel_hi
-    sta SCROLL_SPEED
-    sta SCROLL_SPEED+1
     sta fire_state
+    sta fire_frame
     sta fire_timer
+    sta fire_prev_y
     sta AUDC1
     sta AUDC2
+    sta AUDF1
+    sta AUDF2
+    sta AUDCTL
+    sta HPOSM0
+    sta HPOSM1
+    sta HPOSM2
+    sta HPOSM3
+    sta SIZEM
 
+    ; Reset horizontal scroll speed and momentum to base cruising speed
+    lda #<SCROLL_BASE_SPEED
+    sta SCROLL_SPEED
+    lda #>SCROLL_BASE_SPEED
+    sta SCROLL_SPEED+1
+
+    ; Reset animation phase and speed
+    lda #0
+    sta ANIM_PHASE
+    sta ANIM_PHASE+1
+    jsr update_anim_speed
+
+    ; Reset dragon coordinates
     lda #DRAGON_START_X
     sta dragon_x
+    sta HPOSP0
     lda #DRAGON_START_Y
     sta dragon_y
+    sta dragon_prev_y
 
     lda #DRAGON_COLOR
     sta pal_action_dragon
 
+    ; Restart current level from the very beginning (screen 0, hscrol_fine=3, reset buffers)
+    jsr init_level_screens
+
     ; Refill dragon energy bar in VRAM and reset counters
     jsr init_energy_bar
+    jsr calc_energy_frames
 
     ; Re-render dragon in respawned position
     jsr render_dragon
@@ -1494,56 +1587,456 @@ calc_energy_frames
     rts
 
 ; ==============================================================================
-; LOAD_WORLD_SCREEN — Loads precompiled 440-byte screen buffer into GAME_ACTION_VRAM
+; ==============================================================================
+; LOAD_WORLD_SCREEN — Loads 440-byte screen buffer into visible cols 4..43 of GAME_ACTION_VRAM (48-byte rows)
 ; Input: X = screen index (0..WORLD_SCREENS_COUNT-1)
-; Clobbers: A, Y, PTR_SRC ($80/$81), PTR_DST ($82/$83)
+; Clobbers: A, X, Y, PTR_SRC ($80/$81), PTR_DST ($82/$83)
 ; ==============================================================================
 load_world_screen
     cpx #WORLD_SCREENS_COUNT
     bcc @valid_screen
-    ldx #0                      ; Fallback to screen 0 if index out of bounds
+    ldx #0
 @valid_screen
     stx current_screen_idx
 
-    ; Set PTR_SRC = screens_vram[X]
     lda screens_vram_lo,x
     sta PTR_SRC
     lda screens_vram_hi,x
     sta PTR_SRC+1
 
-    ; Set PTR_DST = GAME_ACTION_VRAM ($6000)
     lda #<GAME_ACTION_VRAM
     sta PTR_DST
     lda #>GAME_ACTION_VRAM
     sta PTR_DST+1
 
-    ; Copy 440 ($01B8) bytes from PTR_SRC to PTR_DST
-    ; Block 1: 256 bytes
+    ldx #0                      ; Row counter (0..10)
+@lws_row_loop
     ldy #0
-@copy_page1
+@lws_col_loop
     lda (PTR_SRC),y
+    pha
+    tya
+    clc
+    adc #4
+    tay
+    pla
     sta (PTR_DST),y
+    tya
+    sec
+    sbc #4
+    tay
     iny
-    bne @copy_page1
+    cpy #40
+    bne @lws_col_loop
 
-    ; Advance high bytes
+    ; Duplicate col 0 into col 3 (for smooth left edge at HSCROL=3)
+    ldy #0
+    lda (PTR_SRC),y
+    ldy #3
+    sta (PTR_DST),y
+
+    ; Advance PTR_SRC by 40
+    lda PTR_SRC
+    clc
+    adc #40
+    sta PTR_SRC
+    bcc @lws_src_no_c
     inc PTR_SRC+1
+@lws_src_no_c
+
+    ; Advance PTR_DST by 48
+    lda PTR_DST
+    clc
+    adc #48
+    sta PTR_DST
+    bcc @lws_dst_no_c
     inc PTR_DST+1
+@lws_dst_no_c
 
-    ; Block 2: remaining 184 bytes (440 - 256 = 184 = $B8)
-    ldy #0
-@copy_page2
-    lda (PTR_SRC),y
-    sta (PTR_DST),y
-    iny
-    cpy #440-256
-    bne @copy_page2
-
+    inx
+    cpx #11
+    bne @lws_row_loop
     rts
 
 ; Compatibility aliases
 update_time_bar     = update_energy_bar
 calc_stage_frames   = calc_energy_frames
+
+; ==============================================================================
+; WORLD STREAMING & PLAYFIELD SCROLLING SUBROUTINES (ANTIC HSCROL)
+; ==============================================================================
+
+init_level_screens
+    lda #0
+    sta level_screen_pos
+    sta incoming_col_idx
+    sta level_tail_cols
+    sta scroll_accum_lo
+    sta scroll_accum_hi
+    lda #3
+    sta hscrol_fine
+
+    ; Fetch total screens count for current_level_idx
+    ldx current_level_idx
+    lda labyrinths_screen_count,x
+    sta lab_total_screens
+
+    ; Clear entire 528 bytes of GAME_ACTION_VRAM ($6000..$620F)
+    ldx #0
+    lda #0
+@clr_vram_loop
+    sta GAME_ACTION_VRAM,x
+    sta GAME_ACTION_VRAM + 256,x
+    inx
+    bne @clr_vram_loop
+    ldx #15
+@clr_vram_tail
+    sta GAME_ACTION_VRAM + 512,x
+    dex
+    bpl @clr_vram_tail
+
+    ; Load screen 0 of this labyrinth into cols 4..43
+    jsr setup_incoming_screen_ptr
+    jsr load_world_screen
+
+    ; Check if labyrinth has a screen 1
+    lda lab_total_screens
+    cmp #2
+    bcc @init_single_screen
+
+    ; Advance level_screen_pos to 1 for incoming stream
+    inc level_screen_pos
+    jsr setup_incoming_screen_ptr
+
+    ; Prefill right margin (cols 44..47) with cols 0..3 of screen 1
+    lda incoming_screen_ptr
+    sta PTR_SRC
+    lda incoming_screen_ptr+1
+    sta PTR_SRC+1
+
+    lda #<GAME_ACTION_VRAM
+    sta PTR_DST
+    lda #>GAME_ACTION_VRAM
+    sta PTR_DST+1
+
+    ldx #0
+@prefill_right_loop
+    ldy #0
+    lda (PTR_SRC),y
+    ldy #44
+    sta (PTR_DST),y
+    ldy #1
+    lda (PTR_SRC),y
+    ldy #45
+    sta (PTR_DST),y
+    ldy #2
+    lda (PTR_SRC),y
+    ldy #46
+    sta (PTR_DST),y
+    ldy #3
+    lda (PTR_SRC),y
+    ldy #47
+    sta (PTR_DST),y
+
+    ; Advance PTR_SRC by 40
+    lda PTR_SRC
+    clc
+    adc #40
+    sta PTR_SRC
+    bcc @pfr_src_no_c
+    inc PTR_SRC+1
+@pfr_src_no_c
+
+    ; Advance PTR_DST by 48
+    lda PTR_DST
+    clc
+    adc #48
+    sta PTR_DST
+    bcc @pfr_dst_no_c
+    inc PTR_DST+1
+@pfr_dst_no_c
+
+    inx
+    cpx #11
+    bne @prefill_right_loop
+
+    ; Next incoming column to stream is col 4
+    lda #4
+    sta incoming_col_idx
+    rts
+
+@init_single_screen
+    ; Only 1 screen: enter tail mode immediately
+    lda #48
+    sta level_tail_cols
+    lda #0
+    sta incoming_col_idx
+    rts
+
+setup_incoming_screen_ptr
+    ldx current_level_idx
+    lda labyrinths_screens_lo,x
+    sta PTR_SRC
+    lda labyrinths_screens_hi,x
+    sta PTR_SRC+1
+
+    ldy level_screen_pos
+    lda (PTR_SRC),y
+    tax                         ; X = screen index (0..WORLD_SCREENS_COUNT-1)
+    lda screens_vram_lo,x
+    sta incoming_screen_ptr
+    lda screens_vram_hi,x
+    sta incoming_screen_ptr+1
+    rts
+
+update_world_scrolling
+    ; Accumulate speed (8.8 fixed-point: $0100 = 1 color clock)
+    lda scroll_accum_lo
+    clc
+    adc SCROLL_SPEED
+    sta scroll_accum_lo
+    lda scroll_accum_hi
+    adc SCROLL_SPEED+1
+    sta scroll_accum_hi
+
+    ; Check if coarse threshold ($0400 = 4 color clocks = 1 char) reached
+    cmp #>SCROLL_COL_THRESHOLD
+    bcc @calc_fine_scroll
+    bne @do_coarse_shift
+    lda scroll_accum_lo
+    cmp #<SCROLL_COL_THRESHOLD
+    bcc @calc_fine_scroll
+
+@do_coarse_shift
+    ; Subtract threshold ($0400) from accumulator
+    lda scroll_accum_lo
+    sec
+    sbc #<SCROLL_COL_THRESHOLD
+    sta scroll_accum_lo
+    lda scroll_accum_hi
+    sbc #>SCROLL_COL_THRESHOLD
+    sta scroll_accum_hi
+
+    ; Execute coarse scroll: shift 48-byte VRAM left and stream new byte into col 47
+    jsr scroll_playfield_step
+
+@calc_fine_scroll
+    ; Compute fine scroll value for HSCROL:
+    ; In ANTIC Mode 5, fine scroll is 0..3 color clocks.
+    ; Moving left means HSCROL steps 3 -> 2 -> 1 -> 0
+    ; hscrol_fine = 3 - (scroll_accum_hi & 3)
+    lda scroll_accum_hi
+    and #$03
+    sta ZP_TMP
+    lda #3
+    sec
+    sbc ZP_TMP
+    sta hscrol_fine
+    rts
+
+shift_vram_left
+    ldx #0
+@shift_vram_loop
+    lda GAME_ACTION_VRAM + 1,x
+    sta GAME_ACTION_VRAM,x
+    lda GAME_ACTION_VRAM + 49,x
+    sta GAME_ACTION_VRAM + 48,x
+    lda GAME_ACTION_VRAM + 97,x
+    sta GAME_ACTION_VRAM + 96,x
+    lda GAME_ACTION_VRAM + 145,x
+    sta GAME_ACTION_VRAM + 144,x
+    lda GAME_ACTION_VRAM + 193,x
+    sta GAME_ACTION_VRAM + 192,x
+    lda GAME_ACTION_VRAM + 241,x
+    sta GAME_ACTION_VRAM + 240,x
+    lda GAME_ACTION_VRAM + 289,x
+    sta GAME_ACTION_VRAM + 288,x
+    lda GAME_ACTION_VRAM + 337,x
+    sta GAME_ACTION_VRAM + 336,x
+    lda GAME_ACTION_VRAM + 385,x
+    sta GAME_ACTION_VRAM + 384,x
+    lda GAME_ACTION_VRAM + 433,x
+    sta GAME_ACTION_VRAM + 432,x
+    lda GAME_ACTION_VRAM + 481,x
+    sta GAME_ACTION_VRAM + 480,x
+    inx
+    cpx #47
+    bne @shift_vram_loop
+    rts
+
+scroll_playfield_step
+    jsr shift_vram_left
+
+    lda level_tail_cols
+    beq @stream_screen_col
+
+    ; Tail mode: blank rightmost column ($00)
+    lda #0
+    sta GAME_ACTION_VRAM + 47
+    sta GAME_ACTION_VRAM + 95
+    sta GAME_ACTION_VRAM + 143
+    sta GAME_ACTION_VRAM + 191
+    sta GAME_ACTION_VRAM + 239
+    sta GAME_ACTION_VRAM + 287
+    sta GAME_ACTION_VRAM + 335
+    sta GAME_ACTION_VRAM + 383
+    sta GAME_ACTION_VRAM + 431
+    sta GAME_ACTION_VRAM + 479
+    sta GAME_ACTION_VRAM + 527
+
+    dec level_tail_cols
+    bne @tail_not_done
+
+    ; Tail completed: all screens in this level cleared!
+    jsr advance_to_next_level
+@tail_not_done
+    rts
+
+@stream_screen_col
+    lda incoming_screen_ptr
+    sta PTR_SRC
+    lda incoming_screen_ptr+1
+    sta PTR_SRC+1
+
+    ; Rows 0..5 (offsets 0..239 in source screen buffer)
+    ldy incoming_col_idx
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 47
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 95
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 143
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 191
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 239
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 287
+
+    ; Rows 6..10 (advance PTR_SRC by 240)
+    lda PTR_SRC
+    clc
+    adc #240
+    sta PTR_SRC
+    bcc @ptr_no_c
+    inc PTR_SRC+1
+@ptr_no_c
+    ldy incoming_col_idx
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 335
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 383
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 431
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 479
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM + 527
+
+    ; Advance incoming_col_idx
+    inc incoming_col_idx
+    lda incoming_col_idx
+    cmp #40
+    bcc @step_rts
+
+    ; Current screen completely streamed in (columns 0..39 finished)
+    lda #0
+    sta incoming_col_idx
+
+    inc level_screen_pos
+    lda level_screen_pos
+    cmp lab_total_screens
+    bcc @next_screen_in_lab
+
+    ; All screens in this level streamed -> enter 48 cols tail mode
+    lda #48
+    sta level_tail_cols
+    rts
+
+@next_screen_in_lab
+    jsr setup_incoming_screen_ptr
+
+@step_rts
+    rts
+
+advance_to_next_level
+    inc current_level_idx
+    lda current_level_idx
+    cmp #WORLD_LABYRINTHS_COUNT
+    bcc @have_another_level
+
+    ; All labyrinths completed! Transition to Game Over with SUCCESS
+    lda #REASON_SUCCESS
+    sta GAME_OVER_REASON
+    rts
+
+@have_another_level
+    inc LEVEL
+    ; Update bottom status bar row 1 text directly:
+    ; " LEVEL: X" where 'X' is at offset 8 (0-indexed from GAME_STATUS_VRAM + 40)
+    lda LEVEL
+    clc
+    adc #$10                    ; ANTIC ASCII digit ('1' -> $11)
+    sta GAME_STATUS_VRAM + 48   ; Column 8 of row 1
+
+    jsr init_level_screens
+    rts
+
+; --- Playfield Horizontal Scrolling & World Streaming Variables ---
+current_level_idx   dta 0           ; Index of current labyrinth (0..WORLD_LABYRINTHS_COUNT-1)
+level_screen_pos    dta 0           ; Position within current labyrinth (0..lab_total_screens-1)
+lab_total_screens   dta 0           ; Total number of screens in current labyrinth
+incoming_col_idx    dta 0           ; Column index (0..39) currently streaming from screen buffer
+level_tail_cols     dta 0           ; Countdown of tail empty columns (48..0) after last screen
+scroll_accum_lo     dta 0           ; 16-bit scroll sub-pixel accumulator (low byte)
+scroll_accum_hi     dta 0           ; 16-bit scroll sub-pixel accumulator (high byte)
+hscrol_fine         dta 3           ; Fine horizontal scroll value (0..3 color clocks) for HSCROL ($D404)
+incoming_screen_ptr dta a(0)        ; 16-bit pointer to currently streaming screen's VRAM buffer
 
 calc_fps_sec        dta 0
 calc_temp           dta 0
@@ -1579,7 +2072,7 @@ pal_bottom_bk       dta $30         ; COLPF2: Tło dolnej linii - fioletowy
 bot_bar_p0_x        dta BOTTOM_BAR_P0_X ; Pozycja X Sprite 0 (48: lewa krawędź)
 bot_bar_p1_x        dta 100             ; Pozycja X Sprite 1 (100: wycentrowany, "SCORE:")
 bot_bar_p2_x        dta 168             ; Pozycja X Sprite 2 (168: prawa strona, "LIVES:")
-bot_bar_pmg_y       dta 218             ; Pozycja pionowa Y paska PMG (indeks linii 0..255 w buforze)
+bot_bar_pmg_y       dta 220           ; Pozycja pionowa Y paska PMG (indeks linii 0..255 w buforze)
 pal_bottom_p0       dta $A0             ; Kolor Sprite 0 (cyan)
 pal_bottom_p1       dta $90             ; Kolor Sprite 1 (blue-cyan)
 pal_bottom_p2       dta $10             ; Kolor Sprite 2 (żółty)
@@ -1619,6 +2112,7 @@ REASON_ENERGY_EMPTY = 1             ; Energia smoka wyczerpana
 REASON_TIME_UP      = 1             ; Compatibility alias
 REASON_LIVES_OUT    = 2             ; Skończyły się życia
 REASON_PLAYER_QUIT  = 3             ; Gracz zakończył grę (START)
+REASON_SUCCESS      = 4             ; Sukces - ukończone wszystkie poziomy
 
 status_line_lo
     dta <GAME_STATUS_VRAM, <(GAME_STATUS_VRAM + 40)

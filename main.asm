@@ -11,8 +11,8 @@ CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
 DLIST_ADDR      = $3E80
 VRAM_ADDR       = $4000
 STUB_VRAM       = $5C00             ; 960-byte text buffer ($5C00-$5FBF)
-GAME_ACTION_VRAM = $6000            ; 440-byte action playfield ($6000-$61B7, 11 lines Antic 5)
-GAME_STATUS_VRAM = $6200            ; 80-byte status bar ($6200-$624F, 2 lines Antic 2)
+GAME_ACTION_VRAM = $6000            ; 528-byte action playfield ($6000-$620F, 11 lines Antic 5 with HSCROL)
+GAME_STATUS_VRAM = $6300            ; 80-byte status bar ($6300-$634F, 2 lines Antic 2)
 FONT_ADDR       = $7000             ; 1024-byte font ($7000-$73FF, 1KB aligned)
 GAME_FONT_ADDR  = $7400             ; 1024-byte action playfield font ($7400-$77FF, 1KB aligned)
 WORLD_DATA_ADDR = $7800             ; World data (screens, labyrinths, objects)
@@ -230,15 +230,16 @@ dlist_game
 
     ; Top status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
     dta DL_MODE_2 | DL_LMS | DL_DLI, a(GAME_STATUS_VRAM) ; DLI 2: triggers after top status line (restores action palette)
+    dta DL_BLANK2 ; 2 empty line
 
-    ; Action playfield: 11 lines of ANTIC Mode 5 (40x11, 16 scanlines each)
-    dta DL_MODE_5 | DL_LMS, a(GAME_ACTION_VRAM)
-    :10 dta DL_MODE_5
+    ; Action playfield: 11 lines of ANTIC Mode 5 (48x11 with DL_HSCROL, 16 scanlines each)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM)
+    :10 dta DL_MODE_5 | DL_HSCROL
 
     ; 1 blank line with DLI before bottom status bar
     dta DL_BLANK1 | DL_DLI      ; DLI 3: triggers before bottom status line (sets text color $34)
-    dta DL_BLANK1 ; 1 empty line
-
+    dta DL_BLANK1
+    
     ; Bottom status bar: 1 line of ANTIC Mode 2 (40x1, 8 scanlines)
     dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM + 40)
 

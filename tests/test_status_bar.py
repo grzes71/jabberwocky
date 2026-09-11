@@ -181,7 +181,7 @@ def test_bottom_bar_sprites_config(project_root: Path, labels: Dict[str, int]):
     assert memory[labels["BOT_BAR_P0_X"]] == 48
     assert memory[labels["BOT_BAR_P1_X"]] == 100
     assert memory[labels["BOT_BAR_P2_X"]] == 168
-    assert memory[labels["BOT_BAR_PMG_Y"]] == 218
+    assert memory[labels["BOT_BAR_PMG_Y"]] == 220
 
     assert memory[labels["PAL_BOTTOM_P0"]] == 0xA0  # Cyan
     assert memory[labels["PAL_BOTTOM_P1"]] == 0x90  # Blue-cyan

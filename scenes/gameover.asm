@@ -24,7 +24,12 @@ gameover_init
     sta SDLSTH
     sta DLISTH
 
-    ; Colors: Deep red background with white text
+    ; Check if VICTORY / SUCCESS
+    lda GAME_OVER_REASON
+    cmp #REASON_SUCCESS
+    beq @init_victory
+
+    ; Colors: Deep red background with white text (Game Over / Defeat)
     lda #$32
     sta COLOR2
     sta COLPF2
@@ -72,7 +77,59 @@ gameover_init
     ldx #13
     ldy #2
     jsr print_at
+    jmp @gover_common_prompt
 
+@init_victory
+    ; Colors: Deep green background ($C4) with golden/white text ($1E)
+    lda #$C4
+    sta COLOR2
+    sta COLPF2
+
+    lda #$1E
+    sta COLOR1
+    sta COLPF1
+
+    lda #$C0
+    sta COLOR4
+    sta COLBK
+
+    ; Clear text screen
+    jsr clear_stub_vram
+
+    ; Print victory text
+    lda #<win_txt_title
+    sta PTR_SRC
+    lda #>win_txt_title
+    sta PTR_SRC+1
+    ldx #3
+    ldy #12
+    jsr print_at
+
+    lda #<win_txt_line1
+    sta PTR_SRC
+    lda #>win_txt_line1
+    sta PTR_SRC+1
+    ldx #8
+    ldy #3
+    jsr print_at
+
+    lda #<win_txt_line2
+    sta PTR_SRC
+    lda #>win_txt_line2
+    sta PTR_SRC+1
+    ldx #10
+    ldy #4
+    jsr print_at
+
+    lda #<win_txt_line3
+    sta PTR_SRC
+    lda #>win_txt_line3
+    sta PTR_SRC+1
+    ldx #13
+    ldy #4
+    jsr print_at
+
+@gover_common_prompt
     lda #<gover_txt_prompt
     sta PTR_SRC
     lda #>gover_txt_prompt
@@ -105,5 +162,15 @@ gover_txt_line2
     dta 36, d'THE VORPAL BLADE WENT SNICKER-SNACK!'
 gover_txt_line3
     dta 36, d'THE JABBERWOCK HAS CLAIMED YOUR SOUL'
+
+win_txt_title
+    dta 15, d'=== VICTORY ==='
+win_txt_line1
+    dta 34, d'AND HAST THOU SLAIN THE JABBERWOCK?'
+win_txt_line2
+    dta 32, d'COME TO MY ARMS, MY BEAMISH BOY!'
+win_txt_line3
+    dta 32, d'O FRABJOUS DAY! CALLOOH! CALLAY!'
+
 gover_txt_prompt
     dta 26, d'>> PRESS FIRE TO RESTART <<'*
