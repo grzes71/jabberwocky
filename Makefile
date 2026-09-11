@@ -69,7 +69,17 @@ $(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
 	@echo === Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ===
 	$(PYTHON) $(SPRITE_SCRIPT) -i $(SPRITE_JSON) -o $(DRAGON_ASM)
 
-$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM)
+PROJECT_YAML    := world/project.yaml
+OBJECTS_YAML    := world/objects.yaml
+WORLD_SCRIPT    := scripts/labirynt_builder.py
+WORLD_GEN_ASM   := $(GEN_DIR)/world_data.asm
+FONT_GAME       := fonts/game.fnt
+
+$(WORLD_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(WORLD_SCRIPT)
+	@echo === Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ===
+	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --output $(WORLD_GEN_ASM)
+
+$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 

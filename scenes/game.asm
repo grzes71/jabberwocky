@@ -16,6 +16,12 @@ DRAGON_MIN_Y            = 40            ; Top boundary (first scanline of ANTIC 
 DRAGON_MAX_Y            = 190           ; Bottom boundary (above bottom status)
 DRAGON_COLOR            = $C6           ; Dragon green (Hue $C, Lum 6)
 BOTTOM_BAR_P0_X         = 48            ; Left edge of normal playfield text (column 0)
+DRAGON_DEATH_TARGET_X   = 48            ; Left edge of visible screen reached on death
+DRAGON_DEATH_DURATION   = 100           ; ~2 seconds death sequence (100 frames @ 50Hz)
+DEATH_STATE_INACTIVE    = 0             ; Normal gameplay / dragon active
+DEATH_STATE_FADING      = 1             ; Fading luminance & moving to left edge
+DEATH_STATE_EXPLODING   = 2             ; Explosion sound & effect
+EXPLOSION_DURATION      = 24            ; Duration of explosion in frames (~0.5s @ 50Hz)
 
 ; --- Dragon Vertical Physics & Inertia (8.8 Fixed-Point) ---
 DRAGON_MAX_VEL          = $0180         ; Max vertical velocity (1.5 px/frame)
@@ -163,15 +169,9 @@ game_init
     sta PCOLR3
     sta COLPM3
 
-    ; Clear 440 bytes of action playfield ($6000-$61B7) with empty tiles (0)
-    lda #0
+    ; Load initial world screen (screen 0 = FOREST_01)
     ldx #0
-@   sta GAME_ACTION_VRAM,x
-    cpx #440-256        ; 184 ($B8)
-    bcs @+
-    sta GAME_ACTION_VRAM+256,x
-@   inx
-    bne @-1
+    jsr load_world_screen
 
     ; Clear status bar row 0 ($6200-$6227) with 0 (normal space)
     lda #0
@@ -191,33 +191,32 @@ game_init
     lda #2
     sta CHACTL
 
-    ; Initialize time bar (row 0): 39 full characters (82) + end of bar (83)
-    ; The end of the bar NEVER has character 82; it always displays 83..90!
-    lda #82
-    ldx #38
-@   sta GAME_STATUS_VRAM,x
-    dex
-    bpl @-
-    lda #83
-    sta GAME_STATUS_VRAM+39
-
-    ; Initialize time bar counters & game over reason
-    lda #40
-    sta COUNTER_FULL
-    lda #83                     ; End of bar starts at 83 (never 82!)
-    sta COUNTER_EIGHT
+    ; Initialize dragon energy bar (row 0) and counters
+    jsr init_energy_bar
     lda #0
     sta GAME_OVER_REASON
-    sta time_acc_lo
-    sta time_acc_hi
+    sta dragon_dying
+    sta death_timer
+    sta death_move_timer
 
-    ; Compute stage frame counts based on stage1..3_min/sec and PAL/NTSC detection
-    jsr calc_stage_frames
+    lda #DRAGON_START_X
+    sta dragon_x
+    lda #DRAGON_START_Y
+    sta dragon_y
+    lda #DRAGON_COLOR
+    sta pal_action_dragon
+
+    ; Compute initial dragon energy frames (~30 seconds) based on PAL/NTSC
+    jsr calc_energy_frames
     ; Initialize game status values (LEVEL, LIVES, SCORE)
     lda #1
     sta LEVEL
     lda #3
     sta LIVES
+    lda #LIVES_BLINK_PERIOD
+    sta lives_blink_timer
+    lda #0
+    sta lives_blink_state
     lda #0
     ldx #5
 @init_score
@@ -254,7 +253,7 @@ game_init
     rts
 
 game_run
-    ; 1. Check if time ran out
+    ; 1. Check if game over already triggered
     lda GAME_OVER_REASON
     bne @exit_to_game_over
 
@@ -283,7 +282,22 @@ game_run
     rts
 
 @not_start
-    ; 2. Check FIRE button to trigger fire breathing
+    ; Reset OS Attract Mode timer to prevent color shifting during gameplay
+    lda #0
+    sta ATRACT
+
+    ; 3. Check if dragon is in death sequence
+    lda dragon_dying
+    beq @dragon_controls_active
+
+    ; Dragon is dying: update death sequence (controls disabled)
+    jsr update_dragon_death
+    lda GAME_OVER_REASON
+    bne @exit_to_game_over
+    jmp @render_frame
+
+@dragon_controls_active
+    ; 4. Check FIRE button to trigger fire breathing
     lda fire_pressed
     beq @not_fire
     lda #0
@@ -293,9 +307,6 @@ game_run
     jsr start_fire
 
 @not_fire
-    ; Reset OS Attract Mode timer to prevent color shifting during gameplay
-    lda #0
-    sta ATRACT
 
     ; 2. Read Joystick 0 (STICK0) — Vertical movement with acceleration & inertia
     ; Bit 0 = 0: UP pushed -> Accelerate UP (subtract ACCEL from velocity)
@@ -504,12 +515,13 @@ game_run
     ; 4. Recalculate dynamic ANIM_SPEED = BASE_HOVER_SPEED + (SCROLL_SPEED / 4)
     jsr update_anim_speed
 
-    ; Update bottom status bar display
-    jsr update_bottom_status
-
     ; Update fire breathing animation & sound
     jsr update_fire
     jsr update_fire_sound
+
+@render_frame
+    ; Update bottom status bar display (handles blinking when LIVES == 1)
+    jsr update_bottom_status
 
     ; 5. Commit/render sprite to Player 0 buffer & missiles to M_ADDR
     jsr render_dragon
@@ -579,6 +591,11 @@ render_dragon
     dey
     bne @-
 
+    ; If dragon is exploding, skip drawing new sprite (dragon is vaporized)
+    lda dragon_dying
+    cmp #DEATH_STATE_EXPLODING
+    beq @keep_p_bot_overlay
+
     ; Advance 16-bit Phase Accumulator (returns X = safe frame index 0..7)
     jsr vblank_anim_step
 
@@ -599,6 +616,7 @@ render_dragon
     cpy #26                         ; Exactly 26 bytes copied
     bne @-
 
+@keep_p_bot_overlay
     ; Ensure bottom status bar overlay stays $FF for Players 0, 1, 2
     ldx bot_bar_pmg_y
     ldy #7
@@ -668,6 +686,40 @@ update_bottom_status
     bne @score_loop
 
     ; Update LIVES digit (column 38)
+    lda LIVES
+    cmp #1
+    bne @lives_steady
+
+    ; LIVES == 1: Blink digit every half second (25 frames @ 50Hz)
+    dec lives_blink_timer
+    bne @lives_draw_blink
+    lda #LIVES_BLINK_PERIOD
+    sta lives_blink_timer
+    lda lives_blink_state
+    eor #1
+    sta lives_blink_state
+
+@lives_draw_blink
+    lda lives_blink_state
+    bne @lives_blank
+
+    ; State 0: visible '1' ($91)
+    lda #$91
+    sta GAME_STATUS_VRAM + 78
+    rts
+
+@lives_blank
+    ; State 1: hidden / inverse blank space ($80)
+    lda #$80
+    sta GAME_STATUS_VRAM + 78
+    rts
+
+@lives_steady
+    ; LIVES != 1: always steady, reset blink state & timer
+    lda #LIVES_BLINK_PERIOD
+    sta lives_blink_timer
+    lda #0
+    sta lives_blink_state
     lda LIVES
     clc
     adc #$90
@@ -932,17 +984,19 @@ dli_game_top
     txa                         ; [2] (5)
     pha                         ; [3] (8) Save X register
 
-    lda pal_top_bk              ; [4] (12) Top status background: blue
-    sta COLPF2                  ; [4] (16) In Mode 2 (normal text): COLPF2 = background
-    lda #<dli_game_action       ; [2] (18) Chain to DLI 2 (restore action palette)
-    sta VDSLST                  ; [4] (22)
-    lda #>dli_game_action       ; [2] (24)
-    sta VDSLST+1                ; [4] (28)
+    lda #>FONT_ADDR             ; [2] (10) Text font for status bar
+    sta CHBASE                  ; [4] (14)
+    lda pal_top_bk              ; [4] (18) Top status background: blue
+    sta COLPF2                  ; [4] (22) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_action       ; [2] (24) Chain to DLI 2 (restore action palette)
+    sta VDSLST                  ; [4] (28)
+    lda #>dli_game_action       ; [2] (30)
+    sta VDSLST+1                ; [4] (34)
 
-    ldx #0                      ; [2] (30) Initialize scanline index (0..7)
+    ldx #0                      ; [2] (36) Initialize scanline index (0..7)
 @top_bar_loop
-    lda pal_top_bar,x           ; [4] (34) Load color value for current scanline
-    sta WSYNC                   ; [4] (38) Wait for horizontal sync
+    lda pal_top_bar,x           ; [4] (40) Load color value for current scanline
+    sta WSYNC                   ; [4] (44) Wait for horizontal sync
     sta COLPF1                  ; [4] (4)  Set character luminance at start of scanline
     inx                         ; [2] (6)
     cpx #8                      ; [2] (8)
@@ -957,48 +1011,53 @@ dli_game_action
     pha                         ; [3] (3) Save accumulator
     sta WSYNC                   ; [4] (7) Wait for horizontal sync
 
+    lda #>GAME_FONT_ADDR        ; [2] (9) Action playfield character set
+    sta CHBASE                  ; [4] (13)
+
     ; Restore Player 0 hardware registers for dragon & disable P1/P2 in action area
-    lda dragon_x                ; [4] (11) Player 0 position
-    sta HPOSP0                  ; [4] (15)
-    lda #0                      ; [2] (17) Normal width (1x) & offscreen for unused sprites
-    sta SIZEP0                  ; [4] (21)
-    sta SIZEP1                  ; [4] (25)
-    sta SIZEP2                  ; [4] (29)
-    sta HPOSP1                  ; [4] (33) Inactive in action area
-    sta HPOSP2                  ; [4] (37) Inactive in action area
+    lda dragon_x                ; [4] (17) Player 0 position
+    sta HPOSP0                  ; [4] (21)
+    lda #0                      ; [2] (23) Normal width (1x) & offscreen for unused sprites
+    sta SIZEP0                  ; [4] (27)
+    sta SIZEP1                  ; [4] (31)
+    sta SIZEP2                  ; [4] (35)
+    sta HPOSP1                  ; [4] (39) Inactive in action area
+    sta HPOSP2                  ; [4] (43) Inactive in action area
 
     ; Restore entire action playfield palette from memory cells
-    lda pal_action_dragon       ; [4] (25) Player 0: Dragon body
-    sta COLPM0                  ; [4] (29)
-    lda pal_action_breath       ; [4] (33) Missiles (5th player): Dragon breath / flame
-    sta COLPF3                  ; [4] (37)
-    lda pal_action_pf0          ; [4] (41) Playfield color 0
-    sta COLPF0                  ; [4] (45)
-    lda pal_action_pf1          ; [4] (49) Playfield color 1
-    sta COLPF1                  ; [4] (53)
-    lda pal_action_pf2          ; [4] (57) Playfield color 2
-    sta COLPF2                  ; [4] (61)
-    lda pal_action_bk           ; [4] (65) Background color & border
-    sta COLBK                   ; [4] (69)
+    lda pal_action_dragon       ; [4] (47) Player 0: Dragon body
+    sta COLPM0                  ; [4] (51)
+    lda pal_action_breath       ; [4] (55) Missiles (5th player): Dragon breath / flame
+    sta COLPF3                  ; [4] (59)
+    lda pal_action_pf0          ; [4] (63) Playfield color 0
+    sta COLPF0                  ; [4] (67)
+    lda pal_action_pf1          ; [4] (71) Playfield color 1
+    sta COLPF1                  ; [4] (75)
+    lda pal_action_pf2          ; [4] (79) Playfield color 2
+    sta COLPF2                  ; [4] (83)
+    lda pal_action_bk           ; [4] (87) Background color & border
+    sta COLBK                   ; [4] (91)
 
-    lda #<dli_game_bottom       ; [2] (71) Chain to DLI 3 (bottom status)
-    sta VDSLST                  ; [4] (75)
-    lda #>dli_game_bottom       ; [2] (77)
-    sta VDSLST+1                ; [4] (81)
-    pla                         ; [4] (85) Restore accumulator
-    rti                         ; [6] (91) Return from interrupt
+    lda #<dli_game_bottom       ; [2] (93) Chain to DLI 3 (bottom status)
+    sta VDSLST                  ; [4] (97)
+    lda #>dli_game_bottom       ; [2] (99)
+    sta VDSLST+1                ; [4] (103)
+    pla                         ; [4] (107) Restore accumulator
+    rti                         ; [6] (113) Return from interrupt
 
 dli_game_bottom
     pha                         ; [3] (3) Save accumulator
     txa                         ; [2] (5)
     pha                         ; [3] (8) Save X register
 
-    lda pal_bottom_bk           ; [4] (12) Bottom status background: black/purple
-    sta COLPF2                  ; [4] (16) In Mode 2 (normal text): COLPF2 = background
-    lda #<dli_game_top          ; [2] (18) Reset DLI vector to top handler for next frame
-    sta VDSLST                  ; [4] (22)
-    lda #>dli_game_top          ; [2] (24)
-    sta VDSLST+1                ; [4] (28)
+    lda #>FONT_ADDR             ; [2] (10) Restore text font for bottom status
+    sta CHBASE                  ; [4] (14)
+    lda pal_bottom_bk           ; [4] (18) Bottom status background: black/purple
+    sta COLPF2                  ; [4] (22) In Mode 2 (normal text): COLPF2 = background
+    lda #<dli_game_top          ; [2] (24) Reset DLI vector to top handler for next frame
+    sta VDSLST                  ; [4] (28)
+    lda #>dli_game_top          ; [2] (30)
+    sta VDSLST+1                ; [4] (34)
 
     ; Reconfigure Players 0, 1, 2 for bottom status overlay (x4 width)
     lda bot_bar_p0_x            ; [4] (30) Left edge of playfield (48 / $30)
@@ -1061,60 +1120,83 @@ vblank_game
     lda pal_action_p2
     sta COLPM2
 
-    ; Update time bar counter during VBLANK
-    jsr update_time_bar
+    ; Update dragon energy bar counter during VBLANK
+    jsr update_energy_bar
 
     jmp XITVBV
 
 ; ==============================================================================
-; TIME BAR UPDATE ROUTINE — Executed once per VBLANK
-; Counts down time across 40 bar characters (each character animates codes 83..90)
+; init_energy_bar
+; Initializes dragon energy bar in VRAM row 0: 39 full characters (82) + end (83)
+; Resets COUNTER_FULL=40, COUNTER_EIGHT=83, energy_acc=0
+; ==============================================================================
+init_energy_bar
+    lda #82
+    ldx #38
+@   sta GAME_STATUS_VRAM,x
+    dex
+    bpl @-
+    lda #83
+    sta GAME_STATUS_VRAM+39
+
+    lda #40
+    sta COUNTER_FULL
+    lda #83                     ; End of bar starts at 83 (never 82!)
+    sta COUNTER_EIGHT
+    lda #0
+    sta energy_acc_lo
+    sta energy_acc_hi
+    rts
+
+; ==============================================================================
+; DRAGON ENERGY BAR UPDATE ROUTINE — Executed once per VBLANK
+; Depletes dragon energy across 40 bar characters (each character animates codes 83..90)
 ; Total sub-steps = 40 * 8 = 320 steps.
 ; Base character: 82 (full bar), Animation: 83..90, Cleared: 0
 ; ==============================================================================
-update_time_bar
+update_energy_bar
     lda GAME_OVER_REASON
-    beq @tb_run
-    rts
+    bne @tb_exit
+    lda dragon_dying
+    bne @tb_exit
 
 @tb_run
 
     ; Advance Bresenham accumulator by total bar steps (320 = 40 chars * 8 anim steps)
-    lda time_acc_lo
+    lda energy_acc_lo
     clc
     adc #<320
-    sta time_acc_lo
-    lda time_acc_hi
+    sta energy_acc_lo
+    lda energy_acc_hi
     adc #>320
-    sta time_acc_hi
+    sta energy_acc_hi
 
-    ; Compare time_acc with current stage total frames
-    ldx current_stage
-    lda time_acc_lo
-    cmp stage_frames_lo,x
-    lda time_acc_hi
-    sbc stage_frames_hi,x
-    bcc @tb_done            ; If time_acc < stage_frames, not yet time to step
+    ; Compare energy_acc with total energy frames
+    lda energy_acc_lo
+    cmp energy_frames_lo
+    lda energy_acc_hi
+    sbc energy_frames_hi
+    bcc @tb_done            ; If energy_acc < energy_frames, not yet time to step
 
-    ; time_acc >= stage_frames: subtract stage_frames
-    lda time_acc_lo
+    ; energy_acc >= energy_frames: subtract energy_frames
+    lda energy_acc_lo
     sec
-    sbc stage_frames_lo,x
-    sta time_acc_lo
-    lda time_acc_hi
-    sbc stage_frames_hi,x
-    sta time_acc_hi
+    sbc energy_frames_lo
+    sta energy_acc_lo
+    lda energy_acc_hi
+    sbc energy_frames_hi
+    sta energy_acc_hi
 
-    ; Safety check: if COUNTER_FULL is already 0, trigger game over
+    ; Safety check: if COUNTER_FULL is already 0, trigger death sequence
     lda COUNTER_FULL
-    beq @tb_time_up
+    beq @tb_energy_empty
 
-    ; Sprawdzamy czy ostatni znak osiągnął 90 (koniec cyklu 8 znaków)
+    ; Check if last character reached 90 (end of 8-character animation cycle)
     lda COUNTER_EIGHT
     cmp #90
     beq @tb_cycle_done
 
-    ; Zwiększamy znak animacji o 1 (83 -> 84 -> ... -> 90)
+    ; Increment animation character code (83 -> 84 -> ... -> 90)
     inc COUNTER_EIGHT
 
 @tb_draw
@@ -1128,128 +1210,344 @@ update_time_bar
     rts
 
 @tb_cycle_done
-    ; W momencie gdy ostatni znak na barze jest czyszczony:
-    ; 1. Czyścimy ostatni znak na barze (pozycja COUNTER_FULL - 1)
+    ; When the end character finishes its 8 sub-steps:
+    ; 1. Clear character at (COUNTER_FULL - 1)
     sec
     lda COUNTER_FULL
     sbc #1
     tax
-    lda #0                  ; Pusta spacja (wyczyszczenie znaku)
+    lda #0                  ; Empty space (cleared character)
     sta GAME_STATUS_VRAM,x
 
-    ; 2. COUNTER_FULL jest zmniejszany o 1
+    ; 2. Decrement full bar character count
     dec COUNTER_FULL
-    beq @tb_time_up         ; Jeśli 0, cały pasek wyczerpany -> koniec gry!
+    beq @tb_energy_empty    ; If 0, entire bar depleted -> Dragon runs out of energy!
 
-    ; 3. Znak 83 jest kopiowany na koniec baru (nowa pozycja COUNTER_FULL - 1)
+    ; 3. Character 83 is placed at new end of bar (COUNTER_FULL - 1)
     lda #83
     sta COUNTER_EIGHT
     sec
     lda COUNTER_FULL
     sbc #1
-    tax                     ; X = nowy koniec baru
+    tax                     ; X = new end of bar
     lda #83
-    sta GAME_STATUS_VRAM,x  ; Kopiowanie znaku 83 na koniec baru
+    sta GAME_STATUS_VRAM,x
     rts
 
-@tb_time_up
-    lda #REASON_TIME_UP
-    sta GAME_OVER_REASON
+@tb_energy_empty
+    jsr start_dragon_death
 
 @tb_done
+@tb_exit
     rts
 
 ; ==============================================================================
-; calc_stage_frames
-; Calculates 16-bit total frame count (stage_frames_lo/hi) for all 3 stages:
-; total_frames = (minutes * frames_per_min) + (seconds * frames_per_sec)
-; Calibrated dynamically for PAL (50Hz) or NTSC (60Hz).
+; start_dragon_death
+; Initiates the ~2 second death sequence when dragon energy reaches zero.
+; Controls are frozen, momentum stopped, fire breathing silenced.
 ; ==============================================================================
-calc_stage_frames
+start_dragon_death
+    lda dragon_dying
+    bne @sdd_done               ; Already in dying sequence
+    lda #DEATH_STATE_FADING     ; Phase 1: Fading & moving to left edge
+    sta dragon_dying
+    lda #DRAGON_DEATH_DURATION  ; 100 frames (~2 seconds @ 50Hz)
+    sta death_timer
+    lda #6
+    sta death_move_timer
+
+    ; Stop vertical velocity and horizontal scroll momentum
+    lda #0
+    sta dragon_vel_lo
+    sta dragon_vel_hi
+    sta SCROLL_SPEED
+    sta SCROLL_SPEED+1
+
+    ; Stop fire breath and silence POKEY
+    sta fire_state
+    sta fire_timer
+    sta AUDC1
+    sta AUDC2
+@sdd_done
+    rts
+
+; ==============================================================================
+; update_dragon_death
+; Updates dragon death sequence once per frame when dragon_dying != 0.
+; Phase 1 (DEATH_STATE_FADING):
+;   - Moves dragon slowly leftwards to DRAGON_DEATH_TARGET_X (48)
+;   - Fades dragon luminance from $C6 -> $C4 -> $C2 -> $C0
+;   - When timer expires (X reaches 48 and luminance reaches 0):
+;     Triggers explosion phase (sound & vaporize)!
+; Phase 2 (DEATH_STATE_EXPLODING):
+;   - Plays dual-channel POKEY explosion sound across 24 frames (~0.5s)
+;   - When explosion finishes:
+;     ONLY NOW decrements LIVES (or triggers Game Over if LIVES == 1)
+; ==============================================================================
+update_dragon_death
+    lda dragon_dying
+    cmp #DEATH_STATE_FADING
+    beq @update_fade
+    cmp #DEATH_STATE_EXPLODING
+    beq @update_expl
+    rts
+
+@update_fade
+    ; 1. Move dragon leftwards towards DRAGON_DEATH_TARGET_X (48) every 6 frames
+    dec death_move_timer
+    bne @check_fade
+    lda #6
+    sta death_move_timer
+    lda dragon_x
+    cmp #DRAGON_DEATH_TARGET_X
+    bcc @check_fade
+    beq @check_fade
+    dec dragon_x
+
+@check_fade
+    ; 2. Fade luminance based on death_timer (100 -> 0)
+    lda death_timer
+    cmp #75
+    bcs @lum_6
+    cmp #50
+    bcs @lum_4
+    cmp #25
+    bcs @lum_2
+    lda #$C0                    ; Luminance 0 (black silhouette)
+    sta pal_action_dragon
+    jmp @step_fade_timer
+
+@lum_6
+    lda #$C6                    ; Luminance 6 (full green)
+    sta pal_action_dragon
+    jmp @step_fade_timer
+
+@lum_4
+    lda #$C4                    ; Luminance 4
+    sta pal_action_dragon
+    jmp @step_fade_timer
+
+@lum_2
+    lda #$C2                    ; Luminance 2
+    sta pal_action_dragon
+
+@step_fade_timer
+    dec death_timer
+    bne @udd_done               ; Fading still in progress
+
+    ; 3. Fading complete: dragon reached left edge and luminance is 0.
+    ; Transition to Phase 2: EXPLOSION!
+    lda #DRAGON_DEATH_TARGET_X
+    sta dragon_x
+    lda #$C0
+    sta pal_action_dragon
+
+    lda #DEATH_STATE_EXPLODING
+    sta dragon_dying
+    lda #EXPLOSION_DURATION
+    sta death_timer
+
+    ; Start frame 0 of explosion sound
+    ldx #0
+    lda expl_snd_audf1,x
+    sta AUDF1
+    lda expl_snd_audc1,x
+    sta AUDC1
+    lda expl_snd_audf2,x
+    sta AUDF2
+    lda expl_snd_audc2,x
+    sta AUDC2
+    rts
+
+@update_expl
+    ; Play explosion sound across 24 frames
+    sec
+    lda #EXPLOSION_DURATION
+    sbc death_timer             ; Index 0..23
+    tax
+    lda expl_snd_audf1,x
+    sta AUDF1
+    lda expl_snd_audc1,x
+    sta AUDC1
+    lda expl_snd_audf2,x
+    sta AUDF2
+    lda expl_snd_audc2,x
+    sta AUDC2
+
+    dec death_timer
+    bne @udd_done               ; Explosion still playing
+
+    ; Explosion finished! Silence sound
+    lda #0
+    sta AUDC1
+    sta AUDC2
+    sta AUDF1
+    sta AUDF2
+
+    ; ONLY NOW (after explosion finishes) check lives & decrement:
+    lda LIVES
+    cmp #1
+    beq @out_of_lives
+
+    ; LIVES > 1: decrement one life, update bottom status bar, and respawn dragon
+    dec LIVES
+    jsr update_bottom_status
+    jsr respawn_dragon
+    rts
+
+@out_of_lives
+    ; Already at 1 life: player is out of lives -> Game Over!
+    lda #REASON_LIVES_OUT
+    sta GAME_OVER_REASON
+
+@udd_done
+    rts
+
+; ==============================================================================
+; respawn_dragon
+; Resets dragon position, state, full luminance, and refills energy bar.
+; Called when dragon died but player still has lives remaining.
+; ==============================================================================
+respawn_dragon
+    lda #DEATH_STATE_INACTIVE
+    sta dragon_dying
+    sta death_timer
+    sta death_move_timer
+    sta dragon_sub_y
+    sta dragon_vel_lo
+    sta dragon_vel_hi
+    sta SCROLL_SPEED
+    sta SCROLL_SPEED+1
+    sta fire_state
+    sta fire_timer
+    sta AUDC1
+    sta AUDC2
+
+    lda #DRAGON_START_X
+    sta dragon_x
+    lda #DRAGON_START_Y
+    sta dragon_y
+
+    lda #DRAGON_COLOR
+    sta pal_action_dragon
+
+    ; Refill dragon energy bar in VRAM and reset counters
+    jsr init_energy_bar
+
+    ; Re-render dragon in respawned position
+    jsr render_dragon
+    rts
+
+; ==============================================================================
+; calc_energy_frames
+; Calculates 16-bit total frame count for dragon energy:
+; energy_frames = dragon_energy_sec * frames_per_second
+; PAL (50Hz):  30 * 50 = 1500 frames ($05DC)
+; NTSC (60Hz): 30 * 60 = 1800 frames ($0708)
+; ==============================================================================
+calc_energy_frames
     lda PAL
     and #$08
     bne @is_ntsc
-    ; PAL (50Hz: 3000 frames/min, 50 frames/sec)
-    lda #<3000
-    sta calc_fps_min_lo
-    lda #>3000
-    sta calc_fps_min_hi
+    ; PAL (50Hz)
     lda #50
     sta calc_fps_sec
-    jmp @setup_done
+    jmp @setup_fps
 
 @is_ntsc
-    ; NTSC (60Hz: 3600 frames/min, 60 frames/sec)
-    lda #<3600
-    sta calc_fps_min_lo
-    lda #>3600
-    sta calc_fps_min_hi
+    ; NTSC (60Hz)
     lda #60
     sta calc_fps_sec
 
-@setup_done
-    ldx #0
-@stage_loop
-    txa
-    asl
-    tay                     ; Y = stage index * 2 (offset in stage_times)
-
-    ; Initialize frame count to 0
+@setup_fps
     lda #0
-    sta stage_frames_lo,x
-    sta stage_frames_hi,x
+    sta energy_frames_lo
+    sta energy_frames_hi
 
-    ; Add minutes * fps_min
-    lda stage_times,y       ; Stage minutes
-    beq @min_done
+    lda dragon_energy_sec
+    beq @calc_energy_done
     sta calc_temp
-@min_loop
-    clc
-    lda stage_frames_lo,x
-    adc calc_fps_min_lo
-    sta stage_frames_lo,x
-    lda stage_frames_hi,x
-    adc calc_fps_min_hi
-    sta stage_frames_hi,x
-    dec calc_temp
-    bne @min_loop
-@min_done
 
-    ; Add seconds * fps_sec
-    lda stage_times+1,y     ; Stage seconds
-    beq @sec_done
-    sta calc_temp
 @sec_loop
     clc
-    lda stage_frames_lo,x
+    lda energy_frames_lo
     adc calc_fps_sec
-    sta stage_frames_lo,x
-    lda stage_frames_hi,x
+    sta energy_frames_lo
+    lda energy_frames_hi
     adc #0
-    sta stage_frames_hi,x
+    sta energy_frames_hi
     dec calc_temp
     bne @sec_loop
-@sec_done
 
-    ; Safety: ensure stage has at least 320 frames
-    lda stage_frames_lo,x
-    ora stage_frames_hi,x
-    bne @next_stage
+@calc_energy_done
+    ; Safety check: ensure at least 320 frames
+    lda energy_frames_hi
+    bne @calc_energy_ok
+    lda energy_frames_lo
+    cmp #<320
+    bcs @calc_energy_ok
     lda #<320
-    sta stage_frames_lo,x
+    sta energy_frames_lo
     lda #>320
-    sta stage_frames_hi,x
-
-@next_stage
-    inx
-    cpx #3
-    bne @stage_loop
+    sta energy_frames_hi
+@calc_energy_ok
     rts
 
-calc_fps_min_lo     dta 0
-calc_fps_min_hi     dta 0
+; ==============================================================================
+; LOAD_WORLD_SCREEN — Loads precompiled 440-byte screen buffer into GAME_ACTION_VRAM
+; Input: X = screen index (0..WORLD_SCREENS_COUNT-1)
+; Clobbers: A, Y, PTR_SRC ($80/$81), PTR_DST ($82/$83)
+; ==============================================================================
+load_world_screen
+    cpx #WORLD_SCREENS_COUNT
+    bcc @valid_screen
+    ldx #0                      ; Fallback to screen 0 if index out of bounds
+@valid_screen
+    stx current_screen_idx
+
+    ; Set PTR_SRC = screens_vram[X]
+    lda screens_vram_lo,x
+    sta PTR_SRC
+    lda screens_vram_hi,x
+    sta PTR_SRC+1
+
+    ; Set PTR_DST = GAME_ACTION_VRAM ($6000)
+    lda #<GAME_ACTION_VRAM
+    sta PTR_DST
+    lda #>GAME_ACTION_VRAM
+    sta PTR_DST+1
+
+    ; Copy 440 ($01B8) bytes from PTR_SRC to PTR_DST
+    ; Block 1: 256 bytes
+    ldy #0
+@copy_page1
+    lda (PTR_SRC),y
+    sta (PTR_DST),y
+    iny
+    bne @copy_page1
+
+    ; Advance high bytes
+    inc PTR_SRC+1
+    inc PTR_DST+1
+
+    ; Block 2: remaining 184 bytes (440 - 256 = 184 = $B8)
+    ldy #0
+@copy_page2
+    lda (PTR_SRC),y
+    sta (PTR_DST),y
+    iny
+    cpy #440-256
+    bne @copy_page2
+
+    rts
+
+; Compatibility aliases
+update_time_bar     = update_energy_bar
+calc_stage_frames   = calc_energy_frames
+
 calc_fps_sec        dta 0
 calc_temp           dta 0
+current_screen_idx  dta 0
 
 ; ==============================================================================
 ; PALETTE CONFIGURATION CELLS (editable during development / tuning)
@@ -1260,15 +1558,15 @@ calc_temp           dta 0
 pal_action_dragon   dta $C6         ; COLPM0: Smok (Player 0) - domyślnie zielony (Hue $C, Lum 6)
 pal_action_breath   dta $28         ; COLPF3: Zianie ogniem / pociski (5th player) - złoto-pomarańczowy
 pal_action_bk       dta $00         ; COLBK:  Tło ekranu akcji i ramka - czarny
-pal_action_pf0      dta $00         ; COLPF0: Pole gry 0 (np. przeszkody/ziemia) - czarny
-pal_action_pf1      dta $0E         ; COLPF1: Pole gry 1 (jasne elementy/tekst) - biały
-pal_action_pf2      dta $00         ; COLPF2: Pole gry 2 - czarny
+pal_action_pf0      dta $26         ; COLPF0: Pole gry 0 (pnie drzew/ziemia) - brązowy
+pal_action_pf1      dta $18         ; COLPF1: Pole gry 1 (jasne elementy/ścieżki) - złoto-żółty
+pal_action_pf2      dta $C4         ; COLPF2: Pole gry 2 (liście/korony drzew/woda) - soczysta zieleń
 pal_action_p1       dta $36         ; COLPM1: Gracz 1 (np. pociski wroga) - czerwony
 pal_action_p2       dta $28         ; COLPM2: Gracz 2 - złoty
 pal_action_p3       dta $1A         ; COLPM3: Gracz 3 - jasnożółty
 
 ; --- Top Status Bar Palette (dli_game_top, normal text) ---
-pal_top_bar         dta $02, $04, $06, $08, $08, $06, $04, $02 ; COLPF1: Pasek czasu (color bar gradient 8 scanlines)
+pal_top_bar         dta $02, $04, $06, $08, $08, $06, $04, $02 ; COLPF1: Pasek energii smoka (color bar gradient 8 scanlines)
 pal_top_text        dta $0A         ; COLPF1: Domyślny kolor tekstu (legacy)
 pal_top_bk          dta $70         ; COLPF2: Tło górnej linii - niebieski
 
@@ -1286,38 +1584,39 @@ pal_bottom_p0       dta $A0             ; Kolor Sprite 0 (cyan)
 pal_bottom_p1       dta $90             ; Kolor Sprite 1 (blue-cyan)
 pal_bottom_p2       dta $10             ; Kolor Sprite 2 (żółty)
 
-; --- Time Bar & Game Over State ---
-COUNTER_FULL        dta 40          ; Remaining characters on the bar (40..0)
+; --- Dragon Energy & Game Over State ---
+COUNTER_FULL        dta 40          ; Remaining characters on the energy bar (40..0)
 COUNTER_EIGHT       dta 83          ; Current animation character code at end of bar (strictly 83..90)
 GAME_OVER_REASON    dta 0           ; Reason game ended
-current_stage       dta 0           ; Current game stage (0..2)
-time_acc_lo         dta 0           ; 16-bit Bresenham time accumulator low
-time_acc_hi         dta 0           ; 16-bit Bresenham time accumulator high
+energy_acc_lo       dta 0           ; 16-bit Bresenham energy accumulator low
+energy_acc_hi       dta 0           ; 16-bit Bresenham energy accumulator high
+time_acc_lo         = energy_acc_lo ; Compatibility alias
+time_acc_hi         = energy_acc_hi ; Compatibility alias
+
+; --- Dragon Energy Configuration (upgradeable during gameplay) ---
+DRAGON_INITIAL_ENERGY_SEC = 30      ; Initial dragon flight energy duration in seconds (~30s)
+dragon_energy_sec   dta DRAGON_INITIAL_ENERGY_SEC ; Current energy capacity in seconds (upgradeable)
+
+; Frame duration for dragon energy depletion (computed at runtime by calc_energy_frames)
+energy_frames_lo    dta <1500
+energy_frames_hi    dta >1500
+stage_frames_lo     = energy_frames_lo ; Compatibility alias
+stage_frames_hi     = energy_frames_hi ; Compatibility alias
 
 ; --- Game Status & Score Variables ---
 LEVEL               dta 1           ; Current level (1 byte, 1..255)
 LIVES               dta 3           ; Remaining lives (1 byte, 0..255)
 SCORE               dta 0, 0, 0, 0, 0, 0 ; Score: 6 decimal digits (each 0..9)
 
-; --- Stage Duration Configuration (editable during development) ---
-; 2 dedicated memory cells per stage (minutes, seconds)
-stage_times
-stage1_min          dta 1           ; Stage 1: minutes
-stage1_sec          dta 20          ; Stage 1: seconds
-
-stage2_min          dta 1           ; Stage 2: minutes
-stage2_sec          dta 0           ; Stage 2: seconds
-
-stage3_min          dta 1           ; Stage 3: minutes
-stage3_sec          dta 0           ; Stage 3: seconds
-
-; Stage frame duration tables (computed at runtime by calc_stage_frames)
-stage_frames_lo     dta <3000, <3000, <3000
-stage_frames_hi     dta >3000, >3000, >3000
+; --- Bottom Status Bar Blinking State ---
+LIVES_BLINK_PERIOD  = 25            ; 25 frames = 0.5s @ 50Hz (half second)
+lives_blink_timer   dta 25
+lives_blink_state   dta 0           ; 0 = visible ('1'), 1 = blanked (' ')
 
 ; Game Over Reason Constants
 REASON_NONE         = 0
-REASON_TIME_UP      = 1             ; Czas się skończył
+REASON_ENERGY_EMPTY = 1             ; Energia smoka wyczerpana
+REASON_TIME_UP      = 1             ; Compatibility alias
 REASON_LIVES_OUT    = 2             ; Skończyły się życia
 REASON_PLAYER_QUIT  = 3             ; Gracz zakończył grę (START)
 
@@ -1331,6 +1630,12 @@ dragon_prev_y       dta DRAGON_START_Y
 dragon_sub_y        dta 0
 dragon_vel_lo       dta 0
 dragon_vel_hi       dta 0
+
+; --- Dragon Death State Variables ---
+dragon_dying        dta 0           ; 0 = active/controllable, 1 = dying sequence
+death_timer         dta 0           ; Countdown timer for 2s death sequence (100..0)
+death_move_timer    dta 0           ; Sub-frame timer for horizontal shift (6..1)
+
 
 ; --- Fire Breathing State Variables ---
 fire_state          dta 0           ; 0 = inactive, 1 = expanding, 2 = peak, 3 = retracting
@@ -1348,6 +1653,25 @@ fire_snd_audf1      dta $3C, $34, $2C, $24, $20, $1C, $1A, $18 ; Ch 1 Pitch (low
 fire_snd_audc1      dta $04, $06, $08, $0A, $0C, $0D, $0E, $0F ; Ch 1 Volume (distortion $00 = complex noise)
 fire_snd_audf2      dta $30, $28, $20, $1C, $18, $16, $14, $12 ; Ch 2 Pitch (white noise rate)
 fire_snd_audc2      dta $83, $85, $87, $89, $8B, $8C, $8D, $8E ; Ch 2 Volume (distortion $80 = white noise hiss)
+
+; --- Explosion Sound Tables (POKEY Ch 1 & 2 across 24 frames, ~0.5s) ---
+; Channel 1: Low-frequency boom (distortion $00 = 17+5 bit noise rumble)
+expl_snd_audf1
+    dta $24, $2C, $38, $48, $5C, $70, $84, $98, $A8, $B8, $C4, $D0
+    dta $DC, $E4, $EC, $F0, $F4, $F8, $FC, $FC, $FC, $FC, $FC, $FC
+
+expl_snd_audc1
+    dta $0F, $0F, $0E, $0E, $0D, $0D, $0C, $0B, $0A, $09, $08, $07
+    dta $06, $05, $05, $04, $03, $03, $02, $02, $01, $01, $00, $00
+
+; Channel 2: Harsh blast & crackle (distortion $80 = 17 bit white noise)
+expl_snd_audf2
+    dta $10, $14, $1A, $22, $2C, $38, $44, $50, $60, $70, $80, $90
+    dta $A0, $B0, $C0, $D0, $D8, $E0, $E8, $F0, $F8, $F8, $F8, $F8
+
+expl_snd_audc2
+    dta $8E, $8F, $8E, $8D, $8C, $8B, $8A, $89, $88, $87, $86, $85
+    dta $84, $83, $83, $82, $82, $81, $81, $80, $80, $80, $80, $80
 
 ; SIZEM: 2-bits per missile (M3..M0): $00, $01, $05, $07, $17, $1F, $5F, $7F
 fire_sizem_tbl
