@@ -76,13 +76,31 @@ WORLD_SCRIPT    := scripts/labirynt_builder.py
 WORLD_GEN_ASM   := $(GEN_DIR)/world_data.asm
 FONT_GAME       := fonts/game.fnt
 
-data: $(WORLD_GEN_ASM)
+ROT_CHARS_JSON      := chars/rotated.json
+ROT_SCRIPT          := scripts/gen_rotated_charset.py
+ROT_CHARS_GLOBAL_ASM:= $(GEN_DIR)/rotated_chars_global.asm
+ROT_CHARS_PROC_ASM  := $(GEN_DIR)/rotated_chars_proc.asm
+
+ANIM_CHARS_JSON     := chars/animated.json
+ANIM_SCRIPT         := scripts/gen_animated_charset.py
+ANIM_CHARS_ASM      := $(GEN_DIR)/animated_chars.asm
+ASM_ENGINE          := engine/charset_anim.asm engine/sound.asm
+
+$(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM): $(ROT_CHARS_JSON) $(ROT_SCRIPT)
+	@echo === Generowanie tablic obrotu znakow $(ROT_CHARS_JSON) do $(GEN_DIR)/ ===
+	$(PYTHON) $(ROT_SCRIPT) -i $(ROT_CHARS_JSON) -g $(ROT_CHARS_GLOBAL_ASM) -p $(ROT_CHARS_PROC_ASM)
+
+$(ANIM_CHARS_ASM): $(ANIM_CHARS_JSON) $(ANIM_SCRIPT)
+	@echo === Generowanie tablic animacji znakow $(ANIM_CHARS_JSON) do $(ANIM_CHARS_ASM) ===
+	$(PYTHON) $(ANIM_SCRIPT) -i $(ANIM_CHARS_JSON) -o $(ANIM_CHARS_ASM) --charset-base 0x7400
+
+data: $(WORLD_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
 
 $(WORLD_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(COLORS_YAML) $(WORLD_SCRIPT)
 	@echo === Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ===
 	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --colors $(COLORS_YAML) --output $(WORLD_GEN_ASM)
 
-$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM)
+$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 

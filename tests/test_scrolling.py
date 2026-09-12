@@ -10,7 +10,7 @@ from py65.devices.mpu6502 import MPU
 def parse_labels(lab_path: Path) -> Dict[str, int]:
     """Parse MADS label (.lab) file into a mapping of symbol name -> address."""
     labels: Dict[str, int] = {}
-    pattern = re.compile(r"^[0-9a-fA-F]{2}\t([0-9a-fA-F]{4})\t([A-Za-z0-9_@?]+)")
+    pattern = re.compile(r"^[0-9a-fA-F]{2}\t([0-9a-fA-F]{4})\t([A-Za-z0-9_@?.]+)")
     with open(lab_path, "r", encoding="utf-8") as f:
         for line in f:
             m = pattern.match(line)
@@ -130,7 +130,7 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
     assert mpu.memory[labels["LEVEL_SCREEN_POS"]] == 1
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 4  # First 4 cols prefilled into cols 44..47
     assert mpu.memory[labels["LEVEL_TAIL_COLS"]] == 0
-    assert mpu.memory[labels["LAB_TOTAL_SCREENS"]] == 3
+    assert mpu.memory[labels["LAB_TOTAL_SCREENS"]] == 8
     assert mpu.memory[labels["HSCROL_FINE"]] == 3
 
     # Check that visible columns 4..43 match Screen 0

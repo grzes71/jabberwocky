@@ -10,7 +10,7 @@ from py65.devices.mpu6502 import MPU
 def parse_labels(lab_path: Path) -> Dict[str, int]:
     """Parse MADS label (.lab) file into a mapping of symbol name -> address."""
     labels: Dict[str, int] = {}
-    pattern = re.compile(r"^[0-9a-fA-F]{2}\t([0-9a-fA-F]{4})\t([A-Za-z0-9_@?]+)")
+    pattern = re.compile(r"^[0-9a-fA-F]{2}\t([0-9a-fA-F]{4})\t([A-Za-z0-9_@?.]+)")
     with open(lab_path, "r", encoding="utf-8") as f:
         for line in f:
             m = pattern.match(line)
@@ -501,6 +501,219 @@ def test_shots_display_and_mechanic(project_root: Path, labels: Dict[str, int]):
 
     assert mpu.memory[vram_shots_tens] == 0x91  # '1' inverted
     assert mpu.memory[vram_shots_units] == 0x95  # '5' inverted
+
+
+def test_increase_energy_bar_emulation(project_root: Path, labels: Dict[str, int]):
+    """Verify increase_energy_bar increments energy sub-steps and caps at maximum."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    status_vram = labels["GAME_STATUS_VRAM"]
+    counter_full = labels["COUNTER_FULL"]
+    counter_eight = labels["COUNTER_EIGHT"]
+    dragon_dying = labels["DRAGON_DYING"]
+
+    def call_increase():
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.pc = labels["INCREASE_ENERGY_BAR"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+    # 1. Start with partial energy at block 38 (0-indexed column 37), sub-step 86
+    mpu.memory[counter_full] = 38
+    mpu.memory[counter_eight] = 86
+    mpu.memory[dragon_dying] = 0
+    mpu.memory[status_vram + 37] = 86
+
+    call_increase()
+    assert mpu.memory[counter_full] == 38
+    assert mpu.memory[counter_eight] == 85
+    assert mpu.memory[status_vram + 37] == 85
+
+    call_increase()
+    assert mpu.memory[counter_full] == 38
+    assert mpu.memory[counter_eight] == 84
+    assert mpu.memory[status_vram + 37] == 84
+
+    call_increase()
+    assert mpu.memory[counter_full] == 38
+    assert mpu.memory[counter_eight] == 83
+    assert mpu.memory[status_vram + 37] == 83
+
+    # 2. Block transition: from 83, it should fill block 37 with 82 and advance to block 38 at 90
+    call_increase()
+    assert mpu.memory[counter_full] == 39
+    assert mpu.memory[counter_eight] == 90
+    assert mpu.memory[status_vram + 37] == 82  # Filled previous block
+    assert mpu.memory[status_vram + 38] == 90  # New end block
+
+    # 3. Maximum energy: set to COUNTER_FULL=40, COUNTER_EIGHT=83
+    mpu.memory[counter_full] = 40
+    mpu.memory[counter_eight] = 83
+    mpu.memory[status_vram + 39] = 83
+
+    call_increase()
+    # Stays at maximum
+    assert mpu.memory[counter_full] == 40
+    assert mpu.memory[counter_eight] == 83
+    assert mpu.memory[status_vram + 39] == 83
+
+    # 4. Dying sequence: should NOT increase energy
+    mpu.memory[counter_full] = 30
+    mpu.memory[counter_eight] = 88
+    mpu.memory[dragon_dying] = 1
+
+    call_increase()
+    assert mpu.memory[counter_full] == 30
+    assert mpu.memory[counter_eight] == 88
+
+
+def test_check_dragon_pf3_collision_emulation(project_root: Path, labels: Dict[str, int]):
+    """Verify check_dragon_collisions detects dragon_p0pf bit 3 and triggers recharge."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    dragon_p0pf = labels["DRAGON_P0PF"]
+    counter_full = labels["COUNTER_FULL"]
+    counter_eight = labels["COUNTER_EIGHT"]
+    dragon_recharging = labels["DRAGON_RECHARGING"]
+    dragon_dying = labels["DRAGON_DYING"]
+
+    def call_check_collision():
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.pc = labels["CHECK_DRAGON_COLLISIONS"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+    # 1. No collision (dragon_p0pf = 0)
+    mpu.memory[dragon_p0pf] = 0x00
+    mpu.memory[counter_full] = 35
+    mpu.memory[counter_eight] = 87
+    mpu.memory[dragon_dying] = 0
+    mpu.memory[dragon_recharging] = 1  # Should be reset to 0
+
+    call_check_collision()
+    assert mpu.memory[dragon_recharging] == 0
+    assert mpu.memory[counter_eight] == 87  # No increase
+
+    # 2. Collision with PF3 (dragon_p0pf = 0x08) -> increases energy by 1
+    mpu.memory[dragon_p0pf] = 0x08
+    call_check_collision()
+    assert mpu.memory[dragon_recharging] == 1
+    assert mpu.memory[counter_eight] == 86  # Increased from 87 to 86
+
+    # 3. Next frame still colliding -> increases again
+    mpu.memory[dragon_p0pf] = 0x08
+    call_check_collision()
+    assert mpu.memory[dragon_recharging] == 1
+    assert mpu.memory[counter_eight] == 85  # Increased from 86 to 85
+
+    # 4. Dying sequence with collision: should NOT recharge
+    mpu.memory[dragon_dying] = 1
+    mpu.memory[dragon_p0pf] = 0x08
+    call_check_collision()
+    assert mpu.memory[dragon_recharging] == 0
+    assert mpu.memory[counter_eight] == 85  # No increase
+
+
+def test_check_dragon_crash_collisions_emulation(project_root: Path, labels: Dict[str, int]):
+    """Verify collision with PF0, PF1, or PF2 triggers crash death and sound."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    dragon_p0pf = labels["DRAGON_P0PF"]
+    dragon_dying = labels["DRAGON_DYING"]
+    death_timer = labels["DEATH_TIMER"]
+    dragon_recharging = labels["DRAGON_RECHARGING"]
+    scroll_speed = labels["SCROLL_SPEED"]
+    audc1 = labels["AUDC1"]
+    audc2 = labels["AUDC2"]
+
+    def call_check_collision():
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.pc = labels["CHECK_DRAGON_COLLISIONS"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+    # Test collision with each playfield color (PF0 = 0x01, PF1 = 0x02, PF2 = 0x04)
+    for mask in (0x01, 0x02, 0x04, 0x09):  # 0x09 is PF0 + PF3 (crash takes priority)
+        mpu.memory[dragon_dying] = 0
+        mpu.memory[death_timer] = 0
+        mpu.memory[dragon_recharging] = 1
+        mpu.memory[scroll_speed] = 0xC0
+        mpu.memory[dragon_p0pf] = mask
+
+        call_check_collision()
+
+        # Dragon should enter crash state (DEATH_STATE_CRASH = 3)
+        assert mpu.memory[dragon_dying] == 3
+        assert mpu.memory[death_timer] == 24  # CRASH_DURATION
+        assert mpu.memory[dragon_recharging] == 0  # Recharging canceled
+        assert mpu.memory[scroll_speed] == 0       # Momentum halted
+        assert mpu.memory[audc1] == 0x2F           # Frame 0 crash sound on Ch 1
+        assert mpu.memory[audc2] == 0x8F           # Frame 0 crash sound on Ch 2
+
+
+def test_dragon_crash_death_sequence_and_sound_emulation(project_root: Path, labels: Dict[str, int]):
+    """Verify update_dragon_death plays crash sound over 24 frames and decrements life."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    dragon_dying = labels["DRAGON_DYING"]
+    death_timer = labels["DEATH_TIMER"]
+    lives = labels["LIVES"]
+    game_over_reason = labels["GAME_OVER_REASON"]
+    audc1 = labels["AUDC1"]
+    audc2 = labels["AUDC2"]
+
+    def call_update_death():
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.pc = labels["UPDATE_DRAGON_DEATH"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+    # Setup crash state with 3 lives
+    mpu.memory[dragon_dying] = 3  # DEATH_STATE_CRASH
+    mpu.memory[death_timer] = 24
+    mpu.memory[lives] = 3
+    mpu.memory[game_over_reason] = 0
+
+    # Step through 23 frames of crash
+    for frame in range(23):
+        call_update_death()
+        assert mpu.memory[dragon_dying] == 3
+        assert mpu.memory[death_timer] == 23 - frame
+
+    # Step final 24th frame (crash finishes)
+    call_update_death()
+
+    # POKEY should be silenced
+    assert mpu.memory[audc1] == 0
+    assert mpu.memory[audc2] == 0
+
+    # Lives decremented from 3 to 2, dragon respawned (dying = 0)
+    assert mpu.memory[lives] == 2
+    assert mpu.memory[dragon_dying] == 0
+    assert mpu.memory[game_over_reason] == 0
+
+    # Now test crash with 1 life -> Game Over
+    mpu.memory[dragon_dying] = 3
+    mpu.memory[death_timer] = 1
+    mpu.memory[lives] = 1
+    mpu.memory[game_over_reason] = 0
+
+    call_update_death()
+    assert mpu.memory[game_over_reason] == labels["REASON_LIVES_OUT"]
+
+
 
 
 

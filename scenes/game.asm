@@ -22,7 +22,9 @@ DRAGON_DEATH_DURATION   = 100           ; ~2 seconds death sequence (100 frames 
 DEATH_STATE_INACTIVE    = 0             ; Normal gameplay / dragon active
 DEATH_STATE_FADING      = 1             ; Fading luminance & moving to left edge
 DEATH_STATE_EXPLODING   = 2             ; Explosion sound & effect
+DEATH_STATE_CRASH       = 3             ; Wall collision crash sound & effect
 EXPLOSION_DURATION      = 24            ; Duration of explosion in frames (~0.5s @ 50Hz)
+CRASH_DURATION          = 24            ; Duration of crash sound & sequence (~0.5s @ 50Hz)
 
 ; --- Dragon Vertical Physics & Inertia (8.8 Fixed-Point) ---
 DRAGON_MAX_VEL          = $0180         ; Max vertical velocity (1.5 px/frame)
@@ -214,8 +216,11 @@ game_init
     lda #0
     sta GAME_OVER_REASON
     sta dragon_dying
+    sta dragon_recharging
+    sta dragon_p0pf
     sta death_timer
     sta death_move_timer
+    sta HITCLR
 
     lda #DRAGON_START_X
     sta dragon_x
@@ -245,6 +250,9 @@ game_init
 
     ; Draw initial bottom status bar (row 1)
     jsr draw_bottom_status
+
+    ; Initialize charset animations state
+    jsr init_charset_animation
 
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon
@@ -661,9 +669,11 @@ render_dragon
     dey
     bne @-
 
-    ; If dragon is exploding, skip drawing new sprite (dragon is vaporized)
+    ; If dragon is exploding or crashing, skip drawing new sprite (dragon is vaporized/destroyed)
     lda dragon_dying
     cmp #DEATH_STATE_EXPLODING
+    beq @keep_p_bot_overlay
+    cmp #DEATH_STATE_CRASH
     beq @keep_p_bot_overlay
 
     ; Advance 16-bit Phase Accumulator (returns X = safe frame index 0..7)
@@ -1148,17 +1158,23 @@ dli_game_action
     lda pal_action_bk           ; [4] (87) Background color & border
     sta COLBK                   ; [4] (91)
 
-    lda #<dli_game_bottom       ; [2] (93) Chain to DLI 3 (bottom status)
-    sta VDSLST                  ; [4] (97)
-    lda #>dli_game_bottom       ; [2] (99)
-    sta VDSLST+1                ; [4] (103)
-    pla                         ; [4] (107) Restore accumulator
-    rti                         ; [6] (113) Return from interrupt
+    sta HITCLR                  ; [4] (95) Clear collision latches right before action area starts
+
+    lda #<dli_game_bottom       ; [2] (97) Chain to DLI 3 (bottom status)
+    sta VDSLST                  ; [4] (101)
+    lda #>dli_game_bottom       ; [2] (103)
+    sta VDSLST+1                ; [4] (107)
+    pla                         ; [4] (111) Restore accumulator
+    rti                         ; [6] (117) Return from interrupt
 
 dli_game_bottom
     pha                         ; [3] (3) Save accumulator
     txa                         ; [2] (5)
     pha                         ; [3] (8) Save X register
+
+    lda P0PF                    ; Capture dragon collisions from action area
+    sta dragon_p0pf
+    sta HITCLR                  ; Clear collision latches before bottom status bar begins
 
     lda #0                      ; Reset HSCROL for bottom status bar
     sta HSCROL
@@ -1264,8 +1280,15 @@ vblank_game
     lda pal_action_p3
     sta COLPM3
 
-    ; Update dragon energy bar counter during VBLANK
+    ; Check dragon collisions with playfield (PF0/1/2 = crash, PF3 = recharge)
+    jsr check_dragon_collisions
+
+    ; Update dragon energy bar counter during VBLANK (depletion)
     jsr update_energy_bar
+
+    ; Update animated and rotated characters in GAME_FONT_ADDR ($7400)
+    jsr animate_charset
+    jsr update_animated_charset
 
     jmp XITVBV
 
@@ -1290,6 +1313,7 @@ init_energy_bar
     lda #0
     sta energy_acc_lo
     sta energy_acc_hi
+    sta dragon_recharging
     rts
 
 ; ==============================================================================
@@ -1302,6 +1326,8 @@ update_energy_bar
     lda GAME_OVER_REASON
     bne @tb_exit
     lda dragon_dying
+    bne @tb_exit
+    lda dragon_recharging
     bne @tb_exit
 
 @tb_run
@@ -1386,6 +1412,127 @@ update_energy_bar
     rts
 
 ; ==============================================================================
+; check_dragon_collisions
+; Checks hardware GTIA Player 0 to Playfield collision (latched in dragon_p0pf).
+; Playfield colors:
+;   - Bit 0 (PF0), Bit 1 (PF1), Bit 2 (PF2): Wall/obstacle collision -> CRASH & DEATH!
+;   - Bit 3 (PF3): Recharge color -> increases dragon energy by 1 step per frame.
+; Background color (COLBK): Does not register in P0PF.
+; ==============================================================================
+.proc check_dragon_collisions
+    ; Read latched collision mask captured in dli_game_bottom
+    lda dragon_p0pf
+    sta ZP_TMP
+    lda #0
+    sta dragon_p0pf
+
+    ; If dragon is already dying or game over, skip collisions and cancel recharge
+    lda dragon_dying
+    bne @no_recharge
+    lda GAME_OVER_REASON
+    bne @no_recharge
+
+    ; Test collision with PF0, PF1, or PF2 (bits 0, 1, 2)
+    lda ZP_TMP
+    and #$07
+    beq @check_pf3
+
+    ; Wall/obstacle collision: crash sound and death!
+    lda #0
+    sta dragon_recharging
+    jsr start_dragon_crash
+    rts
+
+@check_pf3
+    ; Test collision with PF3 (bit 3)
+    lda ZP_TMP
+    and #$08
+    beq @no_recharge
+
+    ; Recharging: increase energy by 1 step
+    lda #1
+    sta dragon_recharging
+    jsr increase_energy_bar
+    rts
+
+@no_recharge
+    lda #0
+    sta dragon_recharging
+
+@done
+    rts
+.endp
+
+check_dragon_pf3_collision = check_dragon_collisions
+
+; ==============================================================================
+; increase_energy_bar
+; Increases dragon energy by 1 sub-step (opposite of update_energy_bar depletion).
+; If already at maximum (COUNTER_FULL=40, COUNTER_EIGHT<=83), does nothing.
+; ==============================================================================
+.proc increase_energy_bar
+    ; Check if dragon is dying or game over
+    lda dragon_dying
+    bne @done
+    lda GAME_OVER_REASON
+    bne @done
+
+    ; Safety check: if COUNTER_FULL is 0, bar is empty/dead
+    lda COUNTER_FULL
+    beq @done
+
+    ; Check if already at maximum: COUNTER_FULL >= 40 and COUNTER_EIGHT <= 83
+    cmp #40
+    bcc @can_increase
+    lda COUNTER_EIGHT
+    cmp #84
+    bcc @done                   ; If COUNTER_FULL >= 40 and COUNTER_EIGHT < 84 (<= 83), at maximum
+
+@can_increase
+    ; Reset fractional depletion accumulator so full step duration is given
+    lda #0
+    sta energy_acc_lo
+    sta energy_acc_hi
+
+    lda COUNTER_EIGHT
+    cmp #83
+    beq @advance_block
+
+    ; Within current block: decrement COUNTER_EIGHT (90 -> 89 -> ... -> 83)
+    dec COUNTER_EIGHT
+    sec
+    lda COUNTER_FULL
+    sbc #1
+    tax
+    lda COUNTER_EIGHT
+    sta GAME_STATUS_VRAM,x
+    rts
+
+@advance_block
+    ; Current block at (COUNTER_FULL - 1) was at 83, so it becomes completely full (82)
+    sec
+    lda COUNTER_FULL
+    sbc #1
+    tax
+    lda #82
+    sta GAME_STATUS_VRAM,x
+
+    ; Move to the next block to the right
+    inc COUNTER_FULL
+    lda #90
+    sta COUNTER_EIGHT
+    sec
+    lda COUNTER_FULL
+    sbc #1
+    tax
+    lda #90
+    sta GAME_STATUS_VRAM,x
+
+@done
+    rts
+.endp
+
+; ==============================================================================
 ; start_dragon_death
 ; Initiates the ~2 second death sequence when dragon energy reaches zero.
 ; Controls are frozen, momentum stopped, fire breathing silenced.
@@ -1416,6 +1563,56 @@ start_dragon_death
     rts
 
 ; ==============================================================================
+; start_dragon_crash
+; Initiates the crash sequence when dragon collides with PF0, PF1, or PF2.
+; Halts movement, halts fire breathing, triggers crash sound and clears sprite.
+; ==============================================================================
+start_dragon_crash
+    lda dragon_dying
+    bne @sdc_done               ; Already in dying sequence
+
+    lda #DEATH_STATE_CRASH      ; State 3: Wall collision crash
+    sta dragon_dying
+    lda #CRASH_DURATION         ; 24 frames (~0.5s @ 50Hz)
+    sta death_timer
+
+    ; Stop vertical velocity and horizontal scroll momentum immediately
+    lda #0
+    sta dragon_vel_lo
+    sta dragon_vel_hi
+    sta SCROLL_SPEED
+    sta SCROLL_SPEED+1
+
+    ; Stop fire breath and silence missile registers
+    sta fire_state
+    sta fire_timer
+    sta dragon_recharging
+    sta cur_sizem
+    sta SIZEM
+    sta HPOSM0
+    sta HPOSM1
+    sta HPOSM2
+    sta HPOSM3
+    sta cur_hposm0
+    sta cur_hposm1
+    sta cur_hposm2
+    sta cur_hposm3
+
+    ; Trigger frame 0 of crash sound
+    ldx #0
+    lda crash_snd_audf1,x
+    sta AUDF1
+    lda crash_snd_audc1,x
+    sta AUDC1
+    lda crash_snd_audf2,x
+    sta AUDF2
+    lda crash_snd_audc2,x
+    sta AUDC2
+
+@sdc_done
+    rts
+
+; ==============================================================================
 ; update_dragon_death
 ; Updates dragon death sequence once per frame when dragon_dying != 0.
 ; Phase 1 (DEATH_STATE_FADING):
@@ -1427,14 +1624,45 @@ start_dragon_death
 ;   - Plays dual-channel POKEY explosion sound across 24 frames (~0.5s)
 ;   - When explosion finishes:
 ;     ONLY NOW decrements LIVES (or triggers Game Over if LIVES == 1)
+; Phase 3 (DEATH_STATE_CRASH):
+;   - Plays dual-channel POKEY crash sound across 24 frames (~0.5s)
+;   - When crash finishes:
+;     ONLY NOW decrements LIVES (or triggers Game Over if LIVES == 1)
 ; ==============================================================================
 update_dragon_death
     lda dragon_dying
     cmp #DEATH_STATE_FADING
     beq @update_fade
     cmp #DEATH_STATE_EXPLODING
-    beq @update_expl
+    beq @go_expl
+    cmp #DEATH_STATE_CRASH
+    bne @udd_done
+
+@update_crash
+    ; Play crash sound across 24 frames
+    sec
+    lda #CRASH_DURATION
+    sbc death_timer             ; Index 0..23
+    tax
+    lda crash_snd_audf1,x
+    sta AUDF1
+    lda crash_snd_audc1,x
+    sta AUDC1
+    lda crash_snd_audf2,x
+    sta AUDF2
+    lda crash_snd_audc2,x
+    sta AUDC2
+
+    dec death_timer
+    beq @crash_finished
+@udd_done
     rts
+
+@crash_finished
+    jmp @death_finished
+
+@go_expl
+    jmp @update_expl
 
 @update_fade
     ; 1. Move dragon leftwards towards DRAGON_DEATH_TARGET_X (48) every 6 frames
@@ -1519,16 +1747,17 @@ update_dragon_death
     sta AUDC2
 
     dec death_timer
-    bne @udd_done               ; Explosion still playing
+    bne @expl_done              ; Explosion still playing
 
-    ; Explosion finished! Silence sound
+@death_finished
+    ; Explosion/Crash finished! Silence sound
     lda #0
     sta AUDC1
     sta AUDC2
     sta AUDF1
     sta AUDF2
 
-    ; ONLY NOW (after explosion finishes) check lives & decrement:
+    ; ONLY NOW (after sound finishes) check lives & decrement:
     lda LIVES
     cmp #1
     beq @out_of_lives
@@ -1544,7 +1773,7 @@ update_dragon_death
     lda #REASON_LIVES_OUT
     sta GAME_OVER_REASON
 
-@udd_done
+@expl_done
     rts
 
 ; ==============================================================================
@@ -1556,8 +1785,11 @@ update_dragon_death
 respawn_dragon
     lda #DEATH_STATE_INACTIVE
     sta dragon_dying
+    sta dragon_recharging
+    sta dragon_p0pf
     sta death_timer
     sta death_move_timer
+    sta HITCLR
     sta dragon_sub_y
     sta dragon_vel_lo
     sta dragon_vel_hi
@@ -2217,6 +2449,8 @@ dragon_vel_hi       dta 0
 
 ; --- Dragon Death State Variables ---
 dragon_dying        dta 0           ; 0 = active/controllable, 1 = dying sequence
+dragon_recharging   dta 0           ; 0 = normal, 1 = recharging via PF3 collision
+dragon_p0pf         dta 0           ; Latched P0PF collision register from action area
 death_timer         dta 0           ; Countdown timer for 2s death sequence (100..0)
 death_move_timer    dta 0           ; Sub-frame timer for horizontal shift (6..1)
 
@@ -2237,25 +2471,6 @@ fire_snd_audf1      dta $3C, $34, $2C, $24, $20, $1C, $1A, $18 ; Ch 1 Pitch (low
 fire_snd_audc1      dta $04, $06, $08, $0A, $0C, $0D, $0E, $0F ; Ch 1 Volume (distortion $00 = complex noise)
 fire_snd_audf2      dta $30, $28, $20, $1C, $18, $16, $14, $12 ; Ch 2 Pitch (white noise rate)
 fire_snd_audc2      dta $83, $85, $87, $89, $8B, $8C, $8D, $8E ; Ch 2 Volume (distortion $80 = white noise hiss)
-
-; --- Explosion Sound Tables (POKEY Ch 1 & 2 across 24 frames, ~0.5s) ---
-; Channel 1: Low-frequency boom (distortion $00 = 17+5 bit noise rumble)
-expl_snd_audf1
-    dta $24, $2C, $38, $48, $5C, $70, $84, $98, $A8, $B8, $C4, $D0
-    dta $DC, $E4, $EC, $F0, $F4, $F8, $FC, $FC, $FC, $FC, $FC, $FC
-
-expl_snd_audc1
-    dta $0F, $0F, $0E, $0E, $0D, $0D, $0C, $0B, $0A, $09, $08, $07
-    dta $06, $05, $05, $04, $03, $03, $02, $02, $01, $01, $00, $00
-
-; Channel 2: Harsh blast & crackle (distortion $80 = 17 bit white noise)
-expl_snd_audf2
-    dta $10, $14, $1A, $22, $2C, $38, $44, $50, $60, $70, $80, $90
-    dta $A0, $B0, $C0, $D0, $D8, $E0, $E8, $F0, $F8, $F8, $F8, $F8
-
-expl_snd_audc2
-    dta $8E, $8F, $8E, $8D, $8C, $8B, $8A, $89, $88, $87, $86, $85
-    dta $84, $83, $83, $82, $82, $81, $81, $80, $80, $80, $80, $80
 
 ; SIZEM: 2-bits per missile (M3..M0): $00, $01, $05, $07, $17, $1F, $5F, $7F
 fire_sizem_tbl
