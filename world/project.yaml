@@ -137,8 +137,6 @@ screens:
     packed_xy: 17
   - code: 65
     packed_xy: 68
-  - code: 65
-    packed_xy: 82
   - code: 178
     packed_xy: 5
   - code: 182
@@ -159,10 +157,12 @@ screens:
     packed_xy: 47
   - code: 5
     packed_xy: 79
+  - code: 9
+    packed_xy: 83
 - id: FOREST_04
   objects:
   - code: 51
-    packed_xy: 35
+    packed_xy: 2
   - code: 51
     packed_xy: 11
   - code: 51
@@ -186,7 +186,7 @@ screens:
   - code: 95
     packed_xy: 0
   - code: 48
-    packed_xy: 70
+    packed_xy: 69
   - code: 62
     packed_xy: 170
   - code: 62
@@ -195,6 +195,24 @@ screens:
     packed_xy: 166
   - code: 115
     packed_xy: 142
+  - code: 48
+    packed_xy: 179
+  - code: 48
+    packed_xy: 4
+  - code: 11
+    packed_xy: 103
+  - code: 11
+    packed_xy: 10
+  - code: 182
+    packed_xy: 165
+  - code: 182
+    packed_xy: 178
+  - code: 182
+    packed_xy: 12
+  - code: 182
+    packed_xy: 18
+  - code: 182
+    packed_xy: 131
 - id: FOREST_05
   objects:
   - code: 115
@@ -217,8 +235,6 @@ screens:
     packed_xy: 170
   - code: 9
     packed_xy: 104
-  - code: 9
-    packed_xy: 48
   - code: 9
     packed_xy: 6
   - code: 9
@@ -259,12 +275,14 @@ screens:
     packed_xy: 108
   - code: 23
     packed_xy: 73
-  - code: 23
-    packed_xy: 45
   - code: 26
     packed_xy: 109
   - code: 26
     packed_xy: 106
+  - code: 48
+    packed_xy: 81
+  - code: 65
+    packed_xy: 47
 - id: FOREST_06
   objects:
   - code: 194
@@ -286,7 +304,7 @@ screens:
   - code: 65
     packed_xy: 139
   - code: 65
-    packed_xy: 77
+    packed_xy: 109
   - code: 65
     packed_xy: 6
   - code: 65
@@ -322,7 +340,7 @@ screens:
   - code: 4
     packed_xy: 50
   - code: 4
-    packed_xy: 75
+    packed_xy: 43
 - id: FOREST_07
   objects:
   - code: 56
@@ -336,7 +354,7 @@ screens:
   - code: 7
     packed_xy: 34
   - code: 7
-    packed_xy: 68
+    packed_xy: 107
   - code: 7
     packed_xy: 109
   - code: 7
@@ -344,13 +362,13 @@ screens:
   - code: 7
     packed_xy: 147
   - code: 9
-    packed_xy: 38
+    packed_xy: 70
   - code: 9
-    packed_xy: 103
+    packed_xy: 104
   - code: 9
     packed_xy: 10
   - code: 9
-    packed_xy: 82
+    packed_xy: 19
   - code: 8
     packed_xy: 14
   - code: 65
@@ -359,8 +377,6 @@ screens:
     packed_xy: 18
   - code: 51
     packed_xy: 12
-  - code: 20
-    packed_xy: 4
   - code: 20
     packed_xy: 0
   - code: 23
@@ -374,7 +390,7 @@ screens:
   - code: 23
     packed_xy: 141
   - code: 166
-    packed_xy: 73
+    packed_xy: 4
   - code: 62
     packed_xy: 16
 - id: FOREST_08
