@@ -64,3 +64,18 @@ def test_validator_detects_blocking_collision(objects_lib):
     ])
     issues = validator.validate_screen(screen)
     assert any("Kolizja obiektów blokujących" in i.message for i in issues)
+
+
+def test_validator_detects_object_overlap(objects_lib):
+    validator = ProjectValidator(objects_lib)
+    # Dwa obiekty na nakładających się obszarach
+    # PALM_SWAMP (code 6) to 4x3 na (2, 2) -> zajmuje x: 2..5, y: 2..4
+    # TREE_2 (code 4) to 2x2 na (4, 3) -> nachodzi w (4, 3) i (5, 3)
+    screen = Screen(id="TEST_OVERLAP", objects=[
+        ObjectInstance(code=6, x=2, y=2),
+        ObjectInstance(code=4, x=4, y=3),
+    ])
+    issues = validator.validate_screen(screen)
+    overlap_errors = [i for i in issues if i.severity == "ERROR" and "Nakładanie się obiektów" in i.message]
+    assert len(overlap_errors) >= 1
+

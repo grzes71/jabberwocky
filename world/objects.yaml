@@ -49,8 +49,8 @@ objects:
     secret: false
   tiles: [0, 79, 114, 0, 203, 110, 111, 203, 0, 203, 203, 0]
   tags: [drzewo, animacja]
-- object: TREE_SMALL
-  id: TREE_SMALL
+- object: TREE_1
+  id: TREE_1
   code: 7
   size:
     width: 2
@@ -61,8 +61,8 @@ objects:
     secret: false
   tiles: [53, 54, 85, 86]
   tags: [drzewo]
-- object: BUSH_2_2
-  id: BUSH_2_2
+- object: BUSH_2_DOWN
+  id: BUSH_2_DOWN
   code: 8
   size:
     width: 2
@@ -97,8 +97,8 @@ objects:
     secret: false
   tiles: [230, 230, 243, 243, 243, 243, 229, 229]
   tags: [woda]
-- object: BUSH
-  id: BUSH
+- object: BUSH_1_DOWN
+  id: BUSH_1_DOWN
   code: 11
   size:
     width: 1
@@ -387,8 +387,8 @@ objects:
     secret: false
   tiles: [124, 0, 124]
   tags: [tło]
-- object: TREE_2_2
-  id: TREE_2_2
+- object: TREE_2_DOWN
+  id: TREE_2_DOWN
   code: 51
   size:
     width: 2
@@ -496,8 +496,8 @@ objects:
     secret: false
   tiles: [10, 11, 12]
   tags: [skała]
-- object: TREE_3_2
-  id: TREE_3_2
+- object: TREE_3_DOWN
+  id: TREE_3_DOWN
   code: 65
   size:
     width: 2
@@ -580,18 +580,6 @@ objects:
     secret: false
   tiles: [224, 225, 65, 66]
   tags: [dom]
-- object: ROCK_1_2
-  id: ROCK_1_2
-  code: 75
-  size:
-    width: 2
-    height: 2
-  flags:
-    blocking: true
-    interactive: false
-    secret: false
-  tiles: [0, 0, 10, 12]
-  tags: [skała]
 - object: SHED
   id: SHED
   code: 76
@@ -604,8 +592,8 @@ objects:
     secret: false
   tiles: [1, 3, 4, 33, 65, 66]
   tags: [dom]
-- object: WATERFALL
-  id: WATERFALL
+- object: WATERFALL_0
+  id: WATERFALL_0
   code: 78
   size:
     width: 6
@@ -725,8 +713,8 @@ objects:
     secret: false
   tiles: [224, 131, 131, 225, 122, 155, 156, 123]
   tags: [dom]
-- object: PALM_SWAMP_2
-  id: PALM_SWAMP_2
+- object: PALM_SWAMP_DOWN
+  id: PALM_SWAMP_DOWN
   code: 89
   size:
     width: 4
@@ -774,8 +762,8 @@ objects:
     secret: false
   tiles: [10, 12]
   tags: [skała]
-- object: STONE_BIG_2
-  id: STONE_BIG_2
+- object: STONE_BIG_DOWN
+  id: STONE_BIG_DOWN
   code: 94
   size:
     width: 4
@@ -786,8 +774,8 @@ objects:
     secret: false
   tiles: [0, 0, 0, 0, 10, 11, 9, 12]
   tags: [skała]
-- object: TREE_SMALL_2
-  id: TREE_SMALL_2
+- object: TREE_1_DOWN
+  id: TREE_1_DOWN
   code: 95
   size:
     width: 2
@@ -798,8 +786,8 @@ objects:
     secret: false
   tiles: [0, 0, 53, 54, 85, 86]
   tags: [drzewo]
-- object: WATERFALL_2
-  id: WATERFALL_2
+- object: WATERFALL_2_DOWN
+  id: WATERFALL_2_DOWN
   code: 96
   size:
     width: 8
@@ -1010,8 +998,8 @@ objects:
     secret: false
   tiles: [236, 230, 208, 243, 208, 243, 237, 229]
   tags: [woda]
-- object: ROCK_BIG
-  id: ROCK_BIG
+- object: ROCK_GREEN_LARGE
+  id: ROCK_GREEN_LARGE
   code: 115
   size:
     width: 7
@@ -1023,8 +1011,8 @@ objects:
   tiles: [0, 0, 13, 14, 15, 0, 0, 0, 13, 14, 74, 74, 15, 0, 13, 14, 74, 74, 74, 74,
     15]
   tags: [skała]
-- object: ROCK_BIG_2
-  id: ROCK_BIG_2
+- object: ROCK_BIG_2_DOWN
+  id: ROCK_BIG_2_DOWN
   code: 116
   size:
     width: 7
@@ -1033,11 +1021,11 @@ objects:
     blocking: true
     interactive: false
     secret: false
-  tiles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 0, 0, 0, 13, 14, 74, 74, 15, 0, 13,
-    14, 74, 74, 74, 74, 15]
+  tiles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 11, 12, 0, 0, 0, 10, 11, 34, 9, 12, 0, 10,
+    11, 34, 34, 34, 9, 12]
   tags: [skała]
-- object: ROCK_GREEN_2
-  id: ROCK_GREEN_2
+- object: ROCK_GREEN_DOWN
+  id: ROCK_GREEN_DOWN
   code: 117
   size:
     width: 3
@@ -1369,8 +1357,8 @@ objects:
     secret: false
   tiles: [96, 97, 65, 66]
   tags: [dom]
-- object: PALM_TREE_2
-  id: PALM_TREE_2
+- object: PALM_TREE_DOWN
+  id: PALM_TREE_DOWN
   code: 152
   size:
     width: 2
@@ -1507,8 +1495,8 @@ objects:
   tiles: [230, 230, 230, 148, 243, 243, 243, 210, 229, 248, 153, 210, 0, 208, 153,
     210]
   tags: [woda]
-- object: ROCK_2_2
-  id: ROCK_2_2
+- object: ROCK_2_DOWN
+  id: ROCK_2_DOWN
   code: 163
   size:
     width: 3
@@ -1531,8 +1519,8 @@ objects:
     secret: true
   tiles: [201]
   tags: [sekret]
-- object: STONE
-  id: STONE
+- object: STONE_HUGE
+  id: STONE_HUGE
   code: 165
   size:
     width: 7
@@ -1686,8 +1674,8 @@ objects:
     secret: false
   tiles: [64, 117, 39, 40]
   tags: [drzewo]
-- object: TREE_4_2
-  id: TREE_4_2
+- object: TREE_4_DOWN
+  id: TREE_4_DOWN
   code: 178
   size:
     width: 2
@@ -1722,8 +1710,8 @@ objects:
     secret: false
   tiles: [0, 241, 241, 0, 241, 241, 0, 241, 241]
   tags: [animacja]
-- object: BUSH_0
-  id: BUSH_0
+- object: BUSH_1
+  id: BUSH_1
   code: 182
   size:
     width: 1
@@ -1784,3 +1772,103 @@ objects:
   tiles: [232, 55, 55, 30, 31, 55, 55, 233, 122, 33, 33, 34, 195, 34, 195, 123, 122,
     27, 28, 157, 98, 98, 157, 123]
   tags: [dom]
+- object: ROCK_1_DOWN
+  id: ROCK_1_DOWN
+  code: 187
+  size:
+    width: 2
+    height: 2
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 10, 12]
+  tags: [skała]
+- object: STONE_HUGE_DOWN
+  id: STONE_HUGE_DOWN
+  code: 188
+  size:
+    width: 7
+    height: 4
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 11, 12, 0, 0, 0, 10, 11, 34, 9, 12, 0, 10,
+    11, 34, 34, 9, 9, 12]
+  tags: [skała]
+- object: WATERFALL_0_DOWN
+  id: WATERFALL_0_DOWN
+  code: 189
+  size:
+    width: 6
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 0, 0, 0, 0, 0, 10, 230, 230, 12, 0, 10, 11, 153, 153, 9, 12]
+  tags: [woda, skała]
+- object: WATERFALL_GREEN_DOWN
+  id: WATERFALL_GREEN_DOWN
+  code: 190
+  size:
+    width: 6
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 0, 0, 0, 0, 0, 13, 230, 230, 15, 0, 13, 14, 153, 153, 121, 15]
+  tags: [woda, skała]
+- object: ROCK_GREEN_LARGE_DOWN
+  id: ROCK_GREEN_LARGE_DOWN
+  code: 191
+  size:
+    width: 7
+    height: 4
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 0, 0, 0, 13, 14, 74, 74, 15, 0, 13,
+    14, 74, 74, 74, 74, 15]
+  tags: [skała]
+- object: WATERFALL_2
+  id: WATERFALL_2
+  code: 192
+  size:
+    width: 8
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 13, 230, 230, 15, 0, 0, 0, 13, 14, 153, 153, 121, 15, 0, 13, 14, 74,
+    153, 153, 74, 121, 15]
+  tags: [woda, skała]
+- object: ROCK_2x4_DOWN
+  id: ROCK_2x4_DOWN
+  code: 193
+  size:
+    width: 4
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 0, 0, 0, 10, 12, 0, 10, 11, 9, 12]
+  tags: [woda, skała]
+- object: ROCK_BIG_2
+  id: ROCK_BIG_2
+  code: 194
+  size:
+    width: 7
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 138, 139, 140, 0, 0, 0, 138, 139, 34, 9, 140, 0, 138, 139, 34, 34,
+    34, 9, 140]
+  tags: [skała]

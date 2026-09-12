@@ -1,0 +1,354 @@
+{
+    "characters": [
+        {
+            "index": 112,
+            "animation": [
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 100,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 10,
+                    "frames": [
+                        {
+                            "duration": 5,
+                            "data": "00 3C C3 83 C3 00 3C 2C"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "3C C3 83 C3 00 3C 2C 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "C3 83 C3 00 3C 2C 00 3C"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "83 C3 00 3C 2C 00 3C C3"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "C3 00 3C 2C 00 3C C3 83"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 3C 2C 00 3C C3 83 C3"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "3C 2C 00 3C C3 83 C3 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "2C 00 3C C3 83 C3 00 3C"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "index": 78,
+            "animation": [
+                {
+                    "repeat": 5,
+                    "frames": [
+                        {
+                            "duration": 50,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 00 00 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 00 00 88"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 00 88 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 88 00 CC "
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 88 00 CC CC"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 1,
+                    "frames": [
+                        {
+                            "duration": 50,
+                            "data": "00 00 00 00 88 00 CC CC"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 88 00 CC CC"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 88 00 CC"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 00 88 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 00 00 88"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 10,
+                    "frames": [
+                        {
+                            "duration": 50,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "index": 113,
+            "animation": [
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 40,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 10,
+                    "frames": [
+                        {
+                            "duration": 5,
+                            "data": "00 0C 3B 0C 00 30 EC 30"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "0C 3B 0C 00 30 EC 30 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "3B 0C 00 30 EC 30 00 0C"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "0C 00 30 EC 30 00 0C 3B"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 30 EC 30 00 0C 3B 0C"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "30 EC 30 00 0C 3B 0C 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "EC 30 00 0C 3B 0C 00 30"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "30 00 0C 3B 0C 00 30 EC"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "index": 25,
+            "animation": [
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 5,
+                            "data": "FF F3 3C FF FF CF 3C FF"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "FF FF F3 3C FF FF CF 3C"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "3C FF FF F3 3C FF FF CF"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "CF 3C FF FF F3 3C FF FF"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "FF CF 3C FF FF F3 3C FF"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "FF FF CF 3C FF FF F3 3C"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "3C FF FF CF 3C FF FF F3"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "F3 3C FF FF CF 3C FF FF"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "index": 124,
+            "animation": [
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 20,
+                            "data": "0C 30 33 0C CC 30 10 10"
+                        },
+                        {
+                            "duration": 20,
+                            "data": "C0 30 0C CC CC 30 10 10"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "index": 75,
+            "animation": [
+                {
+                    "repeat": 2,
+                    "frames": [
+                        {
+                            "duration": 50,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 30 00 00 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 F0 00 00 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 F3 00 00 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 F3 00 03 00"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 00 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 0C 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 00 3C 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 5,
+                            "data": "00 03 3C 00 F3 00 0F 30"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 1,
+                    "frames": [
+                        {
+                            "duration": 50,
+                            "data": "00 03 3C 00 F3 00 0F 30"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 0,
+                    "frames": [
+                        {
+                            "duration": 10,
+                            "data": "00 03 3C 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 3C 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 0C 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 00 00 F3 00 0F 30"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 00 00 F3 00 03 00"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 00 00 F3 00 00 00"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 00 00 F0 00 00 00"
+                        },
+                        {
+                            "duration": 10,
+                            "data": "00 00 00 00 30 00 00 00"
+                        }
+                    ]
+                },
+                {
+                    "repeat": 5,
+                    "frames": [
+                        {
+                            "duration": 50,
+                            "data": "00 00 00 00 00 00 00 00"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

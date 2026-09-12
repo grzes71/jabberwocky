@@ -25,6 +25,8 @@ class CanvasView(QWidget):
     screen_modified = Signal()
     cursor_position_changed = Signal(int, int)  # x, y w znakach
     selection_changed = Signal(object)          # ObjectInstance lub None
+    status_message_requested = Signal(str)
+    tool_mode_changed = Signal(str)             # "INSERT" lub "MOVE"
 
     def __init__(
         self,
@@ -40,7 +42,8 @@ class CanvasView(QWidget):
 
         self.current_screen: Optional[Screen] = None
         self.zoom: int = 4
-        self.mode: str = "DESIGN"  # "DESIGN" lub "ATARI"
+        self.mode: str = "DESIGN"       # "DESIGN" lub "ATARI"
+        self.tool_mode: str = "INSERT"  # "INSERT" (wstawianie) lub "MOVE" (przesuwanie)
 
         self.active_object_code: Optional[int] = None
         self.selected_instance: Optional[ObjectInstance] = None
@@ -61,7 +64,36 @@ class CanvasView(QWidget):
 
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setCursor(Qt.CursorShape.CrossCursor)
         self._update_size()
+
+    def set_tool_mode(self, mode: str):
+        """Ustawia tryb narzędzia: 'INSERT' (wstawianie obiektów) lub 'MOVE' (przesuwanie obiektów)."""
+        if mode in ("INSERT", "MOVE"):
+            self.tool_mode = mode
+            if self.is_dragging and mode != "MOVE":
+                self.is_dragging = False
+                if self.selected_instance:
+                    self.selected_instance.x = self.drag_orig_inst_x
+                    self.selected_instance.y = self.drag_orig_inst_y
+            self._update_cursor()
+            self.tool_mode_changed.emit(mode)
+            self.update()
+
+    def _update_cursor(self, raw_cx: Optional[int] = None, raw_cy: Optional[int] = None):
+        """Aktualizuje kursor myszy w zależności od trybu pracy i pozycji nad obiektem."""
+        if self.tool_mode == "INSERT":
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        elif self.tool_mode == "MOVE":
+            if self.is_dragging:
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            else:
+                if self.current_screen and raw_cx is not None and raw_cy is not None:
+                    hit = self.current_screen.get_object_at(raw_cx, raw_cy, self.objects_lib.by_code)
+                    if hit:
+                        self.setCursor(Qt.CursorShape.OpenHandCursor)
+                        return
+                self.setCursor(Qt.CursorShape.ArrowCursor)
 
     def set_screen(self, screen: Optional[Screen]):
         self.current_screen = screen
@@ -111,13 +143,21 @@ class CanvasView(QWidget):
         pos = event.position()
         self.is_mouse_over = True
         snap_x, snap_y = self._px_to_char_coord(pos.x(), pos.y())
-        
+
+        char_w = CHAR_PIXEL_WIDTH * self.zoom
+        char_h = CHAR_PIXEL_HEIGHT * self.zoom
+        raw_cx = int(pos.x() // char_w)
+        raw_cy = int(pos.y() // char_h)
+
+        if self.tool_mode == "MOVE" and not self.is_dragging:
+            self._update_cursor(raw_cx, raw_cy)
+
         if snap_x != self.hover_char_x or snap_y != self.hover_char_y:
             self.hover_char_x = snap_x
             self.hover_char_y = snap_y
             self.cursor_position_changed.emit(snap_x, snap_y)
             
-            if self.is_dragging and self.selected_instance and self.current_screen:
+            if self.tool_mode == "MOVE" and self.is_dragging and self.selected_instance and self.current_screen:
                 # Oblicz nową pozycję podczas przeciągania
                 dx = snap_x - self.drag_start_x
                 dy = snap_y - self.drag_start_y
@@ -127,7 +167,6 @@ class CanvasView(QWidget):
                 cand_y = (cand_y // GRID_STEP_Y) * GRID_STEP_Y
                 self.selected_instance.x = cand_x
                 self.selected_instance.y = cand_y
-                self.screen_modified.emit()
 
             self.update()
 
@@ -151,16 +190,27 @@ class CanvasView(QWidget):
         hit = self.current_screen.get_object_at(raw_cx, raw_cy, self.objects_lib.by_code)
 
         if event.button() == Qt.MouseButton.LeftButton:
-            if self.active_object_code is not None:
-                # Umieszczanie nowego obiektu
-                new_inst = ObjectInstance(code=self.active_object_code, x=snap_x, y=snap_y)
-                cmd = AddObjectCommand(self.current_screen, new_inst, on_change=self._on_model_changed)
-                self.undo_stack.push(cmd)
-                self.selected_instance = new_inst
-                self.selection_changed.emit(new_inst)
-                self.update()
-            else:
-                # Tryb selekcji / przeciągania
+            if self.tool_mode == "INSERT":
+                # Tryb 1: Wstawianie obiektów (domyślny)
+                if self.active_object_code is not None:
+                    obj_def = self.objects_lib.get_by_code(self.active_object_code)
+                    w = obj_def.size.width if obj_def else 2
+                    h = obj_def.size.height if obj_def else 2
+
+                    if not self.current_screen.can_place_object(snap_x, snap_y, w, h, self.objects_lib.by_code):
+                        self.status_message_requested.emit("Nie można umieścić obiektu: obszar jest zajęty przez inny obiekt lub wychodzi poza ekran.")
+                        return
+
+                    new_inst = ObjectInstance(code=self.active_object_code, x=snap_x, y=snap_y)
+                    cmd = AddObjectCommand(self.current_screen, new_inst, on_change=self._on_model_changed)
+                    self.undo_stack.push(cmd)
+                    self.selected_instance = new_inst
+                    self.selection_changed.emit(new_inst)
+                    self.update()
+                else:
+                    self.status_message_requested.emit("Wybierz obiekt z listy po lewej stronie, aby go wstawić.")
+            elif self.tool_mode == "MOVE":
+                # Tryb 2: Przesuwanie obiektów
                 self.selected_instance = hit
                 self.selection_changed.emit(hit)
                 if hit:
@@ -169,6 +219,7 @@ class CanvasView(QWidget):
                     self.drag_start_y = snap_y
                     self.drag_orig_inst_x = hit.x
                     self.drag_orig_inst_y = hit.y
+                    self._update_cursor()
                 self.update()
 
         elif event.button() == Qt.MouseButton.RightButton:
@@ -184,23 +235,39 @@ class CanvasView(QWidget):
     def mouseReleaseEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton and self.is_dragging:
             self.is_dragging = False
+            self._update_cursor()
             if self.selected_instance and self.current_screen:
                 final_x = self.selected_instance.x
                 final_y = self.selected_instance.y
+                sel_def = self.objects_lib.get_by_code(self.selected_instance.code)
+                w_chars = sel_def.size.width if sel_def else 2
+                h_chars = sel_def.size.height if sel_def else 2
+
                 if final_x != self.drag_orig_inst_x or final_y != self.drag_orig_inst_y:
-                    # Przywróć początkowe, aby QUndoCommand mógł wykonać formalne redo
+                    can_drop = self.current_screen.can_place_object(
+                        final_x, final_y,
+                        w_chars, h_chars,
+                        self.objects_lib.by_code,
+                        exclude=self.selected_instance
+                    )
+                    # Przywróć początkowe, aby model był spójny przed ew. MoveObjectCommand
                     self.selected_instance.x = self.drag_orig_inst_x
                     self.selected_instance.y = self.drag_orig_inst_y
-                    cmd = MoveObjectCommand(
-                        self.current_screen,
-                        self.selected_instance,
-                        self.drag_orig_inst_x,
-                        self.drag_orig_inst_y,
-                        final_x,
-                        final_y,
-                        on_change=self._on_model_changed
-                    )
-                    self.undo_stack.push(cmd)
+
+                    if can_drop:
+                        cmd = MoveObjectCommand(
+                            self.current_screen,
+                            self.selected_instance,
+                            self.drag_orig_inst_x,
+                            self.drag_orig_inst_y,
+                            final_x,
+                            final_y,
+                            on_change=self._on_model_changed
+                        )
+                        self.undo_stack.push(cmd)
+                    else:
+                        self.status_message_requested.emit("Nie można przesunąć obiektu: docelowy obszar pokrywa się z innym obiektem!")
+                        self._on_model_changed()
             self.update()
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -243,11 +310,19 @@ class CanvasView(QWidget):
 
     def paste_selected(self):
         if self.clipboard_instance and self.current_screen:
+            clip_def = self.objects_lib.get_by_code(self.clipboard_instance.code)
+            w = clip_def.size.width if clip_def else 2
+            h = clip_def.size.height if clip_def else 2
+
             # Wklej w miejscu kursora hover lub z przesunięciem +2, +2
-            target_x = self.hover_char_x if self.is_mouse_over else min(self.clipboard_instance.x + 2, SCREEN_WIDTH_CHARS - 2)
-            target_y = self.hover_char_y if self.is_mouse_over else min(self.clipboard_instance.y + 2, SCREEN_HEIGHT_CHARS - 2)
+            target_x = self.hover_char_x if self.is_mouse_over else min(self.clipboard_instance.x + 2, SCREEN_WIDTH_CHARS - w)
+            target_y = self.hover_char_y if self.is_mouse_over else min(self.clipboard_instance.y + 2, SCREEN_HEIGHT_CHARS - h)
             target_x = (target_x // GRID_STEP_X) * GRID_STEP_X
             target_y = (target_y // GRID_STEP_Y) * GRID_STEP_Y
+
+            if not self.current_screen.can_place_object(target_x, target_y, w, h, self.objects_lib.by_code):
+                self.status_message_requested.emit("Nie można wkleić obiektu: docelowy obszar jest zajęty lub wychodzi poza ekran!")
+                return
 
             new_inst = ObjectInstance(code=self.clipboard_instance.code, x=target_x, y=target_y)
             cmd = AddObjectCommand(self.current_screen, new_inst, on_change=self._on_model_changed)
@@ -302,7 +377,18 @@ class CanvasView(QWidget):
             sel_h = h_chars * CHAR_PIXEL_HEIGHT * self.zoom
             
             sel_rect = QRect(sel_px, sel_py, sel_w, sel_h)
-            painter.setPen(QPen(QColor(255, 230, 0), 2, Qt.PenStyle.DashLine))
+            pen_color = QColor(255, 230, 0)
+            if self.is_dragging and self.current_screen:
+                can_drop = self.current_screen.can_place_object(
+                    self.selected_instance.x, self.selected_instance.y,
+                    w_chars, h_chars,
+                    self.objects_lib.by_code,
+                    exclude=self.selected_instance
+                )
+                if not can_drop:
+                    pen_color = QColor(255, 0, 0)
+
+            painter.setPen(QPen(pen_color, 2, Qt.PenStyle.DashLine))
             painter.drawRect(sel_rect)
 
         # 4. Siatka 2x2 znaki (w trybie DESIGN)
@@ -322,8 +408,8 @@ class CanvasView(QWidget):
             painter.setPen(QPen(QColor(100, 120, 150), 2))
             painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
 
-        # 5. Podgląd "duszka" (ghost) przy najechaniu z wybranym obiektem do postawienia
-        if self.mode == "DESIGN" and self.is_mouse_over and self.active_object_code is not None:
+        # 5. Podgląd "duszka" (ghost) przy najechaniu z wybranym obiektem do postawienia (tylko w trybie INSERT)
+        if self.mode == "DESIGN" and self.tool_mode == "INSERT" and self.is_mouse_over and self.active_object_code is not None:
             ghost_def = self.objects_lib.get_by_code(self.active_object_code)
             if ghost_def:
                 ghost_pix = self.renderer.render_object_pixmap(ghost_def, zoom=self.zoom)
@@ -334,9 +420,12 @@ class CanvasView(QWidget):
                 painter.drawPixmap(gx, gy, ghost_pix)
                 painter.setOpacity(1.0)
 
-                # Zarys na zielono / czerwono w zależności od granic
-                fits = (self.hover_char_x + ghost_def.size.width <= SCREEN_WIDTH_CHARS and
-                        self.hover_char_y + ghost_def.size.height <= SCREEN_HEIGHT_CHARS)
+                # Zarys na zielono / czerwono w zależności od granic i kolizji z innymi obiektami
+                fits = self.current_screen.can_place_object(
+                    self.hover_char_x, self.hover_char_y,
+                    ghost_def.size.width, ghost_def.size.height,
+                    self.objects_lib.by_code
+                ) if self.current_screen else False
                 border_color = QColor(0, 255, 0) if fits else QColor(255, 0, 0)
                 painter.setPen(QPen(border_color, 2))
                 painter.drawRect(gx, gy, ghost_pix.width(), ghost_pix.height())

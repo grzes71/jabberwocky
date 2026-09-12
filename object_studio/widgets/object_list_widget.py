@@ -4,6 +4,8 @@ from PySide6.QtGui import QAction
 from ..models import Project, ObjectDefinition
 
 ALL_TAGS_OPTION = "(Wszystkie tagi)"
+ORDER_CODE_OPTION = "Code"
+ORDER_ID_OPTION = "ID (nazwa)"
 
 class ObjectListWidget(QWidget):
     object_selected = Signal(ObjectDefinition)
@@ -21,14 +23,34 @@ class ObjectListWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        # Kontrolki filtrowania i porządkowania
+        controls_layout = QVBoxLayout()
+        controls_layout.setSpacing(4)
+
         # Filtr tagów
         filter_layout = QHBoxLayout()
-        filter_layout.addWidget(QLabel("Filtr:"))
+        lbl_filter = QLabel("Filtr:")
+        lbl_filter.setFixedWidth(55)
+        filter_layout.addWidget(lbl_filter)
         self.combo_tag_filter = QComboBox()
         self.combo_tag_filter.addItem(ALL_TAGS_OPTION)
         self.combo_tag_filter.currentTextChanged.connect(self._on_filter_changed)
         filter_layout.addWidget(self.combo_tag_filter, 1)
-        layout.addLayout(filter_layout)
+        controls_layout.addLayout(filter_layout)
+
+        # Porządkowanie (Order)
+        order_layout = QHBoxLayout()
+        lbl_order = QLabel("Kolejność:")
+        lbl_order.setFixedWidth(55)
+        order_layout.addWidget(lbl_order)
+        self.combo_order = QComboBox()
+        self.combo_order.addItem(ORDER_CODE_OPTION, "code")
+        self.combo_order.addItem(ORDER_ID_OPTION, "id")
+        self.combo_order.currentIndexChanged.connect(self._on_order_changed)
+        order_layout.addWidget(self.combo_order, 1)
+        controls_layout.addLayout(order_layout)
+
+        layout.addLayout(controls_layout)
         
         self.list_widget = QListWidget()
         self.list_widget.itemSelectionChanged.connect(self._on_selection_changed)
@@ -77,6 +99,9 @@ class ObjectListWidget(QWidget):
 
     def _on_filter_changed(self, text):
         self.refresh_list(select_obj=self.current_object)
+
+    def _on_order_changed(self, index: int):
+        self.refresh_list(select_obj=self.current_object)
         
     def refresh_list(self, select_obj=None):
         self.list_widget.blockSignals(True)
@@ -87,8 +112,12 @@ class ObjectListWidget(QWidget):
             self.list_widget.blockSignals(False)
             return
             
-        # Sortowanie ułatwi widok
-        self.project.objects.sort(key=lambda x: x.code)
+        # Porządkowanie (Order) wg Code (domyślnie) lub ID (nazwy)
+        order_mode = self.combo_order.currentData() if hasattr(self, "combo_order") else "code"
+        if order_mode == "id":
+            self.project.objects.sort(key=lambda x: (str(x.id).lower(), x.code))
+        else:
+            self.project.objects.sort(key=lambda x: (x.code, str(x.id).lower()))
 
         selected_tag = self.combo_tag_filter.currentText()
         

@@ -25,6 +25,10 @@ class ProjectValidator:
         """Waliduje pojedynczy ekran pod kątem obiektów, ich granic i kolizji."""
         issues: List[ValidationIssue] = []
 
+        # Mapa zajętości kafelków dla wszystkich obiektów: (cx, cy) -> instancja
+        occupied_tiles = {}
+        reported_overlaps = set()
+
         # Mapa zajętości kafelków dla kolizji blokujących: (cx, cy) -> instancja
         blocking_tiles = {}
 
@@ -81,7 +85,32 @@ class ProjectValidator:
                     y=inst.y,
                 ))
 
-            # 4. Sprawdzanie kolizji blokujących
+            # 4. Sprawdzanie nakładania się obiektów (obszary nie mogą na siebie nachodzić)
+            for cy in range(inst.y, inst.y + h):
+                for cx in range(inst.x, inst.x + w):
+                    coord = (cx, cy)
+                    if coord in occupied_tiles:
+                        other = occupied_tiles[coord]
+                        pair_key = (id(inst), id(other)) if id(inst) < id(other) else (id(other), id(inst))
+                        if pair_key not in reported_overlaps:
+                            reported_overlaps.add(pair_key)
+                            other_def = self.objects_lib.get_by_code(other.code)
+                            other_name = other_def.id if other_def else f"CODE_{other.code}"
+                            issues.append(ValidationIssue(
+                                severity="ERROR",
+                                message=(
+                                    f"Nakładanie się obiektów: {obj_name} ({inst.x}, {inst.y}) "
+                                    f"oraz {other_name} ({other.x}, {other.y}) w punkcie {coord}"
+                                ),
+                                screen_id=screen.id,
+                                code=inst.code,
+                                x=inst.x,
+                                y=inst.y,
+                            ))
+                    else:
+                        occupied_tiles[coord] = inst
+
+            # 5. Sprawdzanie kolizji blokujących
             if obj_def.flags.blocking:
                 for cy in range(inst.y, inst.y + h):
                     for cx in range(inst.x, inst.x + w):

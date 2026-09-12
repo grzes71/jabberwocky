@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
-from .packing import pack_xy, unpack_xy
+from .packing import pack_xy, unpack_xy, SCREEN_WIDTH_CHARS, SCREEN_HEIGHT_CHARS
 
 
 @dataclass
@@ -71,6 +71,60 @@ class Screen:
             if inst.x <= x < inst.x + w and inst.y <= y < inst.y + h:
                 return inst
         return None
+
+    def get_overlapping_object(
+        self,
+        x: int,
+        y: int,
+        width: int = 2,
+        height: int = 2,
+        object_defs: Optional[Dict[int, ObjectDefinition]] = None,
+        exclude: Optional[ObjectInstance] = None,
+    ) -> Optional[ObjectInstance]:
+        """Zwraca pierwszą instancję obiektu, której obszar pokrywa się z [x, x+width) x [y, y+height)."""
+        for inst in self.objects:
+            if inst is exclude:
+                continue
+            iw, ih = 2, 2
+            if object_defs and inst.code in object_defs:
+                obj_def = object_defs[inst.code]
+                iw = obj_def.size.width
+                ih = obj_def.size.height
+            # Sprawdzenie nachodzenia prostokątów (AABB overlap)
+            if x < inst.x + iw and x + width > inst.x and y < inst.y + ih and y + height > inst.y:
+                return inst
+        return None
+
+    def can_place_object(
+        self,
+        x: int,
+        y: int,
+        width: int = 2,
+        height: int = 2,
+        object_defs: Optional[Dict[int, ObjectDefinition]] = None,
+        exclude: Optional[ObjectInstance] = None,
+    ) -> bool:
+        """Sprawdza, czy obiekt o wymiarach width x height mieści się na ekranie i nie nachodzi na żaden inny obiekt."""
+        if x < 0 or y < 0:
+            return False
+        if x + width > SCREEN_WIDTH_CHARS or y + height > SCREEN_HEIGHT_CHARS:
+            return False
+        return self.get_overlapping_object(x, y, width, height, object_defs=object_defs, exclude=exclude) is None
+
+    def can_place_instance(
+        self,
+        instance: ObjectInstance,
+        object_defs: Optional[Dict[int, ObjectDefinition]] = None,
+        exclude: Optional[ObjectInstance] = None,
+    ) -> bool:
+        """Sprawdza, czy instancja obiektu może zostać umieszczona na ekranie bez kolizji."""
+        w, h = 2, 2
+        if object_defs and instance.code in object_defs:
+            obj_def = object_defs[instance.code]
+            w = obj_def.size.width
+            h = obj_def.size.height
+        return self.can_place_object(instance.x, instance.y, w, h, object_defs=object_defs, exclude=exclude or instance)
+
 
 
 @dataclass

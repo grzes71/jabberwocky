@@ -8,7 +8,7 @@ screens:
 - id: FOREST_01
   objects:
   - code: 9
-    packed_xy: 34
+    packed_xy: 33
   - code: 9
     packed_xy: 10
   - code: 9
@@ -83,6 +83,16 @@ screens:
     packed_xy: 14
   - code: 20
     packed_xy: 138
+  - code: 92
+    packed_xy: 165
+  - code: 92
+    packed_xy: 173
+  - code: 92
+    packed_xy: 19
+  - code: 117
+    packed_xy: 7
+  - code: 117
+    packed_xy: 2
 - id: FOREST_03
   objects:
   - code: 11
@@ -101,8 +111,6 @@ screens:
     packed_xy: 131
   - code: 115
     packed_xy: 144
-  - code: 75
-    packed_xy: 0
   - code: 4
     packed_xy: 3
   - code: 4
@@ -129,6 +137,258 @@ screens:
     packed_xy: 135
   - code: 164
     packed_xy: 103
+- id: FOREST_04
+  objects:
+  - code: 51
+    packed_xy: 35
+  - code: 51
+    packed_xy: 11
+  - code: 51
+    packed_xy: 104
+  - code: 51
+    packed_xy: 114
+  - code: 9
+    packed_xy: 129
+  - code: 9
+    packed_xy: 78
+  - code: 9
+    packed_xy: 7
+  - code: 9
+    packed_xy: 19
+  - code: 95
+    packed_xy: 140
+  - code: 95
+    packed_xy: 132
+  - code: 95
+    packed_xy: 16
+  - code: 95
+    packed_xy: 0
+  - code: 48
+    packed_xy: 70
+  - code: 62
+    packed_xy: 170
+  - code: 62
+    packed_xy: 162
+  - code: 166
+    packed_xy: 166
+  - code: 115
+    packed_xy: 142
+- id: FOREST_05
+  objects:
+  - code: 115
+    packed_xy: 129
+  - code: 115
+    packed_xy: 140
+  - code: 92
+    packed_xy: 166
+  - code: 92
+    packed_xy: 167
+  - code: 8
+    packed_xy: 68
+  - code: 8
+    packed_xy: 9
+  - code: 125
+    packed_xy: 169
+  - code: 125
+    packed_xy: 18
+  - code: 22
+    packed_xy: 179
+  - code: 22
+    packed_xy: 170
+  - code: 9
+    packed_xy: 104
+  - code: 9
+    packed_xy: 47
+  - code: 9
+    packed_xy: 6
+  - code: 9
+    packed_xy: 2
+  - code: 7
+    packed_xy: 75
+  - code: 7
+    packed_xy: 13
+  - code: 7
+    packed_xy: 114
+  - code: 7
+    packed_xy: 19
+  - code: 95
+    packed_xy: 133
+  - code: 65
+    packed_xy: 144
+  - code: 182
+    packed_xy: 49
+  - code: 182
+    packed_xy: 8
+  - code: 182
+    packed_xy: 4
+  - code: 92
+    packed_xy: 70
+  - code: 187
+    packed_xy: 97
+  - code: 187
+    packed_xy: 11
+  - code: 166
+    packed_xy: 177
+- id: FOREST_06
+  objects:
+  - code: 194
+    packed_xy: 133
+  - code: 92
+    packed_xy: 172
+  - code: 166
+    packed_xy: 161
+  - code: 166
+    packed_xy: 176
+  - code: 51
+    packed_xy: 35
+  - code: 51
+    packed_xy: 105
+  - code: 51
+    packed_xy: 142
+  - code: 51
+    packed_xy: 131
+  - code: 51
+    packed_xy: 50
+  - code: 65
+    packed_xy: 139
+  - code: 65
+    packed_xy: 45
+  - code: 65
+    packed_xy: 6
+  - code: 65
+    packed_xy: 147
+  - code: 7
+    packed_xy: 10
+  - code: 7
+    packed_xy: 16
+  - code: 7
+    packed_xy: 2
+  - code: 7
+    packed_xy: 97
+  - code: 9
+    packed_xy: 112
+  - code: 83
+    packed_xy: 40
+  - code: 83
+    packed_xy: 69
+  - code: 182
+    packed_xy: 75
+  - code: 26
+    packed_xy: 14
+  - code: 26
+    packed_xy: 15
+  - code: 20
+    packed_xy: 8
+- id: FOREST_07
+  objects:
+  - code: 56
+    packed_xy: 166
+  - code: 115
+    packed_xy: 130
+  - code: 194
+    packed_xy: 142
+  - code: 193
+    packed_xy: 138
+  - code: 7
+    packed_xy: 34
+  - code: 7
+    packed_xy: 68
+  - code: 7
+    packed_xy: 76
+  - code: 7
+    packed_xy: 48
+  - code: 7
+    packed_xy: 147
+  - code: 9
+    packed_xy: 38
+  - code: 9
+    packed_xy: 104
+  - code: 9
+    packed_xy: 10
+  - code: 9
+    packed_xy: 82
+  - code: 8
+    packed_xy: 14
+  - code: 65
+    packed_xy: 129
+  - code: 51
+    packed_xy: 18
+  - code: 51
+    packed_xy: 12
+  - code: 20
+    packed_xy: 4
+  - code: 20
+    packed_xy: 0
+  - code: 23
+    packed_xy: 8
+  - code: 22
+    packed_xy: 168
+  - code: 22
+    packed_xy: 172
+  - code: 22
+    packed_xy: 78
+  - code: 23
+    packed_xy: 45
+  - code: 166
+    packed_xy: 73
+  - code: 62
+    packed_xy: 16
+- id: FOREST_08
+  objects:
+  - code: 62
+    packed_xy: 166
+  - code: 62
+    packed_xy: 176
+  - code: 165
+    packed_xy: 138
+  - code: 166
+    packed_xy: 162
+  - code: 193
+    packed_xy: 136
+  - code: 92
+    packed_xy: 175
+  - code: 92
+    packed_xy: 178
+  - code: 7
+    packed_xy: 34
+  - code: 7
+    packed_xy: 100
+  - code: 9
+    packed_xy: 38
+  - code: 9
+    packed_xy: 13
+  - code: 9
+    packed_xy: 106
+  - code: 11
+    packed_xy: 4
+  - code: 7
+    packed_xy: 10
+  - code: 48
+    packed_xy: 174
+  - code: 48
+    packed_xy: 165
+  - code: 48
+    packed_xy: 16
+  - code: 48
+    packed_xy: 5
+  - code: 95
+    packed_xy: 103
+  - code: 95
+    packed_xy: 79
+  - code: 177
+    packed_xy: 19
+  - code: 178
+    packed_xy: 82
+  - code: 177
+    packed_xy: 76
+  - code: 182
+    packed_xy: 179
+  - code: 182
+    packed_xy: 18
+  - code: 182
+    packed_xy: 8
+  - code: 182
+    packed_xy: 131
 labyrinths:
 - id: LEVEL_01
   name: Tulgey Forest
@@ -136,3 +396,8 @@ labyrinths:
   - FOREST_01
   - FOREST_02
   - FOREST_03
+  - FOREST_04
+  - FOREST_05
+  - FOREST_06
+  - FOREST_07
+  - FOREST_08

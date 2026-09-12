@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QDockWidget, QToolBar, QStatusBar, QLabel, QComboBox, QFileDialog, 
     QMessageBox, QInputDialog
 )
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QUndoStack
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QUndoStack, QActionGroup
 from PySide6.QtCore import Qt
 
 from ..model.models import Project, Screen, ObjectInstance, Labyrinth
@@ -103,6 +103,8 @@ class MainWindow(QMainWindow):
         self.canvas.screen_modified.connect(self._on_screen_modified)
         self.canvas.cursor_position_changed.connect(self._on_cursor_moved)
         self.canvas.selection_changed.connect(self._on_selection_changed)
+        self.canvas.status_message_requested.connect(lambda msg: self.statusBar().showMessage(msg, 3000))
+        self.canvas.tool_mode_changed.connect(self._sync_tool_mode)
 
         scroll_area.setWidget(self.canvas)
         self.setCentralWidget(scroll_area)
@@ -195,6 +197,26 @@ class MainWindow(QMainWindow):
         self.act_delete.setShortcut(QKeySequence.StandardKey.Delete)
         self.act_delete.triggered.connect(self.canvas.delete_selected)
 
+        # Narzędzia edycji na ekranie
+        self.tool_action_group = QActionGroup(self)
+        self.tool_action_group.setExclusive(True)
+
+        self.act_tool_insert = QAction("Wstawianie obiektów", self)
+        self.act_tool_insert.setCheckable(True)
+        self.act_tool_insert.setChecked(True)
+        self.act_tool_insert.setShortcut(QKeySequence("1"))
+        self.act_tool_insert.setToolTip("Tryb wstawiania obiektów z palety na ekran (Skrót: 1)")
+        self.act_tool_insert.triggered.connect(lambda: self._set_tool_mode("INSERT"))
+        self.tool_action_group.addAction(self.act_tool_insert)
+
+        self.act_tool_move = QAction("Przesuwanie obiektów", self)
+        self.act_tool_move.setCheckable(True)
+        self.act_tool_move.setChecked(False)
+        self.act_tool_move.setShortcut(QKeySequence("2"))
+        self.act_tool_move.setToolTip("Tryb przesuwania istniejących obiektów myszką (Skrót: 2)")
+        self.act_tool_move.triggered.connect(lambda: self._set_tool_mode("MOVE"))
+        self.tool_action_group.addAction(self.act_tool_move)
+
         # Widok
         self.act_mode_design = QAction("Tryb DESIGN (Siatka)", self)
         self.act_mode_design.setCheckable(True)
@@ -235,6 +257,9 @@ class MainWindow(QMainWindow):
         menu_edit.addAction(self.act_copy)
         menu_edit.addAction(self.act_paste)
         menu_edit.addAction(self.act_delete)
+        menu_edit.addSeparator()
+        menu_edit.addAction(self.act_tool_insert)
+        menu_edit.addAction(self.act_tool_move)
 
         # Widok
         menu_view = menubar.addMenu("Widok")
@@ -261,8 +286,18 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self.act_redo)
         toolbar.addSeparator()
 
+        # Narzędzie pracy na ekranie: Wstawianie / Przesuwanie
+        toolbar.addWidget(QLabel(" Narzędzie: "))
+        self.tool_combo = QComboBox()
+        self.tool_combo.addItem("Wstawianie obiektów (1)", "INSERT")
+        self.tool_combo.addItem("Przesuwanie obiektów (2)", "MOVE")
+        self.tool_combo.currentIndexChanged.connect(self._on_tool_combo_changed)
+        toolbar.addWidget(self.tool_combo)
+
+        toolbar.addSeparator()
+
         # Przełącznik trybu DESIGN / ATARI
-        toolbar.addWidget(QLabel(" Tryb: "))
+        toolbar.addWidget(QLabel(" Widok: "))
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["DESIGN", "ATARI"])
         self.mode_combo.currentTextChanged.connect(self._set_view_mode)
@@ -281,12 +316,14 @@ class MainWindow(QMainWindow):
 
     def _init_status_bar(self):
         sb = self.statusBar()
+        self.status_tool_label = QLabel("Narzędzie: Wstawianie")
         self.status_screen_label = QLabel("Ekran: -")
         self.status_objects_label = QLabel("Obiekty: 0")
         self.status_pos_label = QLabel("Kursor: (0, 0)")
         self.status_grid_label = QLabel("Siatka: 2×2 znaki")
         self.status_valid_label = QLabel("Status: OK")
 
+        sb.addPermanentWidget(self.status_tool_label)
         sb.addPermanentWidget(self.status_screen_label)
         sb.addPermanentWidget(self.status_objects_label)
         sb.addPermanentWidget(self.status_pos_label)
@@ -314,8 +351,32 @@ class MainWindow(QMainWindow):
     def _on_palette_object_selected(self, code: int):
         if code >= 0:
             self.canvas.set_active_object(code)
+            self._set_tool_mode("INSERT")
         else:
             self.canvas.set_active_object(None)
+
+    def _set_tool_mode(self, mode: str):
+        """Ustawia tryb edycji: 'INSERT' lub 'MOVE' i synchronizuje kontrolki UI."""
+        if mode not in ("INSERT", "MOVE"):
+            return
+        self.canvas.set_tool_mode(mode)
+        self._sync_tool_mode(mode)
+
+    def _sync_tool_mode(self, mode: str):
+        """Synchronizuje stan akcji, comboboxa i paska statusu z trybem narzędzia."""
+        self.act_tool_insert.setChecked(mode == "INSERT")
+        self.act_tool_move.setChecked(mode == "MOVE")
+        self.tool_combo.blockSignals(True)
+        idx = self.tool_combo.findData(mode)
+        if idx >= 0:
+            self.tool_combo.setCurrentIndex(idx)
+        self.tool_combo.blockSignals(False)
+        self.status_tool_label.setText(f"Narzędzie: {'Wstawianie' if mode == 'INSERT' else 'Przesuwanie'}")
+
+    def _on_tool_combo_changed(self, index: int):
+        mode = self.tool_combo.currentData()
+        if mode:
+            self._set_tool_mode(mode)
 
     def _on_screen_modified(self):
         self._set_dirty(True)
