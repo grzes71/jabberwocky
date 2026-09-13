@@ -228,6 +228,13 @@ dlist_intro
 
     dta DL_JVB, a(dlist_intro)
 
+; Display list for Level Name Screen (ANTIC Mode 2, 1 centered line, 232 scanlines total)
+dlist_level_name
+    :14 dta DL_BLANK8
+    dta DL_MODE_2 | DL_LMS, a(STUB_VRAM)
+    :14 dta DL_BLANK8
+    dta DL_JVB, a(dlist_level_name)
+
 ; Display list for Main Game Screen (1 line ANTIC 2 + 11 lines ANTIC 5 + 1 line ANTIC 2)
 dlist_game
     dta DL_BLANK8
@@ -288,6 +295,11 @@ game_font_data
 ; DRAGON FIRE COLLISION & DESTRUCTION ENGINE
 ; ==============================================================================
     icl 'engine/flame_collision.asm'
+
+; ==============================================================================
+; LEVEL NAME SCREEN ENGINE
+; ==============================================================================
+    icl 'engine/level_name.asm'
 
 ; ==============================================================================
 ; SPRITE ASSETS (High RAM)

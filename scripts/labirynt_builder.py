@@ -135,6 +135,32 @@ def load_colors(colors_path: Optional[Path]) -> Dict[str, int]:
     return defaults
 
 
+
+POLISH_CHAR_MAP = {
+    'ą': 64, 'ć': 65, 'ę': 66, 'ł': 67, 'ń': 68, 'ó': 69, 'ś': 70, 'ź': 71, 'ż': 72,
+    'Ą': 73, 'Ć': 74, 'Ę': 75, 'Ł': 76, 'Ń': 77, 'Ó': 78, 'Ś': 79, 'Ź': 80, 'Ż': 81,
+}
+
+
+def format_mads_text_with_len(text: str) -> str:
+    """Format string with length prefix and ANTIC display codes."""
+    parts = [str(len(text))]
+    cur_ascii: List[str] = []
+    for ch in text:
+        if ch in POLISH_CHAR_MAP:
+            if cur_ascii:
+                escaped = "".join(cur_ascii).replace("'", "''")
+                parts.append(f"d'{escaped}'")
+                cur_ascii = []
+            parts.append(str(POLISH_CHAR_MAP[ch]))
+        else:
+            cur_ascii.append(ch)
+    if cur_ascii:
+        escaped = "".join(cur_ascii).replace("'", "''")
+        parts.append(f"d'{escaped}'")
+    return ", ".join(parts)
+
+
 def generate_world_asm(
     project: Project,
     objects_lib: ObjectsLibrary,
@@ -260,12 +286,15 @@ def generate_world_asm(
     asm.append("; LABYRINTH DATA & INDEX TABLES")
     asm.append("; ------------------------------------------------------------------------------")
     lab_screen_labels: List[str] = []
+    lab_name_labels: List[str] = []
     lab_counts: List[str] = []
 
     for idx, lab in enumerate(project.labyrinths):
         safe_lab_id = lab.id.replace("-", "_").replace(" ", "_")
         lbl = f"lab_{safe_lab_id}_screens"
+        name_lbl = f"lab_{safe_lab_id}_name"
         lab_screen_labels.append(lbl)
+        lab_name_labels.append(name_lbl)
         lab_counts.append(str(len(lab.screens)))
 
         asm.append(f"; --- Labyrinth {idx}: {lab.id} ({lab.name}) ---")
@@ -275,6 +304,8 @@ def generate_world_asm(
             asm.append("    dta " + ", ".join(indices))
         else:
             asm.append("    dta 0")
+        asm.append(f"{name_lbl}")
+        asm.append(f"    dta {format_mads_text_with_len(lab.name)}")
         asm.append("")
 
     if project.labyrinths:
@@ -284,10 +315,16 @@ def generate_world_asm(
         asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in lab_screen_labels))
         asm.append("labyrinths_screens_hi")
         asm.append("    dta " + ", ".join(f">{lbl}" for lbl in lab_screen_labels))
+        asm.append("labyrinths_name_lo")
+        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in lab_name_labels))
+        asm.append("labyrinths_name_hi")
+        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in lab_name_labels))
     else:
         asm.append("labyrinths_screen_count dta 0")
         asm.append("labyrinths_screens_lo   dta 0")
         asm.append("labyrinths_screens_hi   dta 0")
+        asm.append("labyrinths_name_lo      dta 0")
+        asm.append("labyrinths_name_hi      dta 0")
     asm.append("")
 
     # 4. Object Metadata Tables (size, flags for collision/interaction)

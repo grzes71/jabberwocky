@@ -84,7 +84,7 @@ ROT_CHARS_PROC_ASM  := $(GEN_DIR)/rotated_chars_proc.asm
 ANIM_CHARS_JSON     := chars/animated.json
 ANIM_SCRIPT         := scripts/gen_animated_charset.py
 ANIM_CHARS_ASM      := $(GEN_DIR)/animated_chars.asm
-ASM_ENGINE          := engine/charset_anim.asm engine/sound.asm engine/flame_collision.asm
+ASM_ENGINE          := $(wildcard engine/*.asm)
 
 $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM): $(ROT_CHARS_JSON) $(ROT_SCRIPT)
 	@echo === Generowanie tablic obrotu znakow $(ROT_CHARS_JSON) do $(GEN_DIR)/ ===

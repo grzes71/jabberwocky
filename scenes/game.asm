@@ -262,25 +262,8 @@ game_init
     jsr render_dragon
 
     ; Set initial DLI vector (points to top status bar handler)
-    lda #<dli_game_top
-    sta VDSLST
-    lda #>dli_game_top
-    sta VDSLST+1
-
-    ; Install Deferred VBLANK vector via OS SETVBV
-    ldy #<vblank_game
-    ldx #>vblank_game
-    lda #7                      ; Type 7 = Deferred VBLANK
-    jsr SETVBV
-
-    ; Enable playfield DMA + single-line PMG + Player DMA + Missile DMA (%00111110 = $3E)
-    lda #$3E
-    sta SDMCTL
-    sta DMACTL
-
-    ; Enable NMI: VBLANK ($40) + DLI ($80) = $C0
-    lda #$C0
-    sta NMIEN
+    ; Start game with the centered level name screen (fade in / out)
+    jsr show_level_name_screen
     rts
 
 game_run
@@ -312,10 +295,18 @@ game_run
     sta game_state
     rts
 
+@run_level_name
+    jsr update_level_name_screen
+    rts
+
 @not_start
     ; Reset OS Attract Mode timer to prevent color shifting during gameplay
     lda #0
     sta ATRACT
+
+    ; Check if currently on level name screen substate
+    lda game_substate
+    beq @run_level_name
 
     ; 3. Check if dragon is in death sequence
     lda dragon_dying
@@ -1863,6 +1854,9 @@ respawn_dragon
 
     ; Re-render dragon in respawned position
     jsr render_dragon
+
+    ; Show level name screen before restarting flight
+    jsr show_level_name_screen
     rts
 
 ; ==============================================================================
@@ -2355,6 +2349,7 @@ advance_to_next_level
     inc LEVEL
     jsr update_bottom_status
     jsr init_level_screens
+    jsr show_level_name_screen
     rts
 
 ; --- Playfield Horizontal Scrolling & World Streaming Variables ---
@@ -2367,6 +2362,11 @@ scroll_accum_lo     dta 0           ; 16-bit scroll sub-pixel accumulator (low b
 scroll_accum_hi     dta 0           ; 16-bit scroll sub-pixel accumulator (high byte)
 hscrol_fine         dta 3           ; Fine horizontal scroll value (0..3 color clocks) for HSCROL ($D404)
 incoming_screen_ptr dta a(0)        ; 16-bit pointer to currently streaming screen's VRAM buffer
+
+; --- Game Substate Variables ---
+SUBSTATE_LEVEL_NAME = 0
+SUBSTATE_PLAYING    = 1
+game_substate       dta SUBSTATE_LEVEL_NAME
 
 calc_fps_sec        dta 0
 calc_temp           dta 0

@@ -115,6 +115,9 @@ def test_labirynt_builder_cli(tmp_path):
     assert "screens_blocking_lo" in content
     assert "screens_blocking_hi" in content
     assert "labyrinths_screens_lo" in content
+    assert "labyrinths_name_lo" in content
+    assert "labyrinths_name_hi" in content
+    assert "lab_LEVEL_01_name" in content
     assert "world_color_bk      dta 0" in content
     assert "world_color_pf0     dta 20" in content
     assert "world_color_pf1     dta 24" in content
