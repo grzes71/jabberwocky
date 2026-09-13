@@ -10,9 +10,10 @@ Address  Size   Variable Name        Description
 --------------------------------------------------------------------------------
 $80      2      PTR_SRC              16-bit pointer: source address (e.g. text)
 $82      2      PTR_DST              16-bit pointer: destination address (e.g. VRAM)
-$84      1      ZP_TMP               8-bit temporary scratchpad
+$84      2      ZP_TMP               8-bit temporary scratchpad
+$86      2      PTR_BLK              16-bit pointer: blocking grid address (BLOCKING_VRAM)
 --------------------------------------------------------------------------------
-[ FREE ZERO PAGE: $85 - $FF (123 bytes free / 128 bytes total) ]
+[ FREE ZERO PAGE: $88 - $FF (120 bytes free / 128 bytes total) ]
 
 --------------------------------------------------------------------------------
 2. SYSTEM VECTORS ($0200 - $03FF)
@@ -27,17 +28,17 @@ $02E0 - $02E1          2   RUNAD                vector
 Start - End     Size (B)   Segment / Name       Type
 --------------------------------------------------------------------------------
 [ FREE SPACE: $0800 - $27FF (8192 bytes) ]
-$2800 - $3F50       5969   CODE                 code
-[ FREE SPACE: $3F51 - $3FFF (175 bytes) ]
+$2800 - $3F79       6010   CODE                 code
+[ FREE SPACE: $3F7A - $3FFF (134 bytes) ]
 $4000 - $5B67       7016   VRAM                 data
 [ FREE SPACE: $5B68 - $67FF (3224 bytes) ]
 $6800 - $6919        282   DLIST                display_list
 [ FREE SPACE: $691A - $6FFF (1766 bytes) ]
-$7000 - $9056       8279   FONT                 data
-[ FREE SPACE: $9057 - $BFFF (12201 bytes) ]
+$7000 - $A24F      12880   FONT                 data
+[ FREE SPACE: $A250 - $BFFF (7600 bytes) ]
 ================================================================================
-Total RAM Used:   21546 bytes
-Total Free RAM:   25558 bytes (54.3% free headroom)
+Total RAM Used:   26188 bytes
+Total Free RAM:   20916 bytes (44.4% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

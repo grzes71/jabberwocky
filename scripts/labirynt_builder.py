@@ -57,6 +57,41 @@ def bake_screen_vram(screen: Screen, objects_lib: ObjectsLibrary) -> bytearray:
     return vram
 
 
+def bake_screen_blocking(screen: Screen, objects_lib: ObjectsLibrary) -> bytearray:
+    """Pre-renders a 440-byte blocking matrix for a given screen.
+    Only solid tiles of objects with blocking: true are marked as 1.
+    Empty/transparent tiles (tile == 0) and non-blocking objects remain 0.
+    """
+    blocking = bytearray(SCREEN_VRAM_SIZE)
+
+    for inst in screen.objects:
+        obj_def = objects_lib.get_by_code(inst.code)
+        if not obj_def or not obj_def.flags.blocking:
+            continue
+
+        w = obj_def.size.width
+        h = obj_def.size.height
+        tiles = obj_def.tiles
+
+        tile_idx = 0
+        for dy in range(h):
+            target_y = inst.y + dy
+            if target_y >= SCREEN_HEIGHT_CHARS:
+                break
+            for dx in range(w):
+                target_x = inst.x + dx
+                if target_x >= SCREEN_WIDTH_CHARS:
+                    break
+                if tile_idx < len(tiles):
+                    tile = tiles[tile_idx] & 0xFF
+                    if tile != 0:
+                        offset = target_y * SCREEN_WIDTH_CHARS + target_x
+                        blocking[offset] = 1
+                tile_idx += 1
+
+    return blocking
+
+
 def format_vram_dta(vram: bytearray) -> List[str]:
     """Formats 440 bytes of VRAM into 11 lines of 40-byte MADS dta statements."""
     lines: List[str] = []
@@ -145,11 +180,16 @@ def generate_world_asm(
     asm.append("; ------------------------------------------------------------------------------")
     for idx, screen in enumerate(project.screens):
         vram = bake_screen_vram(screen, objects_lib)
+        blocking = bake_screen_blocking(screen, objects_lib)
         safe_id = screen.id.replace("-", "_").replace(" ", "_")
 
         asm.append(f"; --- Screen {idx}: {screen.id} ---")
         asm.append(f"screen_{safe_id}_vram")
         asm.extend(format_vram_dta(vram))
+        asm.append("")
+
+        asm.append(f"screen_{safe_id}_blocking")
+        asm.extend(format_vram_dta(blocking))
         asm.append("")
 
         asm.append(f"screen_{safe_id}_obj_count")
@@ -176,6 +216,7 @@ def generate_world_asm(
     asm.append("; ------------------------------------------------------------------------------")
     if project.screens:
         vram_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_vram" for s in project.screens]
+        blocking_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_blocking" for s in project.screens]
         codes_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_codes" for s in project.screens]
         coords_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_coords" for s in project.screens]
         counts = [f"{len(s.objects)}" for s in project.screens]
@@ -184,6 +225,11 @@ def generate_world_asm(
         asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in vram_labels))
         asm.append("screens_vram_hi")
         asm.append("    dta " + ", ".join(f">{lbl}" for lbl in vram_labels))
+
+        asm.append("screens_blocking_lo")
+        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in blocking_labels))
+        asm.append("screens_blocking_hi")
+        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in blocking_labels))
 
         asm.append("screens_obj_count")
         asm.append("    dta " + ", ".join(counts))
@@ -200,6 +246,8 @@ def generate_world_asm(
     else:
         asm.append("screens_vram_lo      dta 0")
         asm.append("screens_vram_hi      dta 0")
+        asm.append("screens_blocking_lo  dta 0")
+        asm.append("screens_blocking_hi  dta 0")
         asm.append("screens_obj_count    dta 0")
         asm.append("screens_codes_lo     dta 0")
         asm.append("screens_codes_hi     dta 0")

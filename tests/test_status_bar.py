@@ -641,6 +641,14 @@ def test_check_dragon_crash_collisions_emulation(project_root: Path, labels: Dic
         while mpu.pc != 0x0100:
             mpu.step()
 
+    # Initialize level screens and position dragon overlapping blocking object 12 (cols 8..9, rows 0..1)
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.pc = labels["INIT_LEVEL_SCREENS"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+    mpu.memory[labels["DRAGON_Y"]] = 40
+
     # Test collision with each playfield color (PF0 = 0x01, PF1 = 0x02, PF2 = 0x04)
     for mask in (0x01, 0x02, 0x04, 0x09):  # 0x09 is PF0 + PF3 (crash takes priority)
         mpu.memory[dragon_dying] = 0

@@ -5,7 +5,7 @@ import pytest
 
 from labirynt_studio.model.models import Project, Screen, ObjectInstance, ObjectDefinition, ObjectSize, ObjectFlags
 from labirynt_studio.io.objects_loader import ObjectsLibrary
-from scripts.labirynt_builder import bake_screen_vram, SCREEN_VRAM_SIZE, generate_world_asm
+from scripts.labirynt_builder import bake_screen_vram, bake_screen_blocking, SCREEN_VRAM_SIZE, generate_world_asm
 
 
 def test_bake_screen_vram_accuracy():
@@ -39,6 +39,53 @@ def test_bake_screen_vram_accuracy():
     assert vram[40] == 0
 
 
+def test_bake_screen_blocking_accuracy():
+    """Weryfikuje, że w siatce blokowania tylko niezerowe kafle obiektów blocking=True dają 1."""
+    lib = ObjectsLibrary()
+    # Obiekt 2x2 z pustym kaflem (0) w lewym górnym rogu, blocking = True
+    obj_blk = ObjectDefinition(
+        id="BLOCKING_OBJ",
+        code=10,
+        size=ObjectSize(width=2, height=2),
+        flags=ObjectFlags(blocking=True),
+        tiles=[0, 52, 83, 84]
+    )
+    # Obiekt nieblokujący (np. decor/tło/krzak), blocking = False
+    obj_decor = ObjectDefinition(
+        id="DECOR_OBJ",
+        code=20,
+        size=ObjectSize(width=2, height=2),
+        flags=ObjectFlags(blocking=False),
+        tiles=[60, 61, 62, 63]
+    )
+    lib.objects.extend([obj_blk, obj_decor])
+    lib.by_code[10] = obj_blk
+    lib.by_code[20] = obj_decor
+
+    screen = Screen(
+        id="SCR_BLOCK_TEST",
+        objects=[
+            ObjectInstance(code=10, x=4, y=2),
+            ObjectInstance(code=20, x=10, y=2),
+        ]
+    )
+    blocking = bake_screen_blocking(screen, lib)
+
+    assert len(blocking) == SCREEN_VRAM_SIZE
+    # Obiekt blocking: kafelek (4, 2) to 0 -> NIE BLOKUJE!
+    assert blocking[2 * 40 + 4] == 0
+    # Kafelki (5, 2), (4, 3), (5, 3) to 52, 83, 84 != 0 -> BLOKUJĄ (1)
+    assert blocking[2 * 40 + 5] == 1
+    assert blocking[3 * 40 + 4] == 1
+    assert blocking[3 * 40 + 5] == 1
+
+    # Obiekt decor: wszystkie kafle mają być 0 pomimo niezerowych kodów kafli
+    assert blocking[2 * 40 + 10] == 0
+    assert blocking[2 * 40 + 11] == 0
+    assert blocking[3 * 40 + 10] == 0
+    assert blocking[3 * 40 + 11] == 0
+
+
 def test_labirynt_builder_cli(tmp_path):
     """Test wywołania skryptu przez CLI z parametrami."""
     out_asm = tmp_path / "test_world.asm"
@@ -60,10 +107,13 @@ def test_labirynt_builder_cli(tmp_path):
     assert f"WORLD_SCREENS_COUNT     = {len(proj.screens)}" in content
     assert "WORLD_LABYRINTHS_COUNT  = 1" in content
     assert "screen_FOREST_01_vram" in content
+    assert "screen_FOREST_01_blocking" in content
     assert "screen_FOREST_02_vram" in content
     assert "screen_FOREST_03_vram" in content
     assert "screens_vram_lo" in content
     assert "screens_vram_hi" in content
+    assert "screens_blocking_lo" in content
+    assert "screens_blocking_hi" in content
     assert "labyrinths_screens_lo" in content
     assert "world_color_bk      dta 0" in content
     assert "world_color_pf0     dta 20" in content

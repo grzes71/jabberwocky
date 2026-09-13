@@ -218,6 +218,7 @@ game_init
     sta dragon_dying
     sta dragon_recharging
     sta dragon_p0pf
+    sta flame_m_pf
     sta death_timer
     sta death_move_timer
     sta HITCLR
@@ -253,6 +254,9 @@ game_init
 
     ; Initialize charset animations state
     jsr init_charset_animation
+
+    ; Initialize flame collision state
+    jsr init_flame_collision
 
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon
@@ -1174,6 +1178,11 @@ dli_game_bottom
 
     lda P0PF                    ; Capture dragon collisions from action area
     sta dragon_p0pf
+    lda M0PF                    ; Capture missile flame collisions from action area
+    ora M1PF
+    ora M2PF
+    ora M3PF
+    sta flame_m_pf
     sta HITCLR                  ; Clear collision latches before bottom status bar begins
 
     lda #0                      ; Reset HSCROL for bottom status bar
@@ -1282,6 +1291,9 @@ vblank_game
 
     ; Check dragon collisions with playfield (PF0/1/2 = crash, PF3 = recharge)
     jsr check_dragon_collisions
+
+    ; Check flame collision with world objects (destroys objects in path of fire)
+    jsr check_flame_object_collision
 
     ; Update dragon energy bar counter during VBLANK (depletion)
     jsr update_energy_bar
@@ -1436,6 +1448,10 @@ update_energy_bar
     lda ZP_TMP
     and #$07
     beq @check_pf3
+
+    ; Only crash if collision was with an active BLOCKING object (blocking == true)
+    jsr check_dragon_blocking_collision
+    bcc @check_pf3              ; Non-blocking object (or clear air) -> do not crash!
 
     ; Wall/obstacle collision: crash sound and death!
     lda #0
@@ -1787,9 +1803,11 @@ respawn_dragon
     sta dragon_dying
     sta dragon_recharging
     sta dragon_p0pf
+    sta flame_m_pf
     sta death_timer
     sta death_move_timer
     sta HITCLR
+    jsr init_flame_collision
     sta dragon_sub_y
     sta dragon_vel_lo
     sta dragon_vel_hi
@@ -2014,6 +2032,7 @@ init_level_screens
     ; Load screen 0 of this labyrinth into cols 4..43
     jsr setup_incoming_screen_ptr
     jsr load_world_screen
+    jsr init_blocking_cols
 
     ; Check if labyrinth has a screen 1
     lda lab_total_screens
@@ -2182,6 +2201,7 @@ shift_vram_left
 
 scroll_playfield_step
     jsr shift_vram_left
+    jsr shift_blocking_cols
 
     lda level_tail_cols
     beq @stream_screen_col

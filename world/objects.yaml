@@ -8,11 +8,10 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 230, 243, 243]
-  tags: [woda]
 - object: TREE_2
   id: TREE_2
   code: 4
@@ -32,7 +31,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [243, 243, 229, 229]
@@ -92,7 +91,7 @@ objects:
     width: 2
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 230, 243, 243, 243, 243, 229, 229]
@@ -140,7 +139,7 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [208, 153, 153, 210, 208, 153, 153, 210]
@@ -284,7 +283,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [240, 240, 240, 240]
@@ -296,7 +295,7 @@ objects:
     width: 2
     height: 1
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [243, 243]
@@ -308,7 +307,7 @@ objects:
     width: 1
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [113, 113]
@@ -320,7 +319,7 @@ objects:
     width: 2
     height: 1
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [206, 206]
@@ -332,7 +331,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [247, 153, 153, 210, 243, 153, 153, 210, 243, 153, 153, 210, 229, 229, 229,
@@ -345,7 +344,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [236, 230, 230, 230, 208, 153, 153, 243, 208, 153, 153, 243, 208, 153, 153,
@@ -430,7 +429,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [0, 0, 206, 206]
@@ -478,7 +477,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [208, 153, 153, 249, 208, 153, 153, 243, 208, 153, 153, 243, 237, 229, 229,
@@ -515,7 +514,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [208, 243, 237, 229]
@@ -527,7 +526,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [243, 210, 229, 235]
@@ -539,7 +538,7 @@ objects:
     width: 1
     height: 1
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [240]
@@ -623,7 +622,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 148, 243, 210]
@@ -635,7 +634,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [153, 153, 153, 153]
@@ -732,7 +731,7 @@ objects:
     width: 2
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 148, 243, 210, 243, 210, 229, 235]
@@ -744,7 +743,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 230, 230, 148, 243, 153, 243, 210, 243, 153, 153, 210, 248, 153, 153,
@@ -806,7 +805,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [236, 230, 208, 243]
@@ -818,7 +817,7 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 153, 153, 230, 243, 243, 243, 243]
@@ -953,7 +952,7 @@ objects:
     width: 8
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [236, 230, 230, 230, 230, 230, 230, 148, 208, 243, 243, 243, 243, 243, 243,
@@ -993,7 +992,7 @@ objects:
     width: 2
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [236, 230, 208, 243, 208, 243, 237, 229]
@@ -1080,7 +1079,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [243, 243, 243, 243]
@@ -1092,7 +1091,7 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [243, 153, 153, 210, 248, 153, 153, 210]
@@ -1242,7 +1241,7 @@ objects:
     width: 1
     height: 1
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [241]
@@ -1254,7 +1253,7 @@ objects:
     width: 1
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [241, 241]
@@ -1278,7 +1277,7 @@ objects:
     width: 1
     height: 1
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [206]
@@ -1426,7 +1425,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [208, 153, 210, 0, 208, 153, 249, 230, 208, 243, 243, 243, 237, 229, 229,
@@ -1439,7 +1438,7 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [208, 153, 153, 210, 237, 229, 229, 235]
@@ -1451,7 +1450,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [0, 208, 153, 210, 230, 247, 153, 210, 243, 243, 243, 210, 229, 229, 229,
@@ -1464,7 +1463,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [236, 230, 230, 230, 208, 243, 243, 243, 208, 153, 246, 229, 208, 153, 210,
@@ -1477,7 +1476,7 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [236, 230, 230, 148, 208, 153, 153, 210]
@@ -1489,7 +1488,7 @@ objects:
     width: 4
     height: 4
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [230, 230, 230, 148, 243, 243, 243, 210, 229, 248, 153, 210, 0, 208, 153,
@@ -1573,7 +1572,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [202, 202, 202, 202]
@@ -1585,7 +1584,7 @@ objects:
     width: 1
     height: 1
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [247]
@@ -1597,7 +1596,7 @@ objects:
     width: 1
     height: 1
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [249]
@@ -1621,7 +1620,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [133, 133, 133, 133]
@@ -1633,7 +1632,7 @@ objects:
     width: 2
     height: 1
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [133, 133]
@@ -1645,7 +1644,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [0, 208, 0, 208]
@@ -1657,7 +1656,7 @@ objects:
     width: 1
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [210, 210]
@@ -1693,7 +1692,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [241, 241, 241, 241]
@@ -1705,7 +1704,7 @@ objects:
     width: 3
     height: 3
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [0, 241, 241, 0, 241, 241, 0, 241, 241]
@@ -1729,11 +1728,11 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: true
+    blocking: false
     interactive: false
     secret: false
   tiles: [0, 10, 12, 0, 10, 11, 9, 12]
-  tags: [woda, skała]
+  tags: [skała]
 - object: PORT_MIKRO
   id: PORT_MIKRO
   code: 184
@@ -1858,7 +1857,7 @@ objects:
     interactive: false
     secret: false
   tiles: [0, 0, 0, 0, 0, 10, 12, 0, 10, 11, 9, 12]
-  tags: [woda, skała]
+  tags: [skała]
 - object: ROCK_BIG_2
   id: ROCK_BIG_2
   code: 194

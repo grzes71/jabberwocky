@@ -13,6 +13,7 @@ VRAM_ADDR       = $4000
 STUB_VRAM       = $5C00             ; 960-byte text buffer ($5C00-$5FBF)
 GAME_ACTION_VRAM = $6000            ; 528-byte action playfield ($6000-$620F, 11 lines Antic 5 with HSCROL)
 GAME_STATUS_VRAM = $6300            ; 80-byte status bar ($6300-$634F, 2 lines Antic 2)
+BLOCKING_VRAM    = $6400            ; 528-byte spatial blocking grid ($6400-$660F, 11 lines Antic 5)
 FONT_ADDR       = $7000             ; 1024-byte font ($7000-$73FF, 1KB aligned)
 GAME_FONT_ADDR  = $7400             ; 1024-byte action playfield font ($7400-$77FF, 1KB aligned)
 WORLD_DATA_ADDR = $7800             ; World data (screens, labyrinths, objects)
@@ -282,6 +283,11 @@ game_font_data
 ; SOUND ENGINE & AUDIO TABLES
 ; ==============================================================================
     icl 'engine/sound.asm'
+
+; ==============================================================================
+; DRAGON FIRE COLLISION & DESTRUCTION ENGINE
+; ==============================================================================
+    icl 'engine/flame_collision.asm'
 
 ; ==============================================================================
 ; SPRITE ASSETS (High RAM)

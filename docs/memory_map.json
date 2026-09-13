@@ -16,15 +16,15 @@
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3F50",
-    "size": 5969,
+    "end_address": "$3F79",
+    "size": 6010,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3F51",
+    "start_address": "$3F7A",
     "end_address": "$3FFF",
-    "size": 175,
+    "size": 134,
     "type": "free"
   },
   {
@@ -58,15 +58,15 @@
   {
     "name": "FONT",
     "start_address": "$7000",
-    "end_address": "$9056",
-    "size": 8279,
+    "end_address": "$A24F",
+    "size": 12880,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$9057",
+    "start_address": "$A250",
     "end_address": "$BFFF",
-    "size": 12201,
+    "size": 7600,
     "type": "free"
   }
 ]

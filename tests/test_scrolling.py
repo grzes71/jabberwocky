@@ -135,6 +135,7 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
 
     # Check that visible columns 4..43 match Screen 0
     screen0_vram = labels["SCREEN_FOREST_01_VRAM"]
+    screen0_blk = labels["SCREEN_FOREST_01_BLOCKING"]
     action_vram = labels["GAME_ACTION_VRAM"]
     for r in range(11):
         for c in range(40):
@@ -150,9 +151,16 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
             actual = mpu.memory[action_vram + r * 48 + 44 + c]
             assert actual == expected, f"Row {r} margin col {c}: expected {expected}, got {actual}"
 
+    # Check that dragon blocking columns match cols 4 and 5 of Screen 0
+    col8_base = labels["BLOCKING_COL8"]
+    col9_base = labels["BLOCKING_COL9"]
+    for r in range(11):
+        assert mpu.memory[col8_base + r] == mpu.memory[screen0_blk + r * 40 + 4], f"Row {r} col 8 blocking mismatch"
+        assert mpu.memory[col9_base + r] == mpu.memory[screen0_blk + r * 40 + 5], f"Row {r} col 9 blocking mismatch"
+
 
 def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[str, int]):
-    """Test that scroll_playfield_step injects column 4 of screen 1 into column 47 of VRAM."""
+    """Test that scroll_playfield_step injects column 4 of screen 1 into column 47 of VRAM and shifts blocking cols."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
@@ -166,12 +174,20 @@ def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[s
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 5
 
     # Check that column 47 in each row equals column 4 from screen 1 (screen_FOREST_02_vram)
+    screen0_blk = labels["SCREEN_FOREST_01_BLOCKING"]
     screen1_vram = labels["SCREEN_FOREST_02_VRAM"]
     action_vram = labels["GAME_ACTION_VRAM"]
     for r in range(11):
         expected_char = mpu.memory[screen1_vram + r * 40 + 4]  # col 4 of row r
         actual_char = mpu.memory[action_vram + r * 48 + 47]  # col 47 of row r
         assert actual_char == expected_char, f"Row {r} col 47: expected {expected_char}, got {actual_char}"
+
+    # Check that dragon blocking columns shifted: col 8 gets col 5, col 9 gets col 6 of Screen 0
+    col8_base = labels["BLOCKING_COL8"]
+    col9_base = labels["BLOCKING_COL9"]
+    for r in range(11):
+        assert mpu.memory[col8_base + r] == mpu.memory[screen0_blk + r * 40 + 5], f"Row {r} col 8 shifted mismatch"
+        assert mpu.memory[col9_base + r] == mpu.memory[screen0_blk + r * 40 + 6], f"Row {r} col 9 shifted mismatch"
 
 
 def test_update_world_scrolling_fine_scroll(project_root: Path, labels: Dict[str, int]):
