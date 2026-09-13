@@ -34,11 +34,11 @@ $4000 - $5B67       7016   VRAM                 data
 [ FREE SPACE: $5B68 - $67FF (3224 bytes) ]
 $6800 - $693B        316   DLIST                display_list
 [ FREE SPACE: $693C - $6FFF (1732 bytes) ]
-$7000 - $A447      13384   FONT                 data
-[ FREE SPACE: $A448 - $BFFF (7096 bytes) ]
+$7000 - $A806      14343   FONT                 data
+[ FREE SPACE: $A807 - $BFFF (6137 bytes) ]
 ================================================================================
-Total RAM Used:   26713 bytes
-Total Free RAM:   20391 bytes (43.3% free headroom)
+Total RAM Used:   27672 bytes
+Total Free RAM:   19432 bytes (41.3% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

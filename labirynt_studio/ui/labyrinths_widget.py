@@ -1,12 +1,74 @@
 """Panel boczny zarządzania labiryntami i przypisywaniem do nich ekranów."""
 
-from typing import Optional
+from typing import Optional, Set, Tuple
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, 
-    QPushButton, QInputDialog, QMessageBox, QLabel, QSplitter
+    QPushButton, QInputDialog, QMessageBox, QLabel, QSplitter,
+    QDialog, QFormLayout, QLineEdit, QDialogButtonBox
 )
 from PySide6.QtCore import Qt, Signal
 from ..model.models import Project, Labyrinth
+
+
+class LabyrinthDialog(QDialog):
+    """Okno dialogowe tworzenia oraz edycji ID i nazwy poziomu labiryntu."""
+
+    def __init__(
+        self,
+        lab_id: str = "",
+        lab_name: str = "",
+        existing_ids: Optional[Set[str]] = None,
+        is_new: bool = False,
+        parent: Optional[QWidget] = None,
+    ):
+        super().__init__(parent)
+        self.setWindowTitle("Nowy labirynt" if is_new else f"Edycja poziomu — {lab_id}")
+        self.setMinimumWidth(360)
+
+        layout = QFormLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        self.id_edit = QLineEdit(lab_id)
+        self.id_edit.setPlaceholderText("np. LEVEL_01")
+        self.name_edit = QLineEdit(lab_name)
+        self.name_edit.setPlaceholderText("np. Tulgey Forest")
+
+        layout.addRow("ID labiryntu:", self.id_edit)
+        layout.addRow("Nazwa poziomu:", self.name_edit)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._validate_and_accept)
+        buttons.rejected.connect(self.reject)
+        layout.addRow(buttons)
+
+        self.existing_ids = existing_ids or set()
+        self.old_id = lab_id if not is_new else None
+        self.is_new = is_new
+
+        if is_new:
+            self.id_edit.setFocus()
+        else:
+            self.name_edit.setFocus()
+            self.name_edit.selectAll()
+
+    def _validate_and_accept(self):
+        clean_id = self.id_edit.text().strip().upper()
+        if not clean_id:
+            QMessageBox.warning(self, "Błąd", "ID labiryntu nie może być puste.")
+            self.id_edit.setFocus()
+            return
+        if self.is_new or clean_id != self.old_id:
+            if clean_id in self.existing_ids:
+                QMessageBox.warning(self, "Błąd", f"Labirynt o ID '{clean_id}' już istnieje.")
+                self.id_edit.setFocus()
+                return
+        self.accept()
+
+    def get_data(self) -> Tuple[str, str]:
+        return self.id_edit.text().strip().upper(), self.name_edit.text().strip()
 
 
 class LabyrinthsWidget(QWidget):
@@ -33,16 +95,23 @@ class LabyrinthsWidget(QWidget):
 
         self.lab_list = QListWidget()
         self.lab_list.currentItemChanged.connect(self._on_lab_selected)
+        self.lab_list.itemDoubleClicked.connect(self._on_lab_double_clicked)
         top_layout.addWidget(self.lab_list)
 
-        lab_btns = QHBoxLayout()
+        lab_btns_1 = QHBoxLayout()
         self.btn_new_lab = QPushButton("Nowy")
         self.btn_new_lab.clicked.connect(self._create_labyrinth)
+        self.btn_rename_lab = QPushButton("Zmień nazwę")
+        self.btn_rename_lab.clicked.connect(self._rename_labyrinth)
+        lab_btns_1.addWidget(self.btn_new_lab)
+        lab_btns_1.addWidget(self.btn_rename_lab)
+        top_layout.addLayout(lab_btns_1)
+
+        lab_btns_2 = QHBoxLayout()
         self.btn_delete_lab = QPushButton("Usuń")
         self.btn_delete_lab.clicked.connect(self._delete_labyrinth)
-        lab_btns.addWidget(self.btn_new_lab)
-        lab_btns.addWidget(self.btn_delete_lab)
-        top_layout.addLayout(lab_btns)
+        lab_btns_2.addWidget(self.btn_delete_lab)
+        top_layout.addLayout(lab_btns_2)
 
         splitter.addWidget(top_widget)
 
@@ -81,9 +150,9 @@ class LabyrinthsWidget(QWidget):
         self.project = project
         self.refresh()
 
-    def refresh(self):
-        cur_lab_id = None
-        if self.lab_list.currentItem():
+    def refresh(self, select_id: Optional[str] = None):
+        cur_lab_id = select_id
+        if not cur_lab_id and self.lab_list.currentItem():
             cur_lab_id = self.lab_list.currentItem().data(Qt.ItemDataRole.UserRole)
 
         self.lab_list.blockSignals(True)
@@ -127,23 +196,44 @@ class LabyrinthsWidget(QWidget):
             item.setData(Qt.ItemDataRole.UserRole, sid)
             self.screen_list.addItem(item)
 
+    def _on_lab_double_clicked(self, item: QListWidgetItem):
+        self._rename_labyrinth()
+
     def _on_screen_double_clicked(self, item: QListWidgetItem):
         sid = item.data(Qt.ItemDataRole.UserRole)
         if sid:
             self.screen_requested.emit(sid)
 
     def _create_labyrinth(self):
-        lab_id, ok = QInputDialog.getText(self, "Nowy labirynt", "Podaj ID labiryntu (np. LEVEL_01):")
-        if ok and lab_id.strip():
-            clean_id = lab_id.strip().upper()
-            if self.project.get_labyrinth(clean_id):
-                QMessageBox.warning(self, "Błąd", f"Labirynt '{clean_id}' już istnieje.")
-                return
-            name, _ = QInputDialog.getText(self, "Nazwa labiryntu", "Podaj opisową nazwę (opcjonalnie):")
-            new_lab = Labyrinth(id=clean_id, name=name.strip(), screens=[])
+        existing_ids = {l.id for l in self.project.labyrinths}
+        dlg = LabyrinthDialog(existing_ids=existing_ids, is_new=True, parent=self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            clean_id, name = dlg.get_data()
+            new_lab = Labyrinth(id=clean_id, name=name, screens=[])
             self.project.labyrinths.append(new_lab)
-            self.refresh()
+            self.refresh(select_id=clean_id)
             self.labyrinths_changed.emit()
+
+    def _rename_labyrinth(self):
+        lab = self._get_current_lab()
+        if not lab:
+            QMessageBox.information(self, "Informacja", "Najpierw wybierz labirynt z listy.")
+            return
+        existing_ids = {l.id for l in self.project.labyrinths}
+        dlg = LabyrinthDialog(
+            lab_id=lab.id,
+            lab_name=lab.name,
+            existing_ids=existing_ids,
+            is_new=False,
+            parent=self,
+        )
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            clean_id, name = dlg.get_data()
+            if clean_id != lab.id or name != lab.name:
+                lab.id = clean_id
+                lab.name = name
+                self.refresh(select_id=clean_id)
+                self.labyrinths_changed.emit()
 
     def _delete_labyrinth(self):
         lab = self._get_current_lab()

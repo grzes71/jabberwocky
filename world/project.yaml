@@ -172,17 +172,15 @@ screens:
   - code: 9
     packed_xy: 129
   - code: 9
-    packed_xy: 78
+    packed_xy: 77
   - code: 9
     packed_xy: 7
   - code: 9
-    packed_xy: 19
+    packed_xy: 81
   - code: 95
     packed_xy: 140
   - code: 95
     packed_xy: 132
-  - code: 95
-    packed_xy: 16
   - code: 95
     packed_xy: 0
   - code: 48
@@ -213,6 +211,10 @@ screens:
     packed_xy: 18
   - code: 182
     packed_xy: 131
+  - code: 48
+    packed_xy: 111
+  - code: 177
+    packed_xy: 15
 - id: FOREST_05
   objects:
   - code: 115
@@ -256,7 +258,7 @@ screens:
   - code: 92
     packed_xy: 70
   - code: 187
-    packed_xy: 97
+    packed_xy: 33
   - code: 166
     packed_xy: 177
   - code: 15
@@ -352,47 +354,53 @@ screens:
   - code: 193
     packed_xy: 138
   - code: 7
-    packed_xy: 34
+    packed_xy: 67
   - code: 7
     packed_xy: 107
   - code: 7
-    packed_xy: 109
+    packed_xy: 77
   - code: 7
-    packed_xy: 48
+    packed_xy: 81
   - code: 7
-    packed_xy: 147
+    packed_xy: 19
   - code: 9
-    packed_xy: 70
+    packed_xy: 69
   - code: 9
-    packed_xy: 104
+    packed_xy: 105
   - code: 9
     packed_xy: 10
   - code: 9
-    packed_xy: 19
+    packed_xy: 98
   - code: 8
     packed_xy: 14
   - code: 65
     packed_xy: 129
   - code: 51
-    packed_xy: 18
+    packed_xy: 146
   - code: 51
-    packed_xy: 12
+    packed_xy: 79
   - code: 20
     packed_xy: 0
   - code: 23
-    packed_xy: 8
+    packed_xy: 103
   - code: 22
     packed_xy: 168
   - code: 22
     packed_xy: 172
   - code: 22
-    packed_xy: 178
+    packed_xy: 179
   - code: 23
     packed_xy: 141
   - code: 166
-    packed_xy: 4
+    packed_xy: 2
   - code: 62
+    packed_xy: 12
+  - code: 51
+    packed_xy: 39
+  - code: 48
     packed_xy: 16
+  - code: 48
+    packed_xy: 65
 - id: FOREST_08
   objects:
   - code: 62
@@ -449,9 +457,71 @@ screens:
     packed_xy: 8
   - code: 182
     packed_xy: 131
+- id: FOREST_09
+  objects:
+  - code: 177
+    packed_xy: 2
+  - code: 177
+    packed_xy: 71
+  - code: 177
+    packed_xy: 47
+  - code: 178
+    packed_xy: 132
+  - code: 178
+    packed_xy: 146
+  - code: 95
+    packed_xy: 129
+  - code: 95
+    packed_xy: 141
+  - code: 51
+    packed_xy: 137
+  - code: 9
+    packed_xy: 5
+  - code: 9
+    packed_xy: 102
+  - code: 9
+    packed_xy: 80
+  - code: 9
+    packed_xy: 143
+  - code: 11
+    packed_xy: 78
+  - code: 11
+    packed_xy: 1
+  - code: 7
+    packed_xy: 107
+  - code: 7
+    packed_xy: 10
+  - code: 7
+    packed_xy: 18
+  - code: 189
+    packed_xy: 133
+  - code: 187
+    packed_xy: 12
+  - code: 166
+    packed_xy: 162
+  - code: 166
+    packed_xy: 176
+  - code: 92
+    packed_xy: 98
+  - code: 187
+    packed_xy: 65
+  - code: 187
+    packed_xy: 67
+  - code: 92
+    packed_xy: 100
+  - code: 56
+    packed_xy: 170
+  - code: 92
+    packed_xy: 172
+  - code: 92
+    packed_xy: 104
+  - code: 8
+    packed_xy: 9
+  - code: 8
+    packed_xy: 17
 labyrinths:
 - id: LEVEL_01
-  name: Tulgey Forest
+  name: Krzaki Wytępy
   screens:
   - FOREST_01
   - FOREST_02
@@ -461,3 +531,4 @@ labyrinths:
   - FOREST_06
   - FOREST_07
   - FOREST_08
+  - FOREST_09
