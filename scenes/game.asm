@@ -258,6 +258,9 @@ game_init
     ; Initialize flame collision state
     jsr init_flame_collision
 
+    ; Restore all secret objects in world data (new game run)
+    jsr restore_all_secrets
+
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon
 
@@ -595,6 +598,9 @@ game_run
 @render_frame
     ; Update bottom status bar display (handles blinking when LIVES == 1)
     jsr update_bottom_status
+
+    ; Update secret collected pickup chime sound
+    jsr update_secret_sound
 
     ; 5. Commit/render sprite to Player 0 buffer & missiles to M_ADDR
     jsr render_dragon
@@ -1439,6 +1445,9 @@ update_energy_bar
     lda ZP_TMP
     and #$07
     beq @check_pf3
+
+    ; Check for secret object collection first!
+    jsr check_dragon_secret_collision
 
     ; Only crash if collision was with an active BLOCKING object (blocking == true)
     jsr check_dragon_blocking_collision

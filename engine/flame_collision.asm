@@ -50,6 +50,15 @@ vram_row_offsets_hi
     dta >(GAME_ACTION_VRAM + 9 * 48)
     dta >(GAME_ACTION_VRAM + 10 * 48)
 
+; Screen 40-column row start offset lookup table (11 rows of 40 bytes each)
+screen40_row_offsets_lo
+    dta <(0 * 40), <(1 * 40), <(2 * 40), <(3 * 40), <(4 * 40), <(5 * 40)
+    dta <(6 * 40), <(7 * 40), <(8 * 40), <(9 * 40), <(10 * 40)
+
+screen40_row_offsets_hi
+    dta >(0 * 40), >(1 * 40), >(2 * 40), >(3 * 40), >(4 * 40), >(5 * 40)
+    dta >(6 * 40), >(7 * 40), >(8 * 40), >(9 * 40), >(10 * 40)
+
 ; ==============================================================================
 ; DATA STORAGE (High RAM)
 ; ==============================================================================
@@ -88,6 +97,9 @@ fc_cur_vram_x           dta 0
 
 fc_erase_r              dta 0
 fc_erase_c              dta 0
+fc_sec_idx              dta 0
+fc_tile_offset          dta 0
+fc_base_ptr             dta a(0)
 
 ; ==============================================================================
 ; init_flame_collision
@@ -761,6 +773,7 @@ shift_blocking_vram_left    = shift_blocking_cols
 @chk_row
     lda blocking_col8,x
     ora blocking_col9,x
+    and #$01                    ; ONLY bit 0 is blocking wall/obstacle
     bne @collision_hit
     inx
     cpx dc_dragon_row_max_p1
@@ -773,5 +786,579 @@ shift_blocking_vram_left    = shift_blocking_cols
     sec
     rts
 .endp
+
+; ==============================================================================
+; check_dragon_secret_collision
+; Ultra-fast check of blocking_col8 and blocking_col9 for secret flag ($04).
+; Dragon spans scanlines dragon_y .. dragon_y + 25 at VRAM columns 8..9.
+; If secret object hit: erases object, increments score, plays chime.
+; Returns:
+;   Carry SET (SEC)   = Secret object hit and collected
+;   Carry CLEAR (CLC) = No secret collision
+; Clobbers: A, X
+; ==============================================================================
+.proc check_dragon_secret_collision
+    ; Compute dragon row bounds (0..10)
+    lda dragon_y
+    sec
+    sbc #34
+    bcs @rel_start_pos
+    lda #0
+@rel_start_pos
+    lsr
+    lsr
+    lsr
+    lsr
+    sta dc_dragon_row_min
+
+    lda dragon_y
+    sec
+    sbc #9
+    bcs @rel_end_pos
+    lda #0
+@rel_end_pos
+    lsr
+    lsr
+    lsr
+    lsr
+    cmp #11
+    bcc @row_max_ok
+    lda #10
+@row_max_ok
+    clc
+    adc #1
+    sta dc_dragon_row_max_p1
+
+    ldx dc_dragon_row_min
+@chk_row
+    lda blocking_col8,x
+    ora blocking_col9,x
+    and #$04                    ; Bit 2: secret object!
+    bne @found_secret
+    inx
+    cpx dc_dragon_row_max_p1
+    bcc @chk_row
+
+    clc
+    rts
+
+@found_secret
+    ; Preserve ZP pointers on stack
+    lda PTR_SRC
+    pha
+    lda PTR_SRC+1
+    pha
+    lda PTR_DST
+    pha
+    lda PTR_DST+1
+    pha
+    lda PTR_BLK
+    pha
+    lda PTR_BLK+1
+    pha
+
+    ; Fetch labyrinth screen list pointer for current_level_idx
+    ldx current_level_idx
+    lda labyrinths_screens_lo,x
+    sta PTR_SRC
+    lda labyrinths_screens_hi,x
+    sta PTR_SRC+1
+
+    ; 1. Left Screen: exists if level_screen_pos > 0
+    lda level_screen_pos
+    beq @skip_left_screen
+
+    ; If incoming_col_idx >= 40, left screen has scrolled past column 8
+    lda incoming_col_idx
+    cmp #40
+    bcs @skip_left_screen
+
+    lda level_screen_pos
+    sec
+    sbc #1
+    tay
+    lda (PTR_SRC),y
+    sta fc_screen_id
+
+    lda #8
+    sec
+    sbc incoming_col_idx
+    sta fc_vram_col0
+
+    jsr check_single_screen_secret
+
+@skip_left_screen
+    ; 2. Incoming Screen: exists if level_tail_cols == 0 and level_screen_pos < lab_total_screens
+    lda level_tail_cols
+    bne @done_secret
+
+    lda level_screen_pos
+    cmp lab_total_screens
+    bcs @done_secret
+
+    ; Incoming screen reaches col 9 if incoming_col_idx >= 39 (48 - 39 = 9)
+    lda incoming_col_idx
+    cmp #39
+    bcc @done_secret
+
+    ; Re-fetch pointer
+    ldx current_level_idx
+    lda labyrinths_screens_lo,x
+    sta PTR_SRC
+    lda labyrinths_screens_hi,x
+    sta PTR_SRC+1
+
+    ldy level_screen_pos
+    lda (PTR_SRC),y
+    sta fc_screen_id
+
+    lda #48
+    sec
+    sbc incoming_col_idx
+    sta fc_vram_col0
+
+    jsr check_single_screen_secret
+
+@done_secret
+    pla
+    sta PTR_BLK+1
+    pla
+    sta PTR_BLK
+    pla
+    sta PTR_DST+1
+    pla
+    sta PTR_DST
+    pla
+    sta PTR_SRC+1
+    pla
+    sta PTR_SRC
+    sec
+    rts
+.endp
+
+; ==============================================================================
+; check_single_screen_secret
+; Checks secret objects on fc_screen_id for collision with dragon.
+; ==============================================================================
+.proc check_single_screen_secret
+    ldx fc_screen_id
+    cpx #WORLD_SCREENS_COUNT
+    bcc @valid_screen
+    rts
+
+@valid_screen
+    lda screens_obj_count,x
+    sta fc_obj_total
+    bne @has_objs
+    rts
+
+@has_objs
+    lda screens_codes_lo,x
+    sta @fetch_code + 1
+    lda screens_codes_hi,x
+    sta @fetch_code + 2
+
+    lda screens_coords_lo,x
+    sta @fetch_coords + 1
+    lda screens_coords_hi,x
+    sta @fetch_coords + 2
+
+    lda #0
+    sta fc_obj_idx
+
+@obj_loop
+    ; --- Check if already destroyed / collected ---
+    ldx fc_screen_id
+    lda screen_destroyed_offsets,x
+    sta ZP_TMP
+
+    lda fc_obj_idx
+    lsr
+    lsr
+    lsr
+    clc
+    adc ZP_TMP
+    tax
+
+    lda fc_obj_idx
+    and #$07
+    tay
+
+    lda screen_obj_destroyed,x
+    and fc_bit_mask_tbl,y
+    beq @not_destroyed
+    jmp @next_obj
+
+@not_destroyed
+    ldy fc_obj_idx
+@fetch_coords
+    lda $FFFF,y
+    sta fc_cur_packed_xy
+
+    lsr
+    lsr
+    lsr
+    lsr
+    and #$0E
+    sta fc_cur_obj_y
+
+@fetch_code
+    lda $FFFF,y
+    tax
+
+    ; Check if object has secret flag (bit 2 = $04)
+    lda obj_type_flags,x
+    and #$04
+    beq @skip_to_next
+
+    lda obj_type_width,x
+    sta fc_cur_obj_w
+    lda obj_type_height,x
+    sta fc_cur_obj_h
+
+    lda fc_cur_obj_w
+    beq @skip_to_next
+    lda fc_cur_obj_h
+    bne @check_vert
+
+@skip_to_next
+    jmp @next_obj
+
+@check_vert
+    ; Fast vertical overlap with dragon (dc_dragon_row_min .. dc_dragon_row_max_p1 - 1)
+    lda fc_cur_obj_y
+    cmp dc_dragon_row_max_p1
+    bcs @skip_to_next
+
+    clc
+    adc fc_cur_obj_h
+    cmp dc_dragon_row_min
+    bcc @skip_to_next
+    beq @skip_to_next
+
+    ; Horizontal overlap with dragon (cols 8 and 9):
+    ; Unpack X: (packed_xy & $1F) * 2
+    lda fc_cur_packed_xy
+    and #$1F
+    asl
+    sta fc_cur_obj_x
+
+    clc
+    adc fc_vram_col0
+    sta fc_cur_vram_x
+
+    bpl @x_positive
+
+    ; cur_vram_x is negative (-31..-1)
+    ; Check right edge: cur_vram_x + cur_obj_w > 8
+    clc
+    adc fc_cur_obj_w
+    bmi @skip_to_next
+    cmp #8
+    bcc @skip_to_next
+    beq @skip_to_next
+    jmp @secret_hit
+
+@x_positive
+    ; cur_vram_x is positive (0..47)
+    ; Dragon is at cols 8..9. Left edge must be <= 9 (i.e. < 10)
+    cmp #10
+    bcs @skip_to_next
+
+    ; Right edge of object must be > 8
+    clc
+    adc fc_cur_obj_w
+    cmp #8
+    bcc @skip_to_next
+    beq @skip_to_next
+
+@secret_hit
+    ; 1. Mark as destroyed in bitmask
+    ldx fc_screen_id
+    lda screen_destroyed_offsets,x
+    sta ZP_TMP
+    lda fc_obj_idx
+    lsr
+    lsr
+    lsr
+    clc
+    adc ZP_TMP
+    tax
+    lda fc_obj_idx
+    and #$07
+    tay
+    lda screen_obj_destroyed,x
+    ora fc_bit_mask_tbl,y
+    sta screen_obj_destroyed,x
+
+    ; 2. Erase from GAME_ACTION_VRAM & blocking_col8/9
+    jsr erase_cur_object
+
+    ; 3. Erase from source buffers (screens_vram and screens_blocking) for run persistence
+    jsr erase_object_from_source_buffers
+
+    ; 4. Increase score by 1
+    jsr add_score_1
+
+    ; 5. Start pickup sound chime
+    jsr start_secret_sound
+
+@next_obj
+    inc fc_obj_idx
+    lda fc_obj_idx
+    cmp fc_obj_total
+    bcc @obj_loop_jmp
+    rts
+
+@obj_loop_jmp
+    jmp @obj_loop
+.endp
+
+; ==============================================================================
+; erase_object_from_source_buffers
+; Erases the collected secret object from screens_vram and screens_blocking
+; in High RAM so it does not reappear when respawning.
+; Input:
+;   fc_screen_id, fc_cur_obj_x, fc_cur_obj_y, fc_cur_obj_w, fc_cur_obj_h
+; Clobbers: A, X, Y, PTR_DST, PTR_BLK
+; ==============================================================================
+.proc erase_object_from_source_buffers
+    ldx fc_screen_id
+    cpx #WORLD_SCREENS_COUNT
+    bcc @valid_screen
+    rts
+
+@valid_screen
+    lda #0
+    sta fc_erase_r
+
+@row_loop
+    lda fc_cur_obj_y
+    clc
+    adc fc_erase_r
+    cmp #11
+    bcs @done                   ; Beyond row 10
+    tax                         ; X = row index (0..10)
+
+    ; Calculate row pointer for screens_vram[fc_screen_id] + screen40_row_offsets[X]
+    ldy fc_screen_id
+    lda screens_vram_lo,y
+    clc
+    adc screen40_row_offsets_lo,x
+    sta PTR_DST
+    lda screens_vram_hi,y
+    adc screen40_row_offsets_hi,x
+    sta PTR_DST+1
+
+    ; Calculate row pointer for screens_blocking[fc_screen_id] + screen40_row_offsets[X]
+    lda screens_blocking_lo,y
+    clc
+    adc screen40_row_offsets_lo,x
+    sta PTR_BLK
+    lda screens_blocking_hi,y
+    adc screen40_row_offsets_hi,x
+    sta PTR_BLK+1
+
+    lda #0
+    sta fc_erase_c
+
+@col_loop
+    lda fc_cur_obj_x
+    clc
+    adc fc_erase_c
+    cmp #40
+    bcs @skip_col
+    tay
+    lda #0
+    sta (PTR_DST),y             ; Clear VRAM tile
+    sta (PTR_BLK),y             ; Clear blocking / secret mask
+
+@skip_col
+    inc fc_erase_c
+    lda fc_erase_c
+    cmp fc_cur_obj_w
+    bcc @col_loop
+
+    inc fc_erase_r
+    lda fc_erase_r
+    cmp fc_cur_obj_h
+    bcc @row_loop
+
+@done
+    rts
+.endp
+
+; ==============================================================================
+; add_score_1
+; Increments 4-digit decimal SCORE by 1 (BCD with carry propagation)
+; and updates the bottom status bar display.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc add_score_1
+    inc SCORE+3
+    lda SCORE+3
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+3
+
+    inc SCORE+2
+    lda SCORE+2
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+2
+
+    inc SCORE+1
+    lda SCORE+1
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+1
+
+    inc SCORE+0
+    lda SCORE+0
+    cmp #10
+    bcc @done
+    ; Cap at 9999
+    lda #9
+    sta SCORE+0
+    sta SCORE+1
+    sta SCORE+2
+    sta SCORE+3
+
+@done
+    jsr update_bottom_status
+    rts
+.endp
+
+; ==============================================================================
+; restore_all_secrets
+; Restores all secret objects back into screens_vram and screens_blocking
+; from secret_objs_backup tables on new game init.
+; Clobbers: A, X, Y, PTR_SRC, PTR_DST, PTR_BLK, ZP_TMP
+; ==============================================================================
+.proc restore_all_secrets
+    lda secret_objs_total
+    bne @has_secrets
+    rts
+
+@has_secrets
+    lda #0
+    sta fc_sec_idx
+
+@sec_loop
+    ldx fc_sec_idx
+    lda secret_objs_screen,x
+    sta fc_screen_id
+
+    lda secret_objs_x,x
+    sta fc_cur_obj_x
+
+    lda secret_objs_y,x
+    sta fc_cur_obj_y
+
+    lda secret_objs_w,x
+    sta fc_cur_obj_w
+
+    lda secret_objs_h,x
+    sta fc_cur_obj_h
+
+    ; Base pointers for tiles and coll masks (self-modifying operands)
+    lda secret_objs_tiles_lo,x
+    sta @fetch_tile + 1
+    lda secret_objs_tiles_hi,x
+    sta @fetch_tile + 2
+
+    lda secret_objs_coll_lo,x
+    sta @fetch_coll + 1
+    lda secret_objs_coll_hi,x
+    sta @fetch_coll + 2
+
+    lda #0
+    sta fc_tile_offset
+    sta fc_erase_r
+
+@row_loop
+    lda fc_cur_obj_y
+    clc
+    adc fc_erase_r
+    cmp #11
+    bcs @next_sec
+    tax                         ; X = row index (0..10)
+
+    ; Calculate row pointer for screens_vram[fc_screen_id] + screen40_row_offsets[X]
+    ldy fc_screen_id
+    lda screens_vram_lo,y
+    clc
+    adc screen40_row_offsets_lo,x
+    sta PTR_DST
+    lda screens_vram_hi,y
+    adc screen40_row_offsets_hi,x
+    sta PTR_DST+1
+
+    ; Calculate row pointer for screens_blocking[fc_screen_id] + screen40_row_offsets[X]
+    lda screens_blocking_lo,y
+    clc
+    adc screen40_row_offsets_lo,x
+    sta PTR_BLK
+    lda screens_blocking_hi,y
+    adc screen40_row_offsets_hi,x
+    sta PTR_BLK+1
+
+    lda #0
+    sta fc_erase_c
+
+@col_loop
+    ; Fetch original tile and collision mask via self-modifying operands
+    ldy fc_tile_offset
+@fetch_tile
+    lda $FFFF,y
+    sta ZP_TMP
+@fetch_coll
+    lda $FFFF,y
+    pha
+
+    inc fc_tile_offset
+
+    ; Target column in row
+    lda fc_cur_obj_x
+    clc
+    adc fc_erase_c
+    cmp #40
+    bcs @skip_restore_cell
+    tay
+
+    lda ZP_TMP
+    sta (PTR_DST),y             ; Restore tile in screens_vram
+    pla
+    sta (PTR_BLK),y             ; Restore mask in screens_blocking
+    jmp @advance_col
+
+@skip_restore_cell
+    pla                         ; Balance stack if column was skipped
+
+@advance_col
+    inc fc_erase_c
+    lda fc_erase_c
+    cmp fc_cur_obj_w
+    bcc @col_loop
+
+    inc fc_erase_r
+    lda fc_erase_r
+    cmp fc_cur_obj_h
+    bcc @row_loop
+
+@next_sec
+    inc fc_sec_idx
+    lda fc_sec_idx
+    cmp secret_objs_total
+    bcs @done_all
+    jmp @sec_loop
+
+@done_all
+    rts
+.endp
+
 
 

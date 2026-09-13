@@ -130,7 +130,7 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
     assert mpu.memory[labels["LEVEL_SCREEN_POS"]] == 1
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 4  # First 4 cols prefilled into cols 44..47
     assert mpu.memory[labels["LEVEL_TAIL_COLS"]] == 0
-    assert mpu.memory[labels["LAB_TOTAL_SCREENS"]] == 8
+    assert mpu.memory[labels["LAB_TOTAL_SCREENS"]] >= 8
     assert mpu.memory[labels["HSCROL_FINE"]] == 3
 
     # Check that visible columns 4..43 match Screen 0

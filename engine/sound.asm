@@ -41,3 +41,44 @@ crash_snd_audf2
 crash_snd_audc2
     dta $8F, $8F, $8E, $8D, $8C, $8A, $88, $87, $86, $85, $84, $83
     dta $82, $82, $81, $81, $80, $80, $80, $80, $80, $80, $80, $80
+
+; --- Secret Collected Pickup Click (POKEY Channel 4) ---
+SECRET_CLICK_FRAMES     = 3
+
+secret_sound_timer      dta 0
+
+.proc start_secret_sound
+    lda #SECRET_CLICK_FRAMES
+    sta secret_sound_timer
+    rts
+.endp
+
+.proc update_secret_sound
+    lda secret_sound_timer
+    beq @done
+    dec secret_sound_timer
+    beq @silence
+
+    ; Frame 2 (timer was 3): initial sharp click ($08, vol 14)
+    cmp #2
+    bne @frame1
+    lda #$08
+    sta AUDF4
+    lda #$AE
+    sta AUDC4
+    rts
+
+@frame1
+    ; Frame 1 (timer was 2): decay tick ($14, vol 7)
+    lda #$14
+    sta AUDF4
+    lda #$A7
+    sta AUDC4
+    rts
+
+@silence
+    lda #0
+    sta AUDC4
+@done
+    rts
+.endp

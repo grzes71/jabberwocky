@@ -58,20 +58,27 @@ def bake_screen_vram(screen: Screen, objects_lib: ObjectsLibrary) -> bytearray:
 
 
 def bake_screen_blocking(screen: Screen, objects_lib: ObjectsLibrary) -> bytearray:
-    """Pre-renders a 440-byte blocking matrix for a given screen.
-    Only solid tiles of objects with blocking: true are marked as 1.
-    Empty/transparent tiles (tile == 0) and non-blocking objects remain 0.
+    """Pre-renders a 440-byte collision matrix for a given screen.
+    Solid tiles of objects with blocking: true have bit 0 ($01) set.
+    Solid tiles of objects with secret: true have bit 2 ($04) set.
+    Empty/transparent tiles (tile == 0) and non-blocking/non-secret objects remain 0.
     """
     blocking = bytearray(SCREEN_VRAM_SIZE)
 
     for inst in screen.objects:
         obj_def = objects_lib.get_by_code(inst.code)
-        if not obj_def or not obj_def.flags.blocking:
+        if not obj_def:
+            continue
+        is_blocking = obj_def.flags.blocking
+        is_secret = obj_def.flags.secret
+        if not is_blocking and not is_secret:
             continue
 
         w = obj_def.size.width
         h = obj_def.size.height
         tiles = obj_def.tiles
+
+        mask_val = (0x01 if is_blocking else 0) | (0x04 if is_secret else 0)
 
         tile_idx = 0
         for dy in range(h):
@@ -86,7 +93,7 @@ def bake_screen_blocking(screen: Screen, objects_lib: ObjectsLibrary) -> bytearr
                     tile = tiles[tile_idx] & 0xFF
                     if tile != 0:
                         offset = target_y * SCREEN_WIDTH_CHARS + target_x
-                        blocking[offset] = 1
+                        blocking[offset] |= mask_val
                 tile_idx += 1
 
     return blocking
@@ -325,6 +332,77 @@ def generate_world_asm(
         asm.append("labyrinths_screens_hi   dta 0")
         asm.append("labyrinths_name_lo      dta 0")
         asm.append("labyrinths_name_hi      dta 0")
+    asm.append("")
+
+    # 3.5. Secret Objects Backup Tables (for restore_all_secrets on game_init)
+    asm.append("; ------------------------------------------------------------------------------")
+    asm.append("; SECRET OBJECTS BACKUP (for restore_all_secrets on game_init)")
+    asm.append("; ------------------------------------------------------------------------------")
+    secret_instances = []
+    for s_idx, screen in enumerate(project.screens):
+        for obj_idx, inst in enumerate(screen.objects):
+            obj_def = objects_lib.get_by_code(inst.code)
+            if obj_def and obj_def.flags.secret:
+                secret_instances.append({
+                    "screen_idx": s_idx,
+                    "obj_idx": obj_idx,
+                    "x": inst.x,
+                    "y": inst.y,
+                    "w": obj_def.size.width,
+                    "h": obj_def.size.height,
+                    "tiles": obj_def.tiles,
+                    "blocking": obj_def.flags.blocking,
+                })
+
+    asm.append(f"secret_objs_total       dta {len(secret_instances)}")
+    if secret_instances:
+        asm.append("secret_objs_screen")
+        asm.append("    dta " + ", ".join(str(item["screen_idx"]) for item in secret_instances))
+        asm.append("secret_objs_x")
+        asm.append("    dta " + ", ".join(str(item["x"]) for item in secret_instances))
+        asm.append("secret_objs_y")
+        asm.append("    dta " + ", ".join(str(item["y"]) for item in secret_instances))
+        asm.append("secret_objs_w")
+        asm.append("    dta " + ", ".join(str(item["w"]) for item in secret_instances))
+        asm.append("secret_objs_h")
+        asm.append("    dta " + ", ".join(str(item["h"]) for item in secret_instances))
+
+        tiles_labels = []
+        coll_labels = []
+        for i, item in enumerate(secret_instances):
+            t_lbl = f"secret_inst_{i}_tiles"
+            c_lbl = f"secret_inst_{i}_coll"
+            tiles_labels.append(t_lbl)
+            coll_labels.append(c_lbl)
+
+            total_cells = item["w"] * item["h"]
+            t_bytes = [f"${b:02X}" for b in item["tiles"][:total_cells]]
+            coll_val = 0x04 | (0x01 if item["blocking"] else 0)
+            c_bytes = [f"${coll_val:02X}" if b != 0 else "$00" for b in item["tiles"][:total_cells]]
+
+            asm.append(f"{t_lbl}")
+            asm.append("    dta " + ", ".join(t_bytes))
+            asm.append(f"{c_lbl}")
+            asm.append("    dta " + ", ".join(c_bytes))
+
+        asm.append("secret_objs_tiles_lo")
+        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in tiles_labels))
+        asm.append("secret_objs_tiles_hi")
+        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in tiles_labels))
+        asm.append("secret_objs_coll_lo")
+        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in coll_labels))
+        asm.append("secret_objs_coll_hi")
+        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in coll_labels))
+    else:
+        asm.append("secret_objs_screen      dta 0")
+        asm.append("secret_objs_x           dta 0")
+        asm.append("secret_objs_y           dta 0")
+        asm.append("secret_objs_w           dta 0")
+        asm.append("secret_objs_h           dta 0")
+        asm.append("secret_objs_tiles_lo    dta 0")
+        asm.append("secret_objs_tiles_hi    dta 0")
+        asm.append("secret_objs_coll_lo     dta 0")
+        asm.append("secret_objs_coll_hi     dta 0")
     asm.append("")
 
     # 4. Object Metadata Tables (size, flags for collision/interaction)
