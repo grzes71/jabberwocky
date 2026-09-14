@@ -4,7 +4,7 @@
             "index": 112,
             "animation": [
                 {
-                    "repeat": 0,
+                    "repeat": 1,
                     "frames": [
                         {
                             "duration": 100,
@@ -13,7 +13,7 @@
                     ]
                 },
                 {
-                    "repeat": 10,
+                    "repeat": 2,
                     "frames": [
                         {
                             "duration": 5,
@@ -248,7 +248,7 @@
             "index": 75,
             "animation": [
                 {
-                    "repeat": 2,
+                    "repeat": 4,
                     "frames": [
                         {
                             "duration": 50,

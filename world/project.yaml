@@ -775,8 +775,6 @@ screens:
     packed_xy: 147
   - code: 11
     packed_xy: 17
-  - code: 48
-    packed_xy: 69
   - code: 177
     packed_xy: 102
   - code: 200
@@ -789,8 +787,6 @@ screens:
     packed_xy: 15
   - code: 164
     packed_xy: 34
-  - code: 164
-    packed_xy: 36
   - code: 182
     packed_xy: 0
   - code: 182
@@ -801,8 +797,6 @@ screens:
     packed_xy: 137
   - code: 92
     packed_xy: 10
-  - code: 92
-    packed_xy: 109
   - code: 8
     packed_xy: 18
   - code: 189
@@ -815,10 +809,6 @@ screens:
     packed_xy: 3
   - code: 118
     packed_xy: 4
-  - code: 118
-    packed_xy: 47
-  - code: 7
-    packed_xy: 81
   - code: 83
     packed_xy: 16
   - code: 20
@@ -841,6 +831,10 @@ screens:
     packed_xy: 67
   - code: 18
     packed_xy: 107
+  - code: 182
+    packed_xy: 36
+  - code: 177
+    packed_xy: 112
 - id: TOLEM_04
   objects:
   - code: 178
@@ -849,8 +843,6 @@ screens:
     packed_xy: 18
   - code: 177
     packed_xy: 2
-  - code: 177
-    packed_xy: 108
   - code: 177
     packed_xy: 47
   - code: 4
@@ -882,8 +874,6 @@ screens:
   - code: 92
     packed_xy: 172
   - code: 11
-    packed_xy: 70
-  - code: 11
     packed_xy: 143
   - code: 182
     packed_xy: 113
@@ -893,18 +883,14 @@ screens:
     packed_xy: 137
   - code: 177
     packed_xy: 97
-  - code: 65
-    packed_xy: 83
   - code: 95
     packed_xy: 49
-  - code: 198
-    packed_xy: 103
   - code: 118
     packed_xy: 142
   - code: 118
     packed_xy: 144
   - code: 164
-    packed_xy: 69
+    packed_xy: 70
   - code: 65
     packed_xy: 130
   - code: 48
@@ -917,8 +903,8 @@ screens:
     packed_xy: 107
   - code: 164
     packed_xy: 177
-  - code: 164
-    packed_xy: 65
+  - code: 65
+    packed_xy: 108
 - id: TOLEM_05
   objects:
   - code: 153
@@ -975,20 +961,22 @@ screens:
     packed_xy: 112
   - code: 53
     packed_xy: 173
-  - code: 53
-    packed_xy: 163
-  - code: 88
-    packed_xy: 100
   - code: 78
     packed_xy: 0
-  - code: 189
-    packed_xy: 128
   - code: 32
     packed_xy: 33
   - code: 32
     packed_xy: 65
   - code: 32
     packed_xy: 97
+  - code: 203
+    packed_xy: 128
+  - code: 152
+    packed_xy: 131
+  - code: 89
+    packed_xy: 68
+  - code: 89
+    packed_xy: 34
 - id: TOLEM_06
   objects:
   - code: 121

@@ -175,6 +175,14 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     score_addr = labels["SCORE"]
     mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 0, 0])
 
+    # Set initial energy: block 20, sub-step 86
+    counter_full = labels["COUNTER_FULL"]
+    counter_eight = labels["COUNTER_EIGHT"]
+    mpu.memory[counter_full] = 20
+    mpu.memory[counter_eight] = 86
+    mpu.memory[labels["DRAGON_DYING"]] = 0
+    mpu.memory[labels["GAME_OVER_REASON"]] = 0
+
     # Pre-render a non-zero tile in GAME_ACTION_VRAM at row 8, col 8
     action_vram = labels["GAME_ACTION_VRAM"]
     mpu.memory[action_vram + 8 * 48 + 8] = 0x49
@@ -187,6 +195,10 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
 
     # Score should now be 0001
     assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 0, 1]
+
+    # Energy should be increased by 10 sub-steps: COUNTER_FULL=21, COUNTER_EIGHT=84
+    assert mpu.memory[counter_full] == 21
+    assert mpu.memory[counter_eight] == 84
 
     # Secret click sound timer triggered
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
@@ -382,9 +394,11 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     mpu.memory[labels["DRAGON_Y"]] = 162
     mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x02
 
-    # Set initial score to 0000
+    # Set initial score to 0000, initial lives to 3
     score_addr = labels["SCORE"]
+    lives_addr = labels["LIVES"]
     mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 0, 0])
+    mpu.memory[lives_addr] = 3
 
     # Set initial energy: block 20, sub-step 86
     counter_full = labels["COUNTER_FULL"]
@@ -406,9 +420,12 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     # SCORE should be 0005 (+5)
     assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 0, 5]
 
-    # Energy should be increased by 100 sub-steps: COUNTER_FULL=33, COUNTER_EIGHT=90
-    assert mpu.memory[counter_full] == 33
-    assert mpu.memory[counter_eight] == 90
+    # Energy should be increased by 40 sub-steps: COUNTER_FULL=25, COUNTER_EIGHT=86
+    assert mpu.memory[counter_full] == 25
+    assert mpu.memory[counter_eight] == 86
+
+    # LIVES should be incremented to 4 (+1)
+    assert mpu.memory[lives_addr] == 4
 
     # Pickup sound triggered
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
@@ -445,6 +462,14 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 0, 0])
     mpu.memory[shots_addr] = 1
 
+    # Set initial energy: block 20, sub-step 86
+    counter_full = labels["COUNTER_FULL"]
+    counter_eight = labels["COUNTER_EIGHT"]
+    mpu.memory[counter_full] = 20
+    mpu.memory[counter_eight] = 86
+    mpu.memory[labels["DRAGON_DYING"]] = 0
+    mpu.memory[labels["GAME_OVER_REASON"]] = 0
+
     # Action VRAM non-zero tile
     action_vram = labels["GAME_ACTION_VRAM"]
     mpu.memory[action_vram + 8 * 48 + 8] = 0x49
@@ -456,6 +481,10 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
 
     # SCORE should be 0010 (+10)
     assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 1, 0]
+
+    # Energy should be increased by 80 sub-steps: COUNTER_FULL=30, COUNTER_EIGHT=86
+    assert mpu.memory[counter_full] == 30
+    assert mpu.memory[counter_eight] == 86
 
     # SHOTS should be incremented to 2
     assert mpu.memory[shots_addr] == 2

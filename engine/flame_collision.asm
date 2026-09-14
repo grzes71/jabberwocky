@@ -1115,7 +1115,7 @@ shift_blocking_vram_left    = shift_blocking_cols
     ; 3. Erase from source buffers (screens_vram and screens_blocking) for run persistence
     jsr erase_object_from_source_buffers
 
-    ; 4. Check flags and award points / energy / shots
+    ; 4. Check flags and award points / energy / shots / lives
     lda fc_cur_obj_flags
     and #$06
     cmp #$06                    ; Both Secret ($04) and Interactive ($02)?
@@ -1123,19 +1123,22 @@ shift_blocking_vram_left    = shift_blocking_cols
     cmp #$02                    ; Only Interactive ($02)?
     beq @award_interactive
 
-    ; Default: Secret only ($04) -> SCORE + 1
+    ; Default: Secret only ($04) -> SCORE + 1, ENERGY + 10
     jsr add_score_1
+    jsr increase_energy_10
     jmp @play_sound
 
 @award_interactive
-    ; Interactive: SCORE + 5, ENERGY + 100
+    ; Interactive: SCORE + 5, ENERGY + 40, LIVES + 1
     jsr add_score_5
-    jsr increase_energy_100
+    jsr increase_energy_40
+    jsr add_life_1
     jmp @play_sound
 
 @award_both
-    ; Both: SCORE + 10, SHOTS + 1
+    ; Both: SCORE + 10, ENERGY + 80, SHOTS + 1
     jsr add_score_10
+    jsr increase_energy_80
     jsr add_shot_1
 
 @play_sound
@@ -1356,21 +1359,55 @@ shift_blocking_vram_left    = shift_blocking_cols
 .endp
 
 ; ==============================================================================
-; increase_energy_100
-; Increases dragon energy by 100 units/sub-steps (calls increase_energy_bar 100 times).
+; increase_energy_n
+; Increases dragon energy by A units/sub-steps (calls increase_energy_bar A times).
 ; Clobbers: A, X
 ; ==============================================================================
-.proc increase_energy_100
-    lda #100
+.proc increase_energy_n
     sta fc_energy_cnt
+    beq @done
 @loop
     jsr increase_energy_bar
     dec fc_energy_cnt
     bne @loop
+@done
     rts
 .endp
+
+increase_energy_10
+    lda #10
+    jmp increase_energy_n
+
+increase_energy_40
+    lda #40
+    jmp increase_energy_n
+
+increase_energy_80
+    lda #80
+    jmp increase_energy_n
+
+increase_energy_100
+    lda #100
+    jmp increase_energy_n
+
 increase_energy_25 = increase_energy_100
-increase_energy_5  = increase_energy_100
+increase_energy_5  = increase_energy_10
+
+; ==============================================================================
+; add_life_1
+; Increases remaining dragon lives by 1 (capped at 99)
+; and updates the bottom status bar display.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc add_life_1
+    lda LIVES
+    cmp #99
+    bcs @done
+    inc LIVES
+    jsr update_bottom_status
+@done
+    rts
+.endp
 
 ; ==============================================================================
 ; add_shot_1

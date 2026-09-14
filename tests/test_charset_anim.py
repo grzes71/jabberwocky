@@ -212,14 +212,15 @@ def test_update_animated_charset_segment_transition(project_root: Path, labels: 
     run_subroutine(mpu, labels["INIT_CHARSET_ANIMATION"])
     run_subroutine(mpu, labels["UPDATE_ANIMATED_CHARSET"])
 
-    # Entry 0 (char 112): currently in Segment 0, Frame 0, Timer 100.
-    # Force timer to 1 and run again -> finishes segment 0, advances to segment 1, frame 0
+    # Entry 0 (char 112): currently in Segment 0, Frame 0.
+    # Force repeat counter to 0 and timer to 1 -> finishes segment 0, advances to segment 1, frame 0
+    mpu.memory[labels["ANIMATED_CHAR_REPEAT_COUNTER"]] = 0
     mpu.memory[labels["ANIMATED_CHAR_TIMERS"]] = 1
     run_subroutine(mpu, labels["UPDATE_ANIMATED_CHARSET"])
 
     assert mpu.memory[labels["ANIMATED_CHAR_CUR_SEGMENT"]] == 1
     assert mpu.memory[labels["ANIMATED_CHAR_CUR_FRAME"]] == 0
-    assert mpu.memory[labels["ANIMATED_CHAR_REPEAT_COUNTER"]] == 10
+    assert mpu.memory[labels["ANIMATED_CHAR_REPEAT_COUNTER"]] == 2
     assert mpu.memory[labels["ANIMATED_CHAR_TIMERS"]] == 5
 
     # Char 112 segment 1 frame 0 data: "00 3C C3 83 C3 00 3C 2C"

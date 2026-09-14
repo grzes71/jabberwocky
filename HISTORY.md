@@ -2,6 +2,17 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-14] - Aktualizacja reguł bonusów dla obiektów Secret i Interactive
+- **Mechanika nagród ([engine/flame_collision.asm](engine/flame_collision.asm))**:
+  - Zaktualizowano procedurę `check_single_screen_secret` i logikę przyznawania bonusów:
+    - **Tylko Secret (`$04`)**: SCORE + 1 oraz **ENERGIA + 10** sub-kroków (wywołanie `increase_energy_10`).
+    - **Tylko Interactive (`$02`)**: SCORE + 5, **ENERGIA + 40** sub-kroków (`increase_energy_40`) oraz **LIVES + 1** (nowa procedura `add_life_1` z limitem 99 i odświeżeniem paska stanu).
+    - **Secret + Interactive (`$06`)**: SCORE + 10, **ENERGIA + 80** sub-kroków (`increase_energy_80`) oraz **SHOTS + 1** (`add_shot_1`).
+  - Zaimplementowano procedurę `increase_energy_n` z punktami wejścia `increase_energy_10`, `increase_energy_40`, `increase_energy_80`, `increase_energy_100`.
+- **Testy jednostkowe ([tests/test_secret_collision.py](tests/test_secret_collision.py), [tests/test_charset_anim.py](tests/test_charset_anim.py))**:
+  - Zaktualizowano asercje przyrostu energii (+10, +40, +80) oraz dodatkowego życia (+1) przy zbieraniu obiektów.
+  - Dopasowano `test_update_animated_charset_segment_transition` do zaktualizowanych wartości powtórzeń segmentów w [chars/animated.json](chars/animated.json).
+
 ## [2026-09-14] - Dynamiczny pionowy bounding box smoka zależny od klatki animacji
 - **Kompilator duszków ([scripts/compile_sprites.py](scripts/compile_sprites.py))**:
   - Dodano automatyczne obliczanie pionowego zakresu niezerowych pikseli (`min_y` oraz `max_y`) dla każdej klatki animacji duszka.

@@ -1943,3 +1943,29 @@ objects:
     secret: true
   tiles: [224, 225, 176, 177]
   tags: [skarb]
+- object: WATERFALL_0_3
+  id: WATERFALL_0_3
+  code: 203
+  size:
+    width: 6
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 10, 230, 230, 12, 0, 10, 11, 153, 153, 9, 12, 208, 243, 243, 243, 243,
+    210]
+  tags: [woda, skała]
+- object: WATERFALL_GREEN_3
+  id: WATERFALL_GREEN_3
+  code: 204
+  size:
+    width: 6
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 13, 230, 230, 15, 0, 13, 14, 153, 153, 121, 15, 208, 243, 153, 153, 243,
+    210]
+  tags: [woda, skała]
