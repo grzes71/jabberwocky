@@ -222,16 +222,17 @@ def test_update_world_scrolling_fine_scroll(project_root: Path, labels: Dict[str
 
 
 def test_level_completion_and_victory_transition(project_root: Path, labels: Dict[str, int]):
-    """Test that scrolling past all screens + 48 tail columns triggers REASON_SUCCESS."""
+    """Test that scrolling past all screens of the final level + 48 tail columns triggers REASON_SUCCESS."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    last_level_idx = labels.get("WORLD_LABYRINTHS_COUNT", 1) - 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = last_level_idx
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Fast-forward to last tail column
-    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 3
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = mpu.memory[labels["LAB_TOTAL_SCREENS"]]
     mpu.memory[labels["INCOMING_COL_IDX"]] = 0
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 1
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
@@ -296,4 +297,51 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
             expected = mpu.memory[screen0_vram + r * 40 + c]
             actual = mpu.memory[action_vram + r * 48 + 4 + c]
             assert actual == expected, f"Row {r} col {c} not reset to screen 0"
+
+
+def test_advance_to_next_level_refills_energy_to_100_percent(project_root: Path, labels: Dict[str, int]):
+    """Verify that advancing to the next level resets dragon energy to 100% (COUNTER_FULL=40, COUNTER_EIGHT=83)."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
+    # Deplete energy to partial state (10 chars left, last at 87)
+    mpu.memory[labels["COUNTER_FULL"]] = 10
+    mpu.memory[labels["COUNTER_EIGHT"]] = 87
+    status_base = labels["GAME_STATUS_VRAM"]
+    for i in range(40):
+        mpu.memory[status_base + i] = 0
+
+    # Put dragon at non-default Y and non-zero velocity
+    mpu.memory[labels["DRAGON_Y"]] = 80
+    mpu.memory[labels["DRAGON_VEL_HI"]] = 2
+
+    # Fast-forward to end of Level 0
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = mpu.memory[labels["LAB_TOTAL_SCREENS"]]
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 0
+    mpu.memory[labels["LEVEL_TAIL_COLS"]] = 1
+    mpu.memory[labels["GAME_OVER_REASON"]] = 0
+
+    # Step finishes tail and calls advance_to_next_level
+    run_subroutine(mpu, labels["SCROLL_PLAYFIELD_STEP"])
+
+    # Verify advanced to Level 1
+    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 1
+
+    # Verify 100% energy restored
+    assert mpu.memory[labels["COUNTER_FULL"]] == 40
+    assert mpu.memory[labels["COUNTER_EIGHT"]] == 83
+
+    # Verify full bar rendered into GAME_STATUS_VRAM row 0: 39 chars (82) + 1 char (83)
+    for c in range(39):
+        assert mpu.memory[status_base + c] == 82, f"Col {c} should be full bar char 82"
+    assert mpu.memory[status_base + 39] == 83, "Col 39 should be end bar char 83"
+
+    # Verify dragon position and velocity restored to start defaults
+    assert mpu.memory[labels["DRAGON_Y"]] == labels["DRAGON_START_Y"]
+    assert mpu.memory[labels["DRAGON_VEL_HI"]] == 0
+
 

@@ -1111,9 +1111,9 @@ shift_blocking_vram_left    = shift_blocking_cols
     jmp @play_sound
 
 @award_interactive
-    ; Interactive: SCORE + 5, ENERGY + 5
+    ; Interactive: SCORE + 5, ENERGY + 100
     jsr add_score_5
-    jsr increase_energy_5
+    jsr increase_energy_100
     jmp @play_sound
 
 @award_both
@@ -1339,12 +1339,12 @@ shift_blocking_vram_left    = shift_blocking_cols
 .endp
 
 ; ==============================================================================
-; increase_energy_5
-; Increases dragon energy by 5 units/sub-steps (calls increase_energy_bar 5 times).
+; increase_energy_100
+; Increases dragon energy by 100 units/sub-steps (calls increase_energy_bar 100 times).
 ; Clobbers: A, X
 ; ==============================================================================
-.proc increase_energy_5
-    lda #5
+.proc increase_energy_100
+    lda #100
     sta fc_energy_cnt
 @loop
     jsr increase_energy_bar
@@ -1352,6 +1352,8 @@ shift_blocking_vram_left    = shift_blocking_cols
     bne @loop
     rts
 .endp
+increase_energy_25 = increase_energy_100
+increase_energy_5  = increase_energy_100
 
 ; ==============================================================================
 ; add_shot_1

@@ -2357,7 +2357,41 @@ advance_to_next_level
 @have_another_level
     inc LEVEL
     jsr update_bottom_status
+
+    lda #0
+    sta dragon_dying
+    sta death_timer
+    sta death_move_timer
+    sta dragon_recharging
+    sta dragon_p0pf
+    sta flame_m_pf
+    sta dragon_vel_hi
+    sta dragon_vel_lo
+    sta dragon_sub_y
+    sta fire_state
+    sta fire_frame
+    sta fire_timer
+    sta fire_prev_y
+    sta HITCLR
+
+    lda #<SCROLL_BASE_SPEED
+    sta SCROLL_SPEED
+    lda #>SCROLL_BASE_SPEED
+    sta SCROLL_SPEED+1
+
+    lda #DRAGON_START_Y
+    sta dragon_y
+    sta dragon_prev_y
+
+    lda #DRAGON_COLOR
+    sta pal_action_dragon
+
     jsr init_level_screens
+
+    ; Refill dragon energy bar to 100% on starting a new level
+    jsr init_energy_bar
+    jsr calc_energy_frames
+
     jsr show_level_name_screen
     rts
 

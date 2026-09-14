@@ -105,7 +105,7 @@ def test_labirynt_builder_cli(tmp_path):
     from labirynt_studio.io.project_io import load_project_from_yaml
     proj, _ = load_project_from_yaml(Path("world/project.yaml"))
     assert f"WORLD_SCREENS_COUNT     = {len(proj.screens)}" in content
-    assert "WORLD_LABYRINTHS_COUNT  = 1" in content
+    assert f"WORLD_LABYRINTHS_COUNT  = {len(proj.labyrinths)}" in content
     assert "screen_FOREST_01_vram" in content
     assert "screen_FOREST_01_blocking" in content
     assert "screen_FOREST_02_vram" in content

@@ -7,24 +7,31 @@
     "type": "vector"
   },
   {
-    "name": "FREE_SPACE",
+    "name": "CODE",
     "start_address": "$0800",
+    "end_address": "$1812",
+    "size": 4115,
+    "type": "code"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$1813",
     "end_address": "$27FF",
-    "size": 8192,
+    "size": 4077,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3F75",
-    "size": 6006,
+    "end_address": "$3FBE",
+    "size": 6079,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3F76",
+    "start_address": "$3FBF",
     "end_address": "$3FFF",
-    "size": 138,
+    "size": 65,
     "type": "free"
   },
   {
@@ -58,15 +65,15 @@
   {
     "name": "FONT",
     "start_address": "$7000",
-    "end_address": "$AD31",
-    "size": 15666,
+    "end_address": "$B8FF",
+    "size": 18688,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$AD32",
+    "start_address": "$B900",
     "end_address": "$BFFF",
-    "size": 4814,
+    "size": 1792,
     "type": "free"
   }
 ]

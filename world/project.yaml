@@ -57,8 +57,6 @@ screens:
     packed_xy: 133
   - code: 118
     packed_xy: 145
-  - code: 202
-    packed_xy: 83
 - id: FOREST_02
   objects:
   - code: 48
@@ -91,8 +89,6 @@ screens:
     packed_xy: 143
   - code: 56
     packed_xy: 101
-  - code: 56
-    packed_xy: 169
   - code: 22
     packed_xy: 9
   - code: 26
@@ -117,8 +113,18 @@ screens:
     packed_xy: 80
   - code: 15
     packed_xy: 109
-  - code: 197
+  - code: 25
+    packed_xy: 169
+  - code: 25
+    packed_xy: 170
+  - code: 15
     packed_xy: 137
+  - code: 19
+    packed_xy: 138
+  - code: 22
+    packed_xy: 168
+  - code: 22
+    packed_xy: 129
 - id: FOREST_03
   objects:
   - code: 11
@@ -557,9 +563,331 @@ screens:
     packed_xy: 17
   - code: 118
     packed_xy: 83
+  - code: 22
+    packed_xy: 7
+  - code: 22
+    packed_xy: 174
+  - code: 23
+    packed_xy: 19
+- id: TOLEM_01
+  objects:
+  - code: 177
+    packed_xy: 0
+  - code: 177
+    packed_xy: 102
+  - code: 177
+    packed_xy: 129
+  - code: 178
+    packed_xy: 132
+  - code: 178
+    packed_xy: 4
+  - code: 65
+    packed_xy: 2
+  - code: 48
+    packed_xy: 6
+  - code: 48
+    packed_xy: 168
+  - code: 152
+    packed_xy: 77
+  - code: 152
+    packed_xy: 139
+  - code: 152
+    packed_xy: 110
+  - code: 18
+    packed_xy: 15
+  - code: 18
+    packed_xy: 105
+  - code: 18
+    packed_xy: 10
+  - code: 18
+    packed_xy: 72
+  - code: 89
+    packed_xy: 80
+  - code: 89
+    packed_xy: 18
+  - code: 89
+    packed_xy: 114
+  - code: 104
+    packed_xy: 160
+  - code: 104
+    packed_xy: 13
+  - code: 104
+    packed_xy: 8
+  - code: 52
+    packed_xy: 67
+  - code: 118
+    packed_xy: 75
+  - code: 118
+    packed_xy: 176
+- id: TOLEM_02
+  objects:
+  - code: 6
+    packed_xy: 128
+  - code: 6
+    packed_xy: 0
+  - code: 155
+    packed_xy: 69
+  - code: 155
+    packed_xy: 12
+  - code: 156
+    packed_xy: 173
+  - code: 156
+    packed_xy: 9
+  - code: 154
+    packed_xy: 78
+  - code: 152
+    packed_xy: 83
+  - code: 152
+    packed_xy: 76
+  - code: 152
+    packed_xy: 77
+  - code: 89
+    packed_xy: 74
+  - code: 19
+    packed_xy: 138
+  - code: 19
+    packed_xy: 139
+  - code: 92
+    packed_xy: 168
+  - code: 136
+    packed_xy: 130
+  - code: 163
+    packed_xy: 3
+  - code: 62
+    packed_xy: 166
+  - code: 62
+    packed_xy: 178
+  - code: 120
+    packed_xy: 66
+  - code: 29
+    packed_xy: 67
+  - code: 19
+    packed_xy: 98
+  - code: 19
+    packed_xy: 99
+  - code: 24
+    packed_xy: 176
+  - code: 24
+    packed_xy: 15
+  - code: 83
+    packed_xy: 2
+  - code: 118
+    packed_xy: 7
+  - code: 118
+    packed_xy: 5
+  - code: 118
+    packed_xy: 50
+  - code: 164
+    packed_xy: 51
+  - code: 164
+    packed_xy: 175
+  - code: 164
+    packed_xy: 171
+  - code: 164
+    packed_xy: 170
+- id: TOLEM_03
+  objects:
+  - code: 156
+    packed_xy: 160
+  - code: 155
+    packed_xy: 64
+  - code: 154
+    packed_xy: 67
+  - code: 155
+    packed_xy: 104
+  - code: 95
+    packed_xy: 13
+  - code: 89
+    packed_xy: 97
+  - code: 18
+    packed_xy: 133
+  - code: 152
+    packed_xy: 131
+  - code: 152
+    packed_xy: 135
+  - code: 152
+    packed_xy: 9
+  - code: 9
+    packed_xy: 19
+  - code: 65
+    packed_xy: 147
+  - code: 11
+    packed_xy: 17
+  - code: 48
+    packed_xy: 177
+  - code: 48
+    packed_xy: 170
+  - code: 177
+    packed_xy: 7
+  - code: 200
+    packed_xy: 79
+  - code: 53
+    packed_xy: 110
+  - code: 53
+    packed_xy: 114
+  - code: 53
+    packed_xy: 15
+  - code: 164
+    packed_xy: 35
+  - code: 164
+    packed_xy: 36
+  - code: 182
+    packed_xy: 0
+  - code: 182
+    packed_xy: 6
+  - code: 187
+    packed_xy: 1
+  - code: 193
+    packed_xy: 140
+  - code: 92
+    packed_xy: 11
+  - code: 92
+    packed_xy: 76
+  - code: 92
+    packed_xy: 175
+- id: TOLEM_04
+  objects:
+  - code: 178
+    packed_xy: 0
+  - code: 178
+    packed_xy: 18
+  - code: 177
+    packed_xy: 2
+  - code: 177
+    packed_xy: 108
+  - code: 177
+    packed_xy: 47
+  - code: 4
+    packed_xy: 67
+  - code: 4
+    packed_xy: 7
+  - code: 17
+    packed_xy: 9
+  - code: 158
+    packed_xy: 41
+  - code: 187
+    packed_xy: 40
+  - code: 187
+    packed_xy: 73
+  - code: 192
+    packed_xy: 132
+  - code: 188
+    packed_xy: 11
+  - code: 117
+    packed_xy: 5
+  - code: 166
+    packed_xy: 170
+  - code: 187
+    packed_xy: 3
+  - code: 62
+    packed_xy: 160
+  - code: 62
+    packed_xy: 178
+  - code: 92
+    packed_xy: 172
+  - code: 11
+    packed_xy: 131
+  - code: 11
+    packed_xy: 70
+  - code: 11
+    packed_xy: 143
+  - code: 182
+    packed_xy: 113
+  - code: 182
+    packed_xy: 146
+  - code: 182
+    packed_xy: 137
+  - code: 177
+    packed_xy: 97
+  - code: 65
+    packed_xy: 83
+  - code: 95
+    packed_xy: 49
+- id: TOLEM_05
+  objects:
+  - code: 56
+    packed_xy: 160
+  - code: 153
+    packed_xy: 135
+  - code: 117
+    packed_xy: 0
+  - code: 38
+    packed_xy: 128
+  - code: 38
+    packed_xy: 96
+  - code: 38
+    packed_xy: 64
+  - code: 38
+    packed_xy: 32
+  - code: 38
+    packed_xy: 97
+  - code: 38
+    packed_xy: 65
+  - code: 38
+    packed_xy: 33
+  - code: 38
+    packed_xy: 129
+  - code: 76
+    packed_xy: 36
+  - code: 76
+    packed_xy: 111
+  - code: 151
+    packed_xy: 12
+  - code: 52
+    packed_xy: 13
+  - code: 164
+    packed_xy: 103
+  - code: 164
+    packed_xy: 104
+  - code: 164
+    packed_xy: 105
+  - code: 164
+    packed_xy: 106
+- id: TOLEM_06
+  objects:
+  - code: 121
+    packed_xy: 72
+  - code: 151
+    packed_xy: 133
+  - code: 31
+    packed_xy: 71
+  - code: 52
+    packed_xy: 78
+  - code: 164
+    packed_xy: 104
+  - code: 164
+    packed_xy: 105
+  - code: 164
+    packed_xy: 106
+  - code: 164
+    packed_xy: 107
+  - code: 164
+    packed_xy: 108
+  - code: 164
+    packed_xy: 109
+- id: TOLEM_07
+  objects:
+  - code: 167
+    packed_xy: 44
+  - code: 151
+    packed_xy: 3
+  - code: 52
+    packed_xy: 109
+  - code: 52
+    packed_xy: 4
+  - code: 31
+    packed_xy: 2
+  - code: 96
+    packed_xy: 46
+  - code: 17
+    packed_xy: 111
+  - code: 67
+    packed_xy: 144
+  - code: 66
+    packed_xy: 143
 labyrinths:
 - id: LEVEL_01
-  name: Krzaki Wytępy
+  name: 'poziom 1 : krzaki wytępy'
   screens:
   - FOREST_01
   - FOREST_02
@@ -570,3 +898,14 @@ labyrinths:
   - FOREST_07
   - FOREST_08
   - FOREST_09
+- id: LEVEL_02
+  name: 'poziom 2 : słoneczne błonia tolemu'
+  screens:
+  - TOLEM_01
+  - TOLEM_02
+  - TOLEM_03
+  - TOLEM_03
+  - TOLEM_04
+  - TOLEM_05
+  - TOLEM_06
+  - TOLEM_07

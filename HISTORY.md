@@ -1,6 +1,39 @@
 # Project History & Changelog
 
-<!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
+<!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
+
+## [2026-09-14] - Resetowanie energii smoka do 100% na każdym nowym poziomie
+- **Scena gry ([scenes/game.asm](scenes/game.asm))**:
+  - W gałęzi `@have_another_level` procedury `advance_to_next_level` dodano wywołania `init_energy_bar` oraz `calc_energy_frames`, dzięki czemu po ukończeniu etapu i przejściu do kolejnego labiryntu smok zawsze startuje ze 100% energii (`COUNTER_FULL = 40`, `COUNTER_EIGHT = 83`).
+  - Zresetowano również stan dynamiczny smoka (`dragon_y = DRAGON_START_Y`, `dragon_vel_hi/lo = 0`, `dragon_sub_y = 0`, wygaszenie strzałów i prędkość przelotowa `SCROLL_BASE_SPEED`).
+- **Testy automatyczne ([tests/test_scrolling.py](tests/test_scrolling.py))**:
+  - Dodano test `test_advance_to_next_level_refills_energy_to_100_percent` weryfikujący uzupełnienie paska energii w `GAME_STATUS_VRAM` (39 znaków $52 + 1 znak $53), liczników energii oraz pozycji smoka po przejściu do kolejnego labiryntu.
+  - Wszystkie 102 testy przechodzą pomyślnie.
+
+## [2026-09-14] - Reorganizacja pamięci RAM (relokacja silników pomocniczych do Low RAM $0800)
+- **Architektura pamięci ([main.asm](main.asm))**:
+  - Zdefiniowano segment `LOW_CODE_ADDR = $0800` w wolnej przestrzeni RAM (`$0800`–`$1FFF`, przed buforem PMG `$2000`).
+  - Przeniesiono silniki pomocnicze (`engine/charset_anim.asm`, `engine/sound.asm`, `engine/flame_collision.asm`, `engine/level_name.asm`, `gen/dragon_sprite.asm`) z High RAM (`$7800+`, za danymi świata) do `LOW_CODE_ADDR` (`$0800`–`$1812`, 4115 bajtów).
+  - Rozszerzone dane świata gry dla 16 ekranów / 2 labiryntów (`gen/world_data.asm`) mieszczą się teraz całkowicie w przedziale `$7800`–`$B8FF`, pozostawiając 1792 bajty wolnego bufora przed granicą OS ROM (`$BFFF`).
+  - Zachowano ściśle rosnący porządek dyrektyw `org` w MADS (`$0800` -> `$2800` -> `$4000` -> `$6800` -> `$7000` -> `$7400` -> `$7800` -> `$02E0`).
+- **Testy automatyczne**:
+  - Zaktualizowano [tests/test_labirynt_builder.py](tests/test_labirynt_builder.py), [tests/test_level_name.py](tests/test_level_name.py) oraz [tests/test_scrolling.py](tests/test_scrolling.py) do dynamicznego odczytu liczby labiryntów i długości nazw poziomów z `world/project.yaml`.
+  - Wszystkie 101 testów automatycznych py65 / pytest przechodzi pomyślnie.
+
+## [2026-09-14] - Zmiana doładowania energii dla obiektów Interactive na 100 jednostek
+- **Silnik kolizji (`engine/flame_collision.asm`)**:
+  - Zmieniono procedurę doładowania energii przy zebraniu obiektu `Interactive` na `increase_energy_100` (100 sub-kroków `increase_energy_bar`, tj. 12.5 znaku paska energii z ograniczeniem do maksimum).
+  - Zachowano aliasy kompatybilności `increase_energy_25` oraz `increase_energy_5`.
+- **Testy automatyczne (`tests/test_secret_collision.py`)**:
+  - Zaktualizowano testy `test_increase_energy_100` oraz `test_interactive_collection_flow` pod kątem 100 kroków doładowania energii.
+
+## [2026-09-14] - Zwiększenie doładowania energii dla obiektów Interactive z 5 do 25
+- **Silnik kolizji (`engine/flame_collision.asm`)**:
+  - Zmieniono liczbę kroków doładowania energii przy zebraniu obiektu `Interactive` z 5 na 25 (`increase_energy_25`).
+  - Procedura `increase_energy_25` wykonuje 25 sub-kroków `increase_energy_bar` (płynny przyrost energii o ponad 3 pełne znaki paska z zachowaniem limitu maksimum).
+  - Zachowano alias wstecznej kompatybilności `increase_energy_5 = increase_energy_25`.
+- **Testy automatyczne (`tests/test_secret_collision.py`)**:
+  - Zaktualizowano test jednostkowy `test_increase_energy_25` oraz test integracyjny `test_interactive_collection_flow` pod kątem 25 kroków doładowania energii.
 
 ## [2026-09-14] - Poprawka kolejności przywracania obiektów w game_init
 - **Scena gry (`scenes/game.asm`)**:

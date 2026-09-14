@@ -64,21 +64,25 @@ def test_show_level_name_screen_emulation(clean_mpu: MPU, labels: Dict[str, int]
     dlist_actual = mpu.memory[labels["SDLSTL"]] | (mpu.memory[labels["SDLSTH"]] << 8)
     assert dlist_actual == dlist_expected
 
-    # 3. Verify text in STUB_VRAM: "Tulgey Forest" (13 chars) centered at col (40-13)//2 = 13
+    # 3. Verify text in STUB_VRAM dynamically centered based on project.yaml
+    from labirynt_studio.io.project_io import load_project_from_yaml
+    proj, _ = load_project_from_yaml(Path("world/project.yaml"))
+    expected_name = proj.labyrinths[0].name
+    name_len = len(expected_name)
+    start_col = (40 - name_len) // 2
+
     stub_base = labels["STUB_VRAM"]
-    # Cols 0..12 must be space ($00)
-    for c in range(13):
+    for c in range(start_col):
         assert mpu.memory[stub_base + c] == 0, f"Col {c} should be space"
 
-    # "Tulgey Forest": "Tulgey" (cols 13..18) are non-zero, col 19 is space ($00), "Forest" (cols 20..25) are non-zero
-    for c in range(13, 19):
-        assert mpu.memory[stub_base + c] != 0, f"Col {c} ('Tulgey') should contain text"
-    assert mpu.memory[stub_base + 19] == 0, "Col 19 must be space ($00)"
-    for c in range(20, 26):
-        assert mpu.memory[stub_base + c] != 0, f"Col {c} ('Forest') should contain text"
+    for i, ch in enumerate(expected_name):
+        c = start_col + i
+        if ch == " ":
+            assert mpu.memory[stub_base + c] == 0, f"Col {c} should be space"
+        else:
+            assert mpu.memory[stub_base + c] != 0, f"Col {c} should contain text for char '{ch}'"
 
-    # Cols 26..39 must be space ($00)
-    for c in range(26, 40):
+    for c in range(start_col + name_len, 40):
         assert mpu.memory[stub_base + c] == 0, f"Col {c} should be space"
 
     # 4. Text luminance initially black (0)

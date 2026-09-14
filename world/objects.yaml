@@ -1552,7 +1552,7 @@ objects:
     blocking: true
     interactive: false
     secret: false
-  tiles: [224, 225, 33, 34, 34, 33, 33, 34, 34, 33, 87, 88]
+  tiles: [224, 225, 33, 34, 34, 33, 33, 34, 34, 33, 27, 28]
   tags: [dom]
 - object: WATER
   id: WATER

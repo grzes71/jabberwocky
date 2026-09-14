@@ -7,6 +7,7 @@
     icl 'zeropage.asm'
 
 ; ---- Memory Map Equates ----
+LOW_CODE_ADDR   = $0800             ; Auxiliary engines & data in Low RAM ($0800-$1FFF)
 CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
 DLIST_ADDR      = $6800
 VRAM_ADDR       = $4000
@@ -36,6 +37,17 @@ STATE_TITLE     = 0
 STATE_INTRO     = 1
 STATE_GAME      = 2
 STATE_GAME_OVER = 3
+
+; ==============================================================================
+; LOW CODE / AUXILIARY ENGINES (Low RAM $0800-$1FFF)
+; ==============================================================================
+    org LOW_CODE_ADDR
+engine
+    icl 'engine/charset_anim.asm'
+    icl 'engine/sound.asm'
+    icl 'engine/flame_collision.asm'
+    icl 'engine/level_name.asm'
+    icl 'gen/dragon_sprite.asm'
 
 ; ==============================================================================
 ; CODE SEGMENT
@@ -280,31 +292,6 @@ game_font_data
 ; ==============================================================================
     org WORLD_DATA_ADDR
     icl 'gen/world_data.asm'
-
-; ==============================================================================
-; CHARSET ANIMATION ENGINE & DATA TABLES
-; ==============================================================================
-    icl 'engine/charset_anim.asm'
-
-; ==============================================================================
-; SOUND ENGINE & AUDIO TABLES
-; ==============================================================================
-    icl 'engine/sound.asm'
-
-; ==============================================================================
-; DRAGON FIRE COLLISION & DESTRUCTION ENGINE
-; ==============================================================================
-    icl 'engine/flame_collision.asm'
-
-; ==============================================================================
-; LEVEL NAME SCREEN ENGINE
-; ==============================================================================
-    icl 'engine/level_name.asm'
-
-; ==============================================================================
-; SPRITE ASSETS (High RAM)
-; ==============================================================================
-    icl 'gen/dragon_sprite.asm'
 
 ; ==============================================================================
 ; RUN ADDRESS VECTOR

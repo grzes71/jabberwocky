@@ -315,21 +315,24 @@ def test_add_shot_1(labels: Dict[str, int], clean_mpu: MPU):
     assert mpu.memory[shots_addr] == 99
 
 
-def test_increase_energy_5(labels: Dict[str, int], clean_mpu: MPU):
-    """Test increase_energy_5 advances energy by 5 sub-steps."""
+def test_increase_energy_100(labels: Dict[str, int], clean_mpu: MPU):
+    """Test increase_energy_100 advances energy by 100 sub-steps across blocks."""
     mpu = clean_mpu
     counter_full = labels["COUNTER_FULL"]
     counter_eight = labels["COUNTER_EIGHT"]
 
-    # Partial energy: block 38, sub-step 88 -> 5 steps back -> sub-step 83
-    mpu.memory[counter_full] = 38
-    mpu.memory[counter_eight] = 88
+    # Start with COUNTER_FULL = 20, COUNTER_EIGHT = 86
+    mpu.memory[counter_full] = 20
+    mpu.memory[counter_eight] = 86
     mpu.memory[labels["DRAGON_DYING"]] = 0
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
-    run_subroutine(mpu, labels["INCREASE_ENERGY_5"])
-    assert mpu.memory[counter_full] == 38
-    assert mpu.memory[counter_eight] == 83
+    run_subroutine(mpu, labels["INCREASE_ENERGY_100"])
+    # 100 steps from (20, 86):
+    # 4 steps to finish block 20 -> block 21 at 90 (96 steps remaining)
+    # 96 / 8 = 12 full blocks -> block 21 + 12 = block 33 at 90
+    assert mpu.memory[counter_full] == 33
+    assert mpu.memory[counter_eight] == 90
 
 
 def test_interactive_does_not_trigger_blocking_crash(labels: Dict[str, int], clean_mpu: MPU):
@@ -359,7 +362,7 @@ def test_interactive_does_not_trigger_blocking_crash(labels: Dict[str, int], cle
 def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     """Test collection of object with interactive flag ($02):
     - SCORE + 5
-    - Energy + 5 units
+    - Energy + 100 units
     - Object erased from VRAM & blocking_col
     - Pickup sound triggered
     """
@@ -381,11 +384,11 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     score_addr = labels["SCORE"]
     mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 0, 0])
 
-    # Set initial energy
+    # Set initial energy: block 20, sub-step 86
     counter_full = labels["COUNTER_FULL"]
     counter_eight = labels["COUNTER_EIGHT"]
-    mpu.memory[counter_full] = 38
-    mpu.memory[counter_eight] = 88
+    mpu.memory[counter_full] = 20
+    mpu.memory[counter_eight] = 86
     mpu.memory[labels["DRAGON_DYING"]] = 0
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
@@ -401,9 +404,9 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     # SCORE should be 0005 (+5)
     assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 0, 5]
 
-    # Energy should be increased by 5 sub-steps: 88 -> 83
-    assert mpu.memory[counter_full] == 38
-    assert mpu.memory[counter_eight] == 83
+    # Energy should be increased by 100 sub-steps: COUNTER_FULL=33, COUNTER_EIGHT=90
+    assert mpu.memory[counter_full] == 33
+    assert mpu.memory[counter_eight] == 90
 
     # Pickup sound triggered
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
