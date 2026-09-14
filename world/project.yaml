@@ -612,7 +612,7 @@ screens:
   - code: 18
     packed_xy: 10
   - code: 18
-    packed_xy: 72
+    packed_xy: 40
   - code: 89
     packed_xy: 80
   - code: 89
@@ -716,9 +716,9 @@ screens:
   - code: 118
     packed_xy: 5
   - code: 118
-    packed_xy: 50
+    packed_xy: 48
   - code: 164
-    packed_xy: 51
+    packed_xy: 49
   - code: 164
     packed_xy: 175
   - code: 164
@@ -726,7 +726,7 @@ screens:
   - code: 164
     packed_xy: 170
   - code: 152
-    packed_xy: 40
+    packed_xy: 8
   - code: 29
     packed_xy: 105
   - code: 19
@@ -735,7 +735,9 @@ screens:
     packed_xy: 135
   - code: 199
     packed_xy: 144
-  - code: 118
+  - code: 7
+    packed_xy: 50
+  - code: 164
     packed_xy: 38
 - id: TOLEM_03
   objects:
