@@ -188,6 +188,12 @@ game_init
     sta PCOLR3
     sta COLPM3
 
+    ; Initialize flame collision state (clears destroyed bitmasks)
+    jsr init_flame_collision
+
+    ; Restore all secret / collectible objects in world data (new game run)
+    jsr restore_all_secrets
+
     ; Initialize world level & screens streaming (starts with level 0)
     lda #0
     sta current_level_idx
@@ -254,12 +260,6 @@ game_init
 
     ; Initialize charset animations state
     jsr init_charset_animation
-
-    ; Initialize flame collision state
-    jsr init_flame_collision
-
-    ; Restore all secret objects in world data (new game run)
-    jsr restore_all_secrets
 
     ; Initial render of dragon sprite into Player 0 buffer
     jsr render_dragon

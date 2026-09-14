@@ -1,5 +1,5 @@
-tags: [woda, drzewo, dom, skała, animacja, infrastruktura, portal, interakcja, tło,
-  sekret]
+tags: [woda, drzewo, dom, skała, animacja, infrastruktura, interakcja, tło, sekret,
+  skarb]
 objects:
 - object: WAVES_UP
   id: WAVES_UP
@@ -273,9 +273,9 @@ objects:
   flags:
     blocking: false
     interactive: false
-    secret: false
+    secret: true
   tiles: [0, 0, 100, 228]
-  tags: [tło]
+  tags: [sekret]
 - object: CHAIN_1_2
   id: CHAIN_1_2
   code: 32
@@ -407,9 +407,9 @@ objects:
   flags:
     blocking: false
     interactive: false
-    secret: false
+    secret: true
   tiles: [0, 100]
-  tags: [tło]
+  tags: [sekret]
 - object: BARREL_2
   id: BARREL_2
   code: 53
@@ -419,9 +419,9 @@ objects:
   flags:
     blocking: false
     interactive: false
-    secret: false
+    secret: true
   tiles: [100, 228]
-  tags: [tło]
+  tags: [sekret]
 - object: CLAW_2_2
   id: CLAW_2_2
   code: 54
@@ -644,12 +644,12 @@ objects:
   code: 82
   size:
     width: 2
-    height: 2
+    height: 1
   flags:
     blocking: true
     interactive: false
     secret: false
-  tiles: [30, 31, 62, 63]
+  tiles: [30, 31]
   tags: [infrastruktura]
 - object: CROSS_2_COPY
   id: CROSS_2_COPY
@@ -845,7 +845,7 @@ objects:
     interactive: true
     secret: false
   tiles: [59, 60, 55, 55, 55, 55, 59, 60, 91, 92, 33, 155, 156, 33, 91, 92]
-  tags: [interakcja]
+  tags: [dom]
 - object: CHURCH
   id: CHURCH
   code: 102
@@ -858,7 +858,7 @@ objects:
     secret: false
   tiles: [0, 171, 172, 0, 0, 103, 106, 0, 0, 185, 56, 0, 0, 61, 189, 0, 16, 33, 33,
     18, 33, 163, 164, 33, 33, 27, 28, 33]
-  tags: [interakcja]
+  tags: [dom]
 - object: CHURCH_SMALL
   id: CHURCH_SMALL
   code: 103
@@ -971,7 +971,7 @@ objects:
     secret: false
   tiles: [1, 3, 2, 3, 3, 3, 3, 2, 3, 4, 250, 34, 163, 164, 33, 33, 163, 164, 34, 251,
     250, 29, 29, 29, 27, 28, 29, 29, 29, 251]
-  tags: [interakcja]
+  tags: [dom]
 - object: PORT_2
   id: PORT_2
   code: 113
@@ -984,7 +984,7 @@ objects:
     secret: false
   tiles: [129, 130, 131, 131, 131, 131, 131, 131, 131, 132, 250, 33, 33, 33, 33, 33,
     33, 33, 33, 251, 250, 255, 255, 255, 27, 28, 255, 255, 255, 251]
-  tags: [portal, interakcja]
+  tags: [dom]
 - object: RIVER_LEFT_END
   id: RIVER_LEFT_END
   code: 114
@@ -1071,7 +1071,7 @@ objects:
     secret: false
   tiles: [1, 3, 2, 3, 3, 3, 3, 3, 3, 2, 3, 4, 250, 163, 164, 163, 164, 27, 28, 163,
     164, 163, 164, 251]
-  tags: [interakcja]
+  tags: [dom]
 - object: WATER_ANIM_2
   id: WATER_ANIM_2
   code: 122
@@ -1105,9 +1105,9 @@ objects:
   flags:
     blocking: false
     interactive: false
-    secret: false
+    secret: true
   tiles: [100]
-  tags: [tło]
+  tags: [sekret]
 - object: BRICKS_2
   id: BRICKS_2
   code: 126
@@ -1180,7 +1180,7 @@ objects:
     secret: false
   tiles: [0, 0, 0, 96, 97, 0, 0, 0, 59, 60, 55, 58, 58, 55, 59, 60, 91, 92, 33, 33,
     33, 33, 91, 92, 91, 92, 34, 27, 28, 34, 91, 92]
-  tags: [interakcja]
+  tags: [dom]
 - object: CASTLE_BIGGER
   id: CASTLE_BIGGER
   code: 133
@@ -1193,7 +1193,7 @@ objects:
     secret: false
   tiles: [0, 0, 0, 104, 105, 0, 0, 0, 0, 0, 0, 33, 33, 0, 0, 0, 59, 60, 55, 61, 61,
     55, 59, 60, 91, 92, 33, 33, 33, 33, 91, 92, 91, 92, 34, 27, 28, 34, 91, 92]
-  tags: [interakcja]
+  tags: [dom]
 - object: CASTLE_BIGGEST
   id: CASTLE_BIGGEST
   code: 134
@@ -1207,7 +1207,7 @@ objects:
   tiles: [0, 0, 0, 0, 0, 224, 225, 0, 0, 0, 0, 0, 0, 0, 96, 97, 0, 33, 33, 0, 96,
     97, 0, 0, 0, 0, 58, 58, 55, 58, 58, 55, 58, 58, 0, 0, 59, 60, 29, 34, 33, 57,
     56, 33, 34, 127, 59, 60, 91, 92, 29, 34, 34, 27, 28, 34, 34, 127, 91, 92]
-  tags: [interakcja]
+  tags: [dom]
 - object: CASTLE_MID
   id: CASTLE_MID
   code: 135
@@ -1220,7 +1220,7 @@ objects:
     secret: false
   tiles: [0, 0, 0, 158, 159, 0, 0, 0, 59, 60, 55, 58, 58, 55, 59, 60, 91, 92, 57,
     56, 57, 56, 91, 92, 91, 92, 250, 27, 28, 251, 91, 92]
-  tags: [interakcja]
+  tags: [dom]
 - object: LARGE_ROCK
   id: LARGE_ROCK
   code: 136
@@ -1229,11 +1229,11 @@ objects:
     height: 3
   flags:
     blocking: true
-    interactive: true
+    interactive: false
     secret: false
   tiles: [0, 0, 10, 11, 12, 0, 0, 0, 10, 11, 34, 9, 12, 0, 10, 11, 34, 34, 34, 9,
     12]
-  tags: [portal, interakcja]
+  tags: [skała]
 - object: CHAIN_2
   id: CHAIN_2
   code: 137
@@ -1376,11 +1376,11 @@ objects:
     height: 3
   flags:
     blocking: true
-    interactive: true
+    interactive: false
     secret: false
   tiles: [0, 0, 13, 14, 15, 0, 0, 0, 13, 14, 74, 74, 15, 0, 13, 14, 74, 155, 156,
     74, 15]
-  tags: [portal, interakcja]
+  tags: [skała]
 - object: PYRAMID_BIG
   id: PYRAMID_BIG
   code: 154
@@ -1393,7 +1393,7 @@ objects:
     secret: false
   tiles: [0, 0, 0, 0, 232, 233, 0, 0, 0, 0, 0, 0, 232, 231, 227, 34, 234, 233, 0,
     0, 232, 231, 227, 227, 155, 156, 34, 34, 234, 233]
-  tags: [interakcja]
+  tags: [dom]
 - object: PYRAMID_MEDIUM
   id: PYRAMID_MEDIUM
   code: 155
@@ -1550,10 +1550,10 @@ objects:
     height: 6
   flags:
     blocking: true
-    interactive: true
+    interactive: false
     secret: false
   tiles: [224, 225, 33, 34, 34, 33, 33, 34, 34, 33, 87, 88]
-  tags: [portal]
+  tags: [dom]
 - object: WATER
   id: WATER
   code: 168
@@ -1728,7 +1728,7 @@ objects:
     width: 4
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [0, 10, 12, 0, 10, 11, 9, 12]
@@ -1745,7 +1745,7 @@ objects:
     secret: false
   tiles: [96, 3, 3, 3, 3, 3, 3, 3, 3, 97, 250, 33, 163, 164, 27, 28, 163, 164, 33,
     251]
-  tags: [portal, interakcja]
+  tags: [dom]
 - object: CAVE_PORTAL_2
   id: CAVE_PORTAL_2
   code: 185
@@ -1754,10 +1754,10 @@ objects:
     height: 2
   flags:
     blocking: true
-    interactive: true
+    interactive: false
     secret: false
   tiles: [0, 10, 11, 34, 12, 0, 10, 11, 27, 28, 9, 12]
-  tags: [portal, interakcja]
+  tags: [dom, skała]
 - object: FORGERY
   id: FORGERY
   code: 186
@@ -1871,3 +1871,75 @@ objects:
   tiles: [0, 0, 138, 139, 140, 0, 0, 0, 138, 139, 34, 9, 140, 0, 138, 139, 34, 34,
     34, 9, 140]
   tags: [skała]
+- object: PEASANT_ARMED
+  id: PEASANT_ARMED
+  code: 197
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: false
+    interactive: true
+    secret: false
+  tiles: [37, 38]
+  tags: [interakcja]
+- object: PEASANT
+  id: PEASANT
+  code: 198
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: false
+    interactive: true
+    secret: false
+  tiles: [16, 17]
+  tags: [interakcja]
+- object: KNIGHT
+  id: KNIGHT
+  code: 199
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: false
+    interactive: true
+    secret: false
+  tiles: [18, 19]
+  tags: [interakcja]
+- object: CAVE_PORTAL_DOWN
+  id: CAVE_PORTAL_DOWN
+  code: 200
+  size:
+    width: 6
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 0, 0, 0, 0, 0, 0, 10, 11, 34, 12, 0, 10, 11, 27, 28, 9, 12]
+  tags: [dom, skała]
+- object: SKARB_1
+  id: SKARB_1
+  code: 201
+  size:
+    width: 2
+    height: 2
+  flags:
+    blocking: false
+    interactive: true
+    secret: true
+  tiles: [96, 97, 48, 49]
+  tags: [skarb]
+- object: SKARB_2
+  id: SKARB_2
+  code: 202
+  size:
+    width: 2
+    height: 2
+  flags:
+    blocking: false
+    interactive: true
+    secret: true
+  tiles: [224, 225, 176, 177]
+  tags: [skarb]

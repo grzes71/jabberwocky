@@ -60,8 +60,9 @@ def bake_screen_vram(screen: Screen, objects_lib: ObjectsLibrary) -> bytearray:
 def bake_screen_blocking(screen: Screen, objects_lib: ObjectsLibrary) -> bytearray:
     """Pre-renders a 440-byte collision matrix for a given screen.
     Solid tiles of objects with blocking: true have bit 0 ($01) set.
+    Solid tiles of objects with interactive: true have bit 1 ($02) set.
     Solid tiles of objects with secret: true have bit 2 ($04) set.
-    Empty/transparent tiles (tile == 0) and non-blocking/non-secret objects remain 0.
+    Empty/transparent tiles (tile == 0) and non-blocking/non-interactive/non-secret objects remain 0.
     """
     blocking = bytearray(SCREEN_VRAM_SIZE)
 
@@ -70,15 +71,18 @@ def bake_screen_blocking(screen: Screen, objects_lib: ObjectsLibrary) -> bytearr
         if not obj_def:
             continue
         is_blocking = obj_def.flags.blocking
+        is_interactive = obj_def.flags.interactive
         is_secret = obj_def.flags.secret
-        if not is_blocking and not is_secret:
+        if not is_blocking and not is_interactive and not is_secret:
             continue
 
         w = obj_def.size.width
         h = obj_def.size.height
         tiles = obj_def.tiles
 
-        mask_val = (0x01 if is_blocking else 0) | (0x04 if is_secret else 0)
+        mask_val = (0x01 if is_blocking else 0) | \
+                   (0x02 if is_interactive else 0) | \
+                   (0x04 if is_secret else 0)
 
         tile_idx = 0
         for dy in range(h):
@@ -342,7 +346,7 @@ def generate_world_asm(
     for s_idx, screen in enumerate(project.screens):
         for obj_idx, inst in enumerate(screen.objects):
             obj_def = objects_lib.get_by_code(inst.code)
-            if obj_def and obj_def.flags.secret:
+            if obj_def and (obj_def.flags.secret or obj_def.flags.interactive):
                 secret_instances.append({
                     "screen_idx": s_idx,
                     "obj_idx": obj_idx,
@@ -352,6 +356,8 @@ def generate_world_asm(
                     "h": obj_def.size.height,
                     "tiles": obj_def.tiles,
                     "blocking": obj_def.flags.blocking,
+                    "interactive": obj_def.flags.interactive,
+                    "secret": obj_def.flags.secret,
                 })
 
     asm.append(f"secret_objs_total       dta {len(secret_instances)}")
@@ -377,7 +383,9 @@ def generate_world_asm(
 
             total_cells = item["w"] * item["h"]
             t_bytes = [f"${b:02X}" for b in item["tiles"][:total_cells]]
-            coll_val = 0x04 | (0x01 if item["blocking"] else 0)
+            coll_val = (0x01 if item["blocking"] else 0) | \
+                       (0x02 if item["interactive"] else 0) | \
+                       (0x04 if item["secret"] else 0)
             c_bytes = [f"${coll_val:02X}" if b != 0 else "$00" for b in item["tiles"][:total_cells]]
 
             asm.append(f"{t_lbl}")

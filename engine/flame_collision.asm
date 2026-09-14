@@ -100,6 +100,8 @@ fc_erase_c              dta 0
 fc_sec_idx              dta 0
 fc_tile_offset          dta 0
 fc_base_ptr             dta a(0)
+fc_cur_obj_flags        dta 0
+fc_energy_cnt           dta 0
 
 ; ==============================================================================
 ; init_flame_collision
@@ -833,7 +835,7 @@ shift_blocking_vram_left    = shift_blocking_cols
 @chk_row
     lda blocking_col8,x
     ora blocking_col9,x
-    and #$04                    ; Bit 2: secret object!
+    and #$06                    ; Bit 1 ($02: interactive) or Bit 2 ($04: secret)
     bne @found_secret
     inx
     cpx dc_dragon_row_max_p1
@@ -1005,10 +1007,9 @@ shift_blocking_vram_left    = shift_blocking_cols
 @fetch_code
     lda $FFFF,y
     tax
-
-    ; Check if object has secret flag (bit 2 = $04)
     lda obj_type_flags,x
-    and #$04
+    sta fc_cur_obj_flags
+    and #$06                    ; Check if object has interactive (bit 1) or secret (bit 2)
     beq @skip_to_next
 
     lda obj_type_width,x
@@ -1097,9 +1098,30 @@ shift_blocking_vram_left    = shift_blocking_cols
     ; 3. Erase from source buffers (screens_vram and screens_blocking) for run persistence
     jsr erase_object_from_source_buffers
 
-    ; 4. Increase score by 1
-    jsr add_score_1
+    ; 4. Check flags and award points / energy / shots
+    lda fc_cur_obj_flags
+    and #$06
+    cmp #$06                    ; Both Secret ($04) and Interactive ($02)?
+    beq @award_both
+    cmp #$02                    ; Only Interactive ($02)?
+    beq @award_interactive
 
+    ; Default: Secret only ($04) -> SCORE + 1
+    jsr add_score_1
+    jmp @play_sound
+
+@award_interactive
+    ; Interactive: SCORE + 5, ENERGY + 5
+    jsr add_score_5
+    jsr increase_energy_5
+    jmp @play_sound
+
+@award_both
+    ; Both: SCORE + 10, SHOTS + 1
+    jsr add_score_10
+    jsr add_shot_1
+
+@play_sound
     ; 5. Start pickup sound chime
     jsr start_secret_sound
 
@@ -1231,6 +1253,124 @@ shift_blocking_vram_left    = shift_blocking_cols
     jsr update_bottom_status
     rts
 .endp
+
+; ==============================================================================
+; add_score_5
+; Increments 4-digit decimal SCORE by 5 (BCD with carry propagation)
+; and updates the bottom status bar display.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc add_score_5
+    lda SCORE+3
+    clc
+    adc #5
+    sta SCORE+3
+    cmp #10
+    bcc @done
+    sec
+    sbc #10
+    sta SCORE+3
+
+    inc SCORE+2
+    lda SCORE+2
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+2
+
+    inc SCORE+1
+    lda SCORE+1
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+1
+
+    inc SCORE+0
+    lda SCORE+0
+    cmp #10
+    bcc @done
+    ; Cap at 9999
+    lda #9
+    sta SCORE+0
+    sta SCORE+1
+    sta SCORE+2
+    sta SCORE+3
+
+@done
+    jsr update_bottom_status
+    rts
+.endp
+
+; ==============================================================================
+; add_score_10
+; Increments 4-digit decimal SCORE by 10 (BCD with carry propagation)
+; and updates the bottom status bar display.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc add_score_10
+    inc SCORE+2
+    lda SCORE+2
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+2
+
+    inc SCORE+1
+    lda SCORE+1
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+1
+
+    inc SCORE+0
+    lda SCORE+0
+    cmp #10
+    bcc @done
+    ; Cap at 9999
+    lda #9
+    sta SCORE+0
+    sta SCORE+1
+    sta SCORE+2
+    sta SCORE+3
+
+@done
+    jsr update_bottom_status
+    rts
+.endp
+
+; ==============================================================================
+; increase_energy_5
+; Increases dragon energy by 5 units/sub-steps (calls increase_energy_bar 5 times).
+; Clobbers: A, X
+; ==============================================================================
+.proc increase_energy_5
+    lda #5
+    sta fc_energy_cnt
+@loop
+    jsr increase_energy_bar
+    dec fc_energy_cnt
+    bne @loop
+    rts
+.endp
+
+; ==============================================================================
+; add_shot_1
+; Increases dragon available fire shots by 1 (capped at 99)
+; and updates the bottom status bar display.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc add_shot_1
+    lda SHOTS
+    cmp #99
+    bcs @done
+    inc SHOTS
+    jsr update_bottom_status
+@done
+    rts
+.endp
+
+check_dragon_item_collision = check_dragon_secret_collision
+restore_all_collectibles   = restore_all_secrets
 
 ; ==============================================================================
 ; restore_all_secrets
