@@ -109,7 +109,7 @@ def generate_mads_assembly(sprite: SpriteData, prefix: str = "dragon") -> str:
             lines.append(f"    dta %{pixel_line}")
         lines.append("")
 
-    # Generate Structure-of-Arrays (SoA) lookup tables for 6502 indexed addressing
+    # Generate Structure-of-Arrays (SoA) Frame Address Lookup Tables
     lines.append("; Structure-of-Arrays (SoA) Frame Address Lookup Tables")
     lo_labels = ", ".join(f"<{prefix}_frame_{i}" for i in range(len(sprite.frames)))
     hi_labels = ", ".join(f">{prefix}_frame_{i}" for i in range(len(sprite.frames)))
@@ -119,6 +119,26 @@ def generate_mads_assembly(sprite: SpriteData, prefix: str = "dragon") -> str:
     lines.append("")
     lines.append(f"{prefix}_frame_tbl_hi")
     lines.append(f"    dta {hi_labels}")
+    lines.append("")
+
+    # Generate per-frame vertical non-zero pixel bounds for exact collision hitboxes
+    min_ys: List[int] = []
+    max_ys: List[int] = []
+    for frame in sprite.frames:
+        non_zero = [i for i, line in enumerate(frame.pixels) if "1" in line]
+        if non_zero:
+            min_ys.append(non_zero[0])
+            max_ys.append(non_zero[-1])
+        else:
+            min_ys.append(0)
+            max_ys.append(0)
+
+    lines.append("; Per-frame vertical non-zero pixel bounds for exact collision hitboxes")
+    lines.append(f"{prefix}_frame_min_y")
+    lines.append("    dta " + ", ".join(str(y) for y in min_ys))
+    lines.append("")
+    lines.append(f"{prefix}_frame_max_y")
+    lines.append("    dta " + ", ".join(str(y) for y in max_ys))
     lines.append("")
 
     return "\n".join(lines)

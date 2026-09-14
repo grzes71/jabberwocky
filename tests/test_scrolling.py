@@ -122,11 +122,11 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Verify state variables
-    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 0
+    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 1
     assert mpu.memory[labels["LEVEL_SCREEN_POS"]] == 1
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 4  # First 4 cols prefilled into cols 44..47
     assert mpu.memory[labels["LEVEL_TAIL_COLS"]] == 0
@@ -165,7 +165,7 @@ def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[s
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Run 1 scroll step (coarse shift)
@@ -252,7 +252,7 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Simulate scrolled playfield deep into the level
@@ -272,7 +272,7 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
     run_subroutine(mpu, labels["RESPAWN_DRAGON"])
 
     # Verify that the level has been restarted from screen 0
-    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 0
+    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 1
     assert mpu.memory[labels["LEVEL_SCREEN_POS"]] == 1
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 4
     assert mpu.memory[labels["LEVEL_TAIL_COLS"]] == 0

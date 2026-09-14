@@ -138,7 +138,8 @@ def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int]):
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
-    # 1. Initialize level 0 screens (screen 0 loaded into cols 4..43)
+    # 1. Initialize level 1 (FOREST) screens (screen 0 loaded into cols 4..43)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -185,6 +186,7 @@ def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dic
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -213,6 +215,7 @@ def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -241,6 +244,7 @@ def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[st
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 

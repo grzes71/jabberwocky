@@ -162,7 +162,7 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     # Screen 0 in left position, scrolled so col 34 aligns with col 8
     # Left screen col0 = 8 - incoming_col_idx -> col 34 at col 8 means 34 + (8 - incoming_col_idx) = 8
     # -> incoming_col_idx = 34
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -212,7 +212,7 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     assert orig_tile != 0
 
     # Collect secret via collision routine
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -239,7 +239,9 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     assert mpu.memory[blk_addr + offset] == orig_blk
     assert mpu.memory[vram_addr + offset] == orig_tile
 
-    # ...AND loaded into active GAME_ACTION_VRAM at Screen 0 (col 4 + 34 = 38)!
+    # ...AND loaded into active GAME_ACTION_VRAM when level 1 screens are loaded (col 4 + 34 = 38)!
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     action_vram = labels["GAME_ACTION_VRAM"]
     assert mpu.memory[action_vram + 8 * 48 + 38] == orig_tile
 
@@ -372,7 +374,7 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     flags_addr = labels["OBJ_TYPE_FLAGS"]
     mpu.memory[flags_addr + 118] = 0x02
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -429,7 +431,7 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     flags_addr = labels["OBJ_TYPE_FLAGS"]
     mpu.memory[flags_addr + 118] = 0x06
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -455,7 +457,7 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     # SCORE should be 0010 (+10)
     assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 1, 0]
 
-    # SHOTS should be incremented to 2 (+1)
+    # SHOTS should be incremented to 2
     assert mpu.memory[shots_addr] == 2
 
     # Pickup sound triggered
@@ -465,3 +467,30 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     assert mpu.memory[action_vram + 8 * 48 + 8] == 0x00
     assert mpu.memory[labels["BLOCKING_COL8"] + 8] == 0x00
 
+
+def test_dragon_frame_dependent_collision_bounds(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that collision routines use per-frame vertical pixel bounds (min_y, max_y):
+    - In frame 3 (folded wings, lines 8..18), dragon at y=74 does not reach row 4, avoiding obstacle.
+    - In frame 7 (wings fully spread, lines 0..25), dragon at y=74 reaches row 4, triggering crash.
+    """
+    mpu = clean_mpu
+
+    # Place an obstacle only at row 4 in blocking_col8
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL8"] + 4] = 0x01
+
+    mpu.memory[labels["DRAGON_Y"]] = 74
+
+    # Frame 3: folded wings (lines 8..18)
+    # y=74: rel_end = 74 + 18 - 34 = 58 -> row 3. Row 4 is NOT included!
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 3
+    run_subroutine(mpu, labels["CHECK_DRAGON_BLOCKING_COLLISION"])
+    assert (mpu.p & 0x01) == 0, "Frame 3 with folded wings should pass over row 4 obstacle without collision"
+
+    # Frame 7: fully spread wings (lines 0..25)
+    # y=74: rel_end = 74 + 25 - 34 = 65 -> row 4. Row 4 IS included!
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 7
+    run_subroutine(mpu, labels["CHECK_DRAGON_BLOCKING_COLLISION"])
+    assert (mpu.p & 0x01) == 1, "Frame 7 with spread wings should collide with row 4 obstacle"

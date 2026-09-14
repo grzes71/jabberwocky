@@ -736,12 +736,19 @@ shift_blocking_vram_left    = shift_blocking_cols
 ; Clobbers: A, X
 ; ==============================================================================
 .proc check_dragon_blocking_collision
-    ; Dragon spans scanlines dragon_y .. dragon_y + 25
+    ; Dynamic vertical bounding box based on current animation frame (0..7)
+    ; Dragon spans scanlines (dragon_y + min_y) .. (dragon_y + max_y)
     ; Action playfield starts at scanline 34
-    ; rel_start = dragon_y - 34
-    ; rel_end   = dragon_y + 25 - 34 = dragon_y - 9
+    ; rel_start = dragon_y + dragon_frame_min_y[x] - 34
+    ; rel_end   = dragon_y + dragon_frame_max_y[x] - 34
     ; row = rel / 16 (4 right shifts)
+    lda ANIM_PHASE+1
+    and #$07
+    tax
+
     lda dragon_y
+    clc
+    adc dragon_frame_min_y,x
     sec
     sbc #34
     bcs @rel_start_pos
@@ -754,8 +761,10 @@ shift_blocking_vram_left    = shift_blocking_cols
     sta dc_dragon_row_min
 
     lda dragon_y
+    clc
+    adc dragon_frame_max_y,x
     sec
-    sbc #9
+    sbc #34
     bcs @rel_end_pos
     lda #0
 @rel_end_pos
@@ -792,7 +801,7 @@ shift_blocking_vram_left    = shift_blocking_cols
 ; ==============================================================================
 ; check_dragon_secret_collision
 ; Ultra-fast check of blocking_col8 and blocking_col9 for secret flag ($04).
-; Dragon spans scanlines dragon_y .. dragon_y + 25 at VRAM columns 8..9.
+; Dragon spans scanlines (dragon_y + min_y) .. (dragon_y + max_y) at VRAM cols 8..9.
 ; If secret object hit: erases object, increments score, plays chime.
 ; Returns:
 ;   Carry SET (SEC)   = Secret object hit and collected
@@ -800,8 +809,14 @@ shift_blocking_vram_left    = shift_blocking_cols
 ; Clobbers: A, X
 ; ==============================================================================
 .proc check_dragon_secret_collision
-    ; Compute dragon row bounds (0..10)
+    ; Dynamic vertical bounding box based on current animation frame (0..7)
+    lda ANIM_PHASE+1
+    and #$07
+    tax
+
     lda dragon_y
+    clc
+    adc dragon_frame_min_y,x
     sec
     sbc #34
     bcs @rel_start_pos
@@ -814,8 +829,10 @@ shift_blocking_vram_left    = shift_blocking_cols
     sta dc_dragon_row_min
 
     lda dragon_y
+    clc
+    adc dragon_frame_max_y,x
     sec
-    sbc #9
+    sbc #34
     bcs @rel_end_pos
     lda #0
 @rel_end_pos

@@ -41,6 +41,8 @@ def test_compile_sprites_real_jabberwocky(tmp_path: Path) -> None:
     assert "dragon_frame_7" in content
     assert "dragon_frame_tbl_lo" in content
     assert "dragon_frame_tbl_hi" in content
+    assert "dragon_frame_min_y" in content
+    assert "dragon_frame_max_y" in content
 
 
 def test_compile_sprites_validation_error(tmp_path: Path) -> None:

@@ -2,6 +2,17 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-14] - Dynamiczny pionowy bounding box smoka zależny od klatki animacji
+- **Kompilator duszków ([scripts/compile_sprites.py](scripts/compile_sprites.py))**:
+  - Dodano automatyczne obliczanie pionowego zakresu niezerowych pikseli (`min_y` oraz `max_y`) dla każdej klatki animacji duszka.
+  - Generowanie tablic `dragon_frame_min_y` i `dragon_frame_max_y` w formacie Structure-of-Arrays w generowanym pliku `gen/dragon_sprite.asm`.
+- **Weryfikacja kolizji ([engine/flame_collision.asm](engine/flame_collision.asm))**:
+  - W procedurach `check_dragon_blocking_collision` oraz `check_dragon_secret_collision` zastąpiono stałą wysokość 26 linii dynamicznym obliczaniem zakresu wierszy Mode 5 (`dc_dragon_row_min` i `dc_dragon_row_max_p1`) z użyciem rejestru `ANIM_PHASE+1` oraz tablic `dragon_frame_min_y` i `dragon_frame_max_y`.
+  - Zapobiega to fałszywym kolizjom ze ścianami/przeszkodami w klatkach ze złożonymi skrzydłami (np. klatka 3 o wysokości 11 linii zamiast 26).
+- **Testy jednostkowe ([tests/test_secret_collision.py](tests/test_secret_collision.py), [tests/test_compile_sprites.py](tests/test_compile_sprites.py), [tests/test_flame_collision.py](tests/test_flame_collision.py), [tests/test_scrolling.py](tests/test_scrolling.py))**:
+  - Dodano test `test_dragon_frame_dependent_collision_bounds` weryfikujący brak kolizji w klatce 3 (złożone skrzydła) oraz kolizję w klatce 7 (rozpostarte skrzydła) przy identycznej pozycji pionowej.
+  - Zaktualizowano indeks poziomu na 1 w testach sprawdzających ekrany lasu `FOREST_01`.
+
 ## [2026-09-14] - Poprawka izolacji QSettings i domyślnej palety PF0 w Object Studio
 - **Object Studio ([object_studio/main.py](object_studio/main.py))**:
   - Zmieniono sygnaturę `load_resources` na `save_settings: bool = False`, aby wewnętrzne lub testowe wywołania ładowania zasobów nie nadpisywały automatycznie rejestru `QSettings` systemu operacyjnego.
