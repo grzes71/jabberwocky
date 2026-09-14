@@ -2,6 +2,40 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-14] - Poprawka izolacji QSettings i domyślnej palety PF0 w Object Studio
+- **Object Studio ([object_studio/main.py](object_studio/main.py))**:
+  - Zmieniono sygnaturę `load_resources` na `save_settings: bool = False`, aby wewnętrzne lub testowe wywołania ładowania zasobów nie nadpisywały automatycznie rejestru `QSettings` systemu operacyjnego.
+  - Zapis do `QSettings` odbywa się wyłącznie przy celowej zmianie w oknie `action_configure_resources`.
+- **Testy jednostkowe ([tests/test_object_studio_resources.py](tests/test_object_studio_resources.py))**:
+  - Wprowadzono autouse fixture `isolate_settings_and_colors` izolującą `QSettings` w pamięci oraz przywracającą oryginalną paletę `DEFAULT_COLORS` po zakończeniu testów, zapobiegając wyciekaniu tymczasowych danych testowych do środowiska deweloperskiego użytkownika.
+  - Zresetowano klucz `colors_path` w `QSettings` na `world/colors.yaml` (`PF0 = (140, 70, 0)` / `#8c4600`).
+
+## [2026-09-14] - Podgląd graficzny obiektów (ikony) na liście w Object Studio
+- **Lista obiektów ([object_studio/widgets/object_list_widget.py](object_studio/widgets/object_list_widget.py))**:
+  - Dodano renderowanie małych ikon dla każdego obiektu na liście (`QListWidget.setIconSize(QSize(32, 32))`).
+  - Zaimplementowano metodę `_render_icon` renderującą piksele kafli obiektu na podstawie aktualnego charsetu (`Charset`) i palety barw Atari, ze skalowaniem nearest-neighbor (zachowanie ostrości pikseli Atari).
+  - Dodano metody `set_charset`, `set_colors` oraz `update_object_item`, dzięki czemu ikony na liście odświeżają się dynamicznie przy edycji na płótnie, zmianie właściwości oraz zmianie zasobów.
+- **Główne okno ([object_studio/main.py](object_studio/main.py))**:
+  - Przekazano `charset` i kolory do `ObjectListWidget` przy wczytywaniu zasobów i zmianie parametrów.
+  - Podłączono `update_object_item` pod zdarzenia `_on_canvas_changed` oraz `_on_prop_changed` (natychmiastowa aktualizacja ikony obiektu na liście podczas rysowania).
+- **Testy jednostkowe ([tests/test_object_studio_list.py](tests/test_object_studio_list.py))**:
+  - Dodano test `test_object_list_widget_icon_rendering` weryfikujący generowanie i aktualizację ikon obiektów.
+
+## [2026-09-14] - Konfiguracja i automatyczne ładowanie zasobów w Object Studio
+- **Object Studio ([object_studio/main.py](object_studio/main.py))**:
+  - Dodano obsługę argumentów wiersza poleceń (`--objects`, `--colors`, `--charset`) ze standardowymi wartościami domyślnymi (`world/objects.yaml`, `world/colors.yaml`, `fonts/game.fnt`).
+  - Dodano automatyczne wczytywanie wszystkich trzech zasobów przy starcie programu (koniec z koniecznością ręcznego otwierania każdego pliku z osobna).
+  - Wprowadzono zapamiętywanie skonfigurowanych ścieżek w rejestrze ustawień `QSettings("Atari", "ObjectStudio")`.
+  - W menu `File` dodano opcję `Konfiguruj zasoby...` otwierającą dedykowane okno dialogowe wyboru plików.
+  - Zaimplementowano metodę `load_resources` przeładowującą definicje obiektów, paletę kolorów Atari oraz zestaw znaków (.fnt) w czasie działania aplikacji z automatycznym odświeżeniem płótna, palety i listy.
+  - W przypadku braku plików zasobów przy starcie program wyświetla okno dialogowe z prośbą o wskazanie poprawnych ścieżek (analogicznie do Labirynt Studio).
+- **Okno dialogowe zasobów ([object_studio/widgets/resource_dialog.py](object_studio/widgets/resource_dialog.py))**:
+  - Utworzono komponent `ResourceDialog` z polami wprowadzania i przyciskami przeglądania plików dla `objects.yaml`, `colors.yaml` oraz `game.fnt` wraz z walidacją ich istnienia przed zatwierdzeniem.
+- **Ustawienia domyślne ([object_studio/settings.py](object_studio/settings.py))**:
+  - Zaktualizowano kolory rezerwowe `DEFAULT_COLORS` do wartości odpowiadających `world/colors.yaml`.
+- **Testy jednostkowe ([tests/test_object_studio_resources.py](tests/test_object_studio_resources.py))**:
+  - Dodano zestaw testów sprawdzających walidację w `ResourceDialog`, automatyczne ładowanie i przeładowywanie zasobów w `MainWindow` oraz parsowanie argumentów CLI.
+
 ## [2026-09-14] - Resetowanie energii smoka do 100% na każdym nowym poziomie
 - **Scena gry ([scenes/game.asm](scenes/game.asm))**:
   - W gałęzi `@have_another_level` procedury `advance_to_next_level` dodano wywołania `init_energy_bar` oraz `calc_energy_frames`, dzięki czemu po ukończeniu etapu i przejściu do kolejnego labiryntu smok zawsze startuje ze 100% energii (`COUNTER_FULL = 40`, `COUNTER_EIGHT = 83`).

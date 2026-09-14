@@ -151,7 +151,7 @@ objects:
     width: 2
     height: 2
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [79, 114, 110, 111]
@@ -1363,7 +1363,7 @@ objects:
     width: 2
     height: 3
   flags:
-    blocking: false
+    blocking: true
     interactive: false
     secret: false
   tiles: [0, 0, 79, 114, 110, 111]

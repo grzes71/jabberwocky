@@ -2,10 +2,10 @@
 # Te wartości posłużą jako domyślna konfiguracja wyświetlania w GUI.
 DEFAULT_COLORS = {
     "BACKGROUND": (0, 0, 0),         # Tło
-    "PF0": (255, 128, 0),            # Pomarańczowy
-    "PF1": (128, 255, 128),          # Jasnozielony
-    "PF2": (100, 100, 255),          # Niebieski
-    "PF3_INV": (255, 255, 100),      # Żółty (dla bitu Inwersji)
+    "PF0": (140, 70, 0),             # Brąz / Pomarańcz
+    "PF1": (236, 130, 0),            # Jasnopomarańczowy
+    "PF2": (0, 85, 0),               # Ciemnozielony
+    "PF3_INV": (0, 0, 176),          # Niebieski (dla bitu Inwersji)
 }
 
 # Wymiary pojedynczego kafelka

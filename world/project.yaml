@@ -499,6 +499,8 @@ screens:
     packed_xy: 1
   - code: 11
     packed_xy: 15
+  - code: 4
+    packed_xy: 64
 - id: FOREST_09
   objects:
   - code: 177
@@ -569,6 +571,16 @@ screens:
     packed_xy: 174
   - code: 23
     packed_xy: 19
+  - code: 48
+    packed_xy: 74
+  - code: 48
+    packed_xy: 179
+  - code: 48
+    packed_xy: 14
+  - code: 4
+    packed_xy: 77
+  - code: 4
+    packed_xy: 4
 - id: TOLEM_01
   objects:
   - code: 177
@@ -619,6 +631,34 @@ screens:
     packed_xy: 75
   - code: 118
     packed_xy: 176
+  - code: 199
+    packed_xy: 173
+  - code: 24
+    packed_xy: 166
+  - code: 83
+    packed_xy: 1
+  - code: 172
+    packed_xy: 17
+  - code: 172
+    packed_xy: 16
+  - code: 182
+    packed_xy: 49
+  - code: 182
+    packed_xy: 177
+  - code: 182
+    packed_xy: 162
+  - code: 182
+    packed_xy: 65
+  - code: 164
+    packed_xy: 69
+  - code: 118
+    packed_xy: 38
+  - code: 118
+    packed_xy: 79
+  - code: 118
+    packed_xy: 141
+  - code: 118
+    packed_xy: 44
 - id: TOLEM_02
   objects:
   - code: 6
@@ -685,6 +725,18 @@ screens:
     packed_xy: 171
   - code: 164
     packed_xy: 170
+  - code: 152
+    packed_xy: 40
+  - code: 29
+    packed_xy: 105
+  - code: 19
+    packed_xy: 73
+  - code: 199
+    packed_xy: 135
+  - code: 199
+    packed_xy: 144
+  - code: 118
+    packed_xy: 38
 - id: TOLEM_03
   objects:
   - code: 156
@@ -714,8 +766,6 @@ screens:
   - code: 11
     packed_xy: 17
   - code: 48
-    packed_xy: 177
-  - code: 48
     packed_xy: 170
   - code: 177
     packed_xy: 7
@@ -743,8 +793,28 @@ screens:
     packed_xy: 11
   - code: 92
     packed_xy: 76
-  - code: 92
-    packed_xy: 175
+  - code: 8
+    packed_xy: 18
+  - code: 19
+    packed_xy: 168
+  - code: 19
+    packed_xy: 164
+  - code: 19
+    packed_xy: 162
+  - code: 19
+    packed_xy: 161
+  - code: 189
+    packed_xy: 143
+  - code: 197
+    packed_xy: 74
+  - code: 24
+    packed_xy: 83
+  - code: 118
+    packed_xy: 3
+  - code: 118
+    packed_xy: 4
+  - code: 118
+    packed_xy: 47
 - id: TOLEM_04
   objects:
   - code: 178
@@ -803,6 +873,14 @@ screens:
     packed_xy: 83
   - code: 95
     packed_xy: 49
+  - code: 198
+    packed_xy: 103
+  - code: 118
+    packed_xy: 142
+  - code: 118
+    packed_xy: 144
+  - code: 164
+    packed_xy: 69
 - id: TOLEM_05
   objects:
   - code: 56
@@ -827,10 +905,6 @@ screens:
     packed_xy: 33
   - code: 38
     packed_xy: 129
-  - code: 76
-    packed_xy: 36
-  - code: 76
-    packed_xy: 111
   - code: 151
     packed_xy: 12
   - code: 52
@@ -838,17 +912,71 @@ screens:
   - code: 164
     packed_xy: 103
   - code: 164
-    packed_xy: 104
-  - code: 164
-    packed_xy: 105
-  - code: 164
     packed_xy: 106
+  - code: 115
+    packed_xy: 47
+  - code: 56
+    packed_xy: 171
+  - code: 47
+    packed_xy: 8
+  - code: 66
+    packed_xy: 7
+  - code: 67
+    packed_xy: 10
+  - code: 99
+    packed_xy: 143
+  - code: 74
+    packed_xy: 5
+  - code: 7
+    packed_xy: 35
+  - code: 7
+    packed_xy: 108
+  - code: 7
+    packed_xy: 146
+  - code: 9
+    packed_xy: 109
+  - code: 8
+    packed_xy: 11
+  - code: 8
+    packed_xy: 6
+  - code: 118
+    packed_xy: 102
+  - code: 118
+    packed_xy: 107
+  - code: 62
+    packed_xy: 165
+  - code: 95
+    packed_xy: 39
+  - code: 95
+    packed_xy: 42
+  - code: 95
+    packed_xy: 147
+  - code: 95
+    packed_xy: 145
+  - code: 11
+    packed_xy: 19
+  - code: 11
+    packed_xy: 14
+  - code: 182
+    packed_xy: 162
+  - code: 164
+    packed_xy: 113
+  - code: 164
+    packed_xy: 112
+  - code: 53
+    packed_xy: 173
+  - code: 53
+    packed_xy: 163
+  - code: 53
+    packed_xy: 2
+  - code: 88
+    packed_xy: 100
 - id: TOLEM_06
   objects:
   - code: 121
     packed_xy: 72
   - code: 151
-    packed_xy: 133
+    packed_xy: 134
   - code: 31
     packed_xy: 71
   - code: 52
@@ -865,6 +993,62 @@ screens:
     packed_xy: 108
   - code: 164
     packed_xy: 109
+  - code: 177
+    packed_xy: 32
+  - code: 177
+    packed_xy: 132
+  - code: 177
+    packed_xy: 111
+  - code: 48
+    packed_xy: 174
+  - code: 48
+    packed_xy: 179
+  - code: 95
+    packed_xy: 128
+  - code: 95
+    packed_xy: 19
+  - code: 9
+    packed_xy: 69
+  - code: 51
+    packed_xy: 35
+  - code: 51
+    packed_xy: 65
+  - code: 65
+    packed_xy: 130
+  - code: 65
+    packed_xy: 16
+  - code: 24
+    packed_xy: 9
+  - code: 24
+    packed_xy: 171
+  - code: 23
+    packed_xy: 11
+  - code: 83
+    packed_xy: 7
+  - code: 11
+    packed_xy: 2
+  - code: 11
+    packed_xy: 81
+  - code: 11
+    packed_xy: 146
+  - code: 11
+    packed_xy: 135
+  - code: 8
+    packed_xy: 5
+  - code: 202
+    packed_xy: 13
+  - code: 118
+    packed_xy: 4
+  - code: 118
+    packed_xy: 169
+  - code: 53
+    packed_xy: 170
+  - code: 164
+    packed_xy: 115
+  - code: 164
+    packed_xy: 0
+  - code: 48
+    packed_xy: 161
 - id: TOLEM_07
   objects:
   - code: 167
@@ -885,9 +1069,54 @@ screens:
     packed_xy: 144
   - code: 66
     packed_xy: 143
+  - code: 9
+    packed_xy: 103
+  - code: 9
+    packed_xy: 128
+  - code: 51
+    packed_xy: 146
+  - code: 177
+    packed_xy: 1
+  - code: 177
+    packed_xy: 106
+  - code: 52
+    packed_xy: 82
+  - code: 94
+    packed_xy: 8
+  - code: 116
+    packed_xy: 66
+  - code: 163
+    packed_xy: 18
+  - code: 178
+    packed_xy: 6
+  - code: 48
+    packed_xy: 173
+  - code: 48
+    packed_xy: 11
+  - code: 142
+    packed_xy: 107
+  - code: 142
+    packed_xy: 105
+  - code: 142
+    packed_xy: 104
+  - code: 22
+    packed_xy: 166
+  - code: 24
+    packed_xy: 64
 labyrinths:
 - id: LEVEL_01
-  name: 'poziom 1 : krzaki wytępy'
+  name: 'poziom 1 : słoneczne błonia tolemu'
+  screens:
+  - TOLEM_01
+  - TOLEM_02
+  - TOLEM_03
+  - TOLEM_03
+  - TOLEM_04
+  - TOLEM_05
+  - TOLEM_06
+  - TOLEM_07
+- id: LEVEL_02
+  name: 'poziom 2 : krzaki wytępy'
   screens:
   - FOREST_01
   - FOREST_02
@@ -898,14 +1127,3 @@ labyrinths:
   - FOREST_07
   - FOREST_08
   - FOREST_09
-- id: LEVEL_02
-  name: 'poziom 2 : słoneczne błonia tolemu'
-  screens:
-  - TOLEM_01
-  - TOLEM_02
-  - TOLEM_03
-  - TOLEM_03
-  - TOLEM_04
-  - TOLEM_05
-  - TOLEM_06
-  - TOLEM_07

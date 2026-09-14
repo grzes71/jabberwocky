@@ -61,3 +61,33 @@ def test_object_list_widget_sorting_and_filtering(qapp):
 
     assert len(widget.filtered_objects) == 2
     assert [o.id for o in widget.filtered_objects] == ["BANANA", "APPLE"]
+
+
+def test_object_list_widget_icon_rendering(qapp):
+    from pathlib import Path
+    from object_studio.charset import Charset
+
+    charset = Charset()
+    fnt_path = Path("fonts/game.fnt")
+    if fnt_path.exists():
+        assert charset.load(fnt_path) is True
+
+    project = Project()
+    obj1 = ObjectDefinition(id="TREE", code=1, tiles=[10, 11, 20, 21])
+    obj1.size.width = 2
+    obj1.size.height = 2
+    project.objects = [obj1]
+
+    widget = ObjectListWidget()
+    widget.set_charset(charset)
+    widget.set_project(project)
+
+    assert widget.list_widget.count() == 1
+    item = widget.list_widget.item(0)
+    assert not item.icon().isNull()
+
+    # Test modyfikacji kafelków i aktualizacji ikony
+    obj1.tiles = [30, 31, 40, 41]
+    widget.update_object_item(obj1)
+    assert not item.icon().isNull()
+

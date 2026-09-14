@@ -1,7 +1,13 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QListWidget, QPushButton, QHBoxLayout, QMenu, QComboBox, QLabel
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QAction
+from typing import Optional, List
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, 
+    QHBoxLayout, QMenu, QComboBox, QLabel
+)
+from PySide6.QtCore import Signal, Qt, QSize
+from PySide6.QtGui import QAction, QIcon, QPixmap, QImage, QColor
 from ..models import Project, ObjectDefinition
+from ..charset import Charset
+from ..settings import DEFAULT_COLORS
 
 ALL_TAGS_OPTION = "(Wszystkie tagi)"
 ORDER_CODE_OPTION = "Code"
@@ -19,6 +25,8 @@ class ObjectListWidget(QWidget):
         self.project = None
         self.current_object = None
         self.filtered_objects = []
+        self.charset: Optional[Charset] = None
+        self.colors: List[QColor] = [QColor(*rgb) for rgb in DEFAULT_COLORS.values()]
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -53,6 +61,7 @@ class ObjectListWidget(QWidget):
         layout.addLayout(controls_layout)
         
         self.list_widget = QListWidget()
+        self.list_widget.setIconSize(QSize(32, 32))
         self.list_widget.itemSelectionChanged.connect(self._on_selection_changed)
         self.list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self._on_context_menu)
@@ -97,6 +106,68 @@ class ObjectListWidget(QWidget):
             self.combo_tag_filter.setCurrentIndex(0)
         self.combo_tag_filter.blockSignals(False)
 
+    def set_charset(self, charset: Optional[Charset]):
+        self.charset = charset
+        self.refresh_list(select_obj=self.current_object)
+
+    def set_colors(self, color_dict):
+        self.colors = [QColor(*rgb) for rgb in color_dict.values()]
+        self.refresh_list(select_obj=self.current_object)
+
+    def _render_icon(self, obj: ObjectDefinition) -> QIcon:
+        if not self.charset or not getattr(self.charset, "data", None):
+            return QIcon()
+
+        w_chars = max(1, obj.size.width)
+        h_chars = max(1, obj.size.height)
+        px_w = w_chars * 8
+        px_h = h_chars * 8
+
+        img = QImage(px_w, px_h, QImage.Format.Format_ARGB32)
+        bg_color = self.colors[0] if self.colors else QColor(0, 0, 0)
+        img.fill(bg_color)
+
+        tiles = obj.tiles
+        tile_idx = 0
+        for cy in range(h_chars):
+            for cx in range(w_chars):
+                if tile_idx < len(tiles):
+                    t_val = tiles[tile_idx]
+                    pixels = self.charset.get_tile_pixels(t_val)
+                    for py in range(8):
+                        row = pixels[py]
+                        for px in range(4):
+                            c_idx = row[px]
+                            if 0 < c_idx < len(self.colors):
+                                qc = self.colors[c_idx]
+                                img.setPixelColor(cx * 8 + px * 2, cy * 8 + py, qc)
+                                img.setPixelColor(cx * 8 + px * 2 + 1, cy * 8 + py, qc)
+                tile_idx += 1
+
+        pix = QPixmap.fromImage(img)
+        max_dim = max(px_w, px_h)
+        if max_dim > 0:
+            scale = max(1, 32 // max_dim)
+            if scale > 1:
+                pix = pix.scaled(
+                    px_w * scale,
+                    px_h * scale,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.FastTransformation
+                )
+
+        return QIcon(pix)
+
+    def update_object_item(self, obj: ObjectDefinition):
+        if not obj or obj not in self.filtered_objects:
+            return
+        idx = self.filtered_objects.index(obj)
+        item = self.list_widget.item(idx)
+        if item:
+            tag_str = f" [{', '.join(obj.tags)}]" if obj.tags else ""
+            item.setText(f"[{obj.code}] {obj.id}{tag_str}")
+            item.setIcon(self._render_icon(obj))
+
     def _on_filter_changed(self, text):
         self.refresh_list(select_obj=self.current_object)
 
@@ -127,7 +198,9 @@ class ObjectListWidget(QWidget):
                     continue
             self.filtered_objects.append(obj)
             tag_str = f" [{', '.join(obj.tags)}]" if obj.tags else ""
-            self.list_widget.addItem(f"[{obj.code}] {obj.id}{tag_str}")
+            icon = self._render_icon(obj)
+            item = QListWidgetItem(icon, f"[{obj.code}] {obj.id}{tag_str}")
+            self.list_widget.addItem(item)
             
         self.list_widget.blockSignals(False)
 

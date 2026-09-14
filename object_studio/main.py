@@ -1,11 +1,13 @@
+import argparse
 from pathlib import Path
 import sys
 import copy
+from typing import Optional
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, 
                               QVBoxLayout, QFormLayout, QLineEdit, QSpinBox, 
                               QCheckBox, QGroupBox, QMenuBar, QMenu, QFileDialog, QMessageBox, QPushButton, QColorDialog, QScrollArea, QListWidget, QListWidgetItem, QLabel, QSizePolicy)
 from PySide6.QtGui import QAction, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSettings
 
 from object_studio.models import Project, ObjectDefinition, ObjectSize, ObjectFlags
 from object_studio.charset import Charset
@@ -15,18 +17,32 @@ from object_studio.widgets.palette_widget import PaletteWidget
 from object_studio.widgets.canvas_widget import CanvasWidget
 from object_studio.widgets.object_list_widget import ObjectListWidget
 from object_studio.widgets.manage_tags_dialog import ManageTagsDialog
+from object_studio.widgets.resource_dialog import ResourceDialog
 
 class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Object Studio - Witcher Atari")
+    def __init__(
+        self,
+        objects_path: str = "world/objects.yaml",
+        colors_path: str = "world/colors.yaml",
+        charset_path: str = "fonts/game.fnt",
+        parent: Optional[QWidget] = None
+    ):
+        super().__init__(parent)
+        self.setWindowTitle("Object Studio — Atari 8-bit Object Designer")
         self.project_path = None
         self.project = Project()
         self.charset = Charset()
         self.current_object = None
 
+        self.objects_path = objects_path
+        self.colors_path = colors_path
+        self.charset_path = charset_path
+
         self._setup_ui()
         self._setup_menu()
+
+        # Wczytanie zasobów
+        self.load_resources(self.objects_path, self.colors_path, self.charset_path)
 
     def _setup_ui(self):
         main_widget = QWidget()
@@ -120,6 +136,12 @@ class MainWindow(QMainWindow):
         file_menu.addAction(act_save_proj)
         
         file_menu.addSeparator()
+
+        act_resources = QAction("Konfiguruj zasoby...", self)
+        act_resources.triggered.connect(self.action_configure_resources)
+        file_menu.addAction(act_resources)
+
+        file_menu.addSeparator()
         
         act_load_char = QAction("Load game_font.fnt...", self)
         act_load_char.triggered.connect(self.action_load_charset)
@@ -174,12 +196,88 @@ class MainWindow(QMainWindow):
             self.tags_list_widget.clear()
             self.tags_list_widget.blockSignals(False)
 
+    def load_resources(self, objects_path: str, colors_path: str, charset_path: str, save_settings: bool = False) -> bool:
+        """Ładuje lub przeładowuje pliki zasobów (objects, colors, charset)."""
+        self.objects_path = str(objects_path)
+        self.colors_path = str(colors_path)
+        self.charset_path = str(charset_path)
+
+        ok_col = False
+        p_col = Path(self.colors_path)
+        if p_col.exists():
+            ok_col = self._load_colors_from_file(p_col)
+        else:
+            self.list_widget.set_colors(DEFAULT_COLORS)
+
+        ok_chr = False
+        p_chr = Path(self.charset_path)
+        if p_chr.exists():
+            if self.charset.load(p_chr):
+                self.palette_widget.set_charset(self.charset)
+                self.canvas_widget.set_charset(self.charset)
+                self.list_widget.set_charset(self.charset)
+                ok_chr = True
+
+        ok_obj = False
+        p_obj = Path(self.objects_path)
+        if p_obj.exists():
+            self.project_path = p_obj
+            self.project = load_project(self.project_path)
+            self.list_widget.set_project(self.project)
+            self._on_tags_updated()
+            ok_obj = True
+
+        if save_settings:
+            # Zapisz w QSettings
+            settings = QSettings("Atari", "ObjectStudio")
+            settings.setValue("objects_path", self.objects_path)
+            settings.setValue("colors_path", self.colors_path)
+            settings.setValue("charset_path", self.charset_path)
+
+        return ok_obj and ok_col and ok_chr
+
+    def _load_colors_from_file(self, path: Path) -> bool:
+        import yaml
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                if data and isinstance(data, dict):
+                    if "colors" in data:
+                        data = data["colors"]
+                    for k, v in data.items():
+                        if k in DEFAULT_COLORS:
+                            if isinstance(v, dict) and "rgb" in v:
+                                DEFAULT_COLORS[k] = tuple(v["rgb"])
+                            elif isinstance(v, list) and len(v) == 3:
+                                DEFAULT_COLORS[k] = tuple(v)
+                    self.palette_widget.set_colors(DEFAULT_COLORS)
+                    self.canvas_widget.set_colors(DEFAULT_COLORS)
+                    self.list_widget.set_colors(DEFAULT_COLORS)
+            return True
+        except Exception:
+            return False
+
+    def action_configure_resources(self):
+        dlg = ResourceDialog(
+            objects_path=self.objects_path,
+            colors_path=self.colors_path,
+            charset_path=self.charset_path,
+            parent=self
+        )
+        if dlg.exec():
+            obj_p, col_p, chr_p = dlg.get_paths()
+            self.load_resources(obj_p, col_p, chr_p, save_settings=True)
+            self.statusBar().showMessage("Zasoby zostały pomyślnie zaktualizowane.", 3000)
+
     def action_load_charset(self):
         path, _ = QFileDialog.getOpenFileName(self, "Load Charset", "", "Atari Font (*.fnt);;All Files (*)")
         if path:
             if self.charset.load(Path(path)):
+                self.charset_path = str(path)
+                QSettings("Atari", "ObjectStudio").setValue("charset_path", self.charset_path)
                 self.palette_widget.set_charset(self.charset)
                 self.canvas_widget.set_charset(self.charset)
+                self.list_widget.set_charset(self.charset)
             else:
                 QMessageBox.warning(self, "Error", "Failed to load charset (must be 1024 bytes).")
 
@@ -192,27 +290,16 @@ class MainWindow(QMainWindow):
             DEFAULT_COLORS[name] = (new_color.red(), new_color.green(), new_color.blue())
             self.palette_widget.set_colors(DEFAULT_COLORS)
             self.canvas_widget.set_colors(DEFAULT_COLORS)
+            self.list_widget.set_colors(DEFAULT_COLORS)
 
     def action_load_colors(self):
         path, _ = QFileDialog.getOpenFileName(self, "Load Colors", "", "YAML (*.yaml);;All Files (*)")
         if path:
-            import yaml
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    data = yaml.safe_load(f)
-                    if data and isinstance(data, dict):
-                        if "colors" in data:
-                            data = data["colors"]
-                        for k, v in data.items():
-                            if k in DEFAULT_COLORS:
-                                if isinstance(v, dict) and "rgb" in v:
-                                    DEFAULT_COLORS[k] = tuple(v["rgb"])
-                                elif isinstance(v, list) and len(v) == 3:
-                                    DEFAULT_COLORS[k] = tuple(v)
-                        self.palette_widget.set_colors(DEFAULT_COLORS)
-                        self.canvas_widget.set_colors(DEFAULT_COLORS)
-            except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to load colors:\n{e}")
+            if self._load_colors_from_file(Path(path)):
+                self.colors_path = str(path)
+                QSettings("Atari", "ObjectStudio").setValue("colors_path", self.colors_path)
+            else:
+                QMessageBox.warning(self, "Error", f"Failed to load colors from {path}")
 
     def action_save_colors(self):
         path, _ = QFileDialog.getSaveFileName(self, "Save Colors", "region.yaml", "YAML (*.yaml);;All Files (*)")
@@ -239,7 +326,9 @@ class MainWindow(QMainWindow):
     def action_open_project(self):
         path, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "YAML (*.yaml);;All Files (*)")
         if path:
+            self.objects_path = str(path)
             self.project_path = Path(path)
+            QSettings("Atari", "ObjectStudio").setValue("objects_path", self.objects_path)
             self.project = load_project(self.project_path)
             self.list_widget.set_project(self.project)
             self.current_object = None
@@ -418,10 +507,7 @@ class MainWindow(QMainWindow):
         self.current_object.flags.interactive = self.chk_interactive.isChecked()
         self.current_object.flags.secret = self.chk_secret.isChecked()
         
-        row = self.list_widget.list_widget.currentRow()
-        item = self.list_widget.list_widget.item(row)
-        if item:
-            item.setText(f"[{self.current_object.code}] {self.current_object.id}")
+        self.list_widget.update_object_item(self.current_object)
 
     def _on_canvas_changed(self):
         if not self.current_object:
@@ -443,6 +529,7 @@ class MainWindow(QMainWindow):
             self.current_object.size.height = 1
             self.current_object.tiles = [0]
             self.lbl_size.setText("1 x 1")
+            self.list_widget.update_object_item(self.current_object)
             return
             
         # Do not trim spaces on the left and top (min_x and min_y are always 0)
@@ -461,6 +548,7 @@ class MainWindow(QMainWindow):
                 tiles.append(grid[y][x])
                 
         self.current_object.tiles = tiles
+        self.list_widget.update_object_item(self.current_object)
 
     def closeEvent(self, event):
         reply = QMessageBox.question(
@@ -475,11 +563,89 @@ class MainWindow(QMainWindow):
         else:
             event.ignore()
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Object Studio — Narzędzie GUI do edycji obiektów dla Atari 8-bit."
+    )
+    parser.add_argument(
+        "--objects",
+        type=str,
+        default="world/objects.yaml",
+        help="Ścieżka do pliku objects.yaml (domyślnie: world/objects.yaml)"
+    )
+    parser.add_argument(
+        "--colors",
+        type=str,
+        default="world/colors.yaml",
+        help="Ścieżka do pliku colors.yaml (domyślnie: world/colors.yaml)"
+    )
+    parser.add_argument(
+        "--charset",
+        type=str,
+        default="fonts/game.fnt",
+        help="Ścieżka do pliku charsetu Atari .fnt (domyślnie: fonts/game.fnt)"
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
     app = QApplication(sys.argv)
-    window = MainWindow()
+    app.setStyle("Fusion")
+
+    font = app.font()
+    font.setPointSize(9)
+    app.setFont(font)
+
+    settings = QSettings("Atari", "ObjectStudio")
+    stored_obj = settings.value("objects_path", args.objects, type=str)
+    stored_col = settings.value("colors_path", args.colors, type=str)
+    stored_chr = settings.value("charset_path", args.charset, type=str)
+
+    obj_path = args.objects if "--objects" in sys.argv else stored_obj
+    col_path = args.colors if "--colors" in sys.argv else stored_col
+    chr_path = args.charset if "--charset" in sys.argv else stored_chr
+
+    # Weryfikacja dostępności plików zasobów
+    missing = []
+    if not Path(obj_path).exists():
+        missing.append(f"Obiekty: {obj_path}")
+    if not Path(col_path).exists():
+        missing.append(f"Kolory: {col_path}")
+    if not Path(chr_path).exists():
+        missing.append(f"Charset: {chr_path}")
+
+    # Jeśli brakuje zasobów, nie rzucaj tracebackiem — pozwól wskazać pliki w oknie dialogowym
+    if missing:
+        QMessageBox.information(
+            None,
+            "Konfiguracja zasobów",
+            "Niektóre pliki zasobów nie zostały odnalezione:\n" +
+            "\n".join(missing) +
+            "\n\nWskaż poprawne ścieżki w kolejnym oknie."
+        )
+        dialog = ResourceDialog(
+            objects_path=obj_path,
+            colors_path=col_path,
+            charset_path=chr_path
+        )
+        if dialog.exec():
+            obj_path, col_path, chr_path = dialog.get_paths()
+            settings.setValue("objects_path", obj_path)
+            settings.setValue("colors_path", col_path)
+            settings.setValue("charset_path", chr_path)
+        else:
+            sys.exit(0)
+
+    window = MainWindow(
+        objects_path=obj_path,
+        colors_path=col_path,
+        charset_path=chr_path
+    )
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
