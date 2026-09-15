@@ -981,14 +981,8 @@ screens:
     packed_xy: 134
   - code: 31
     packed_xy: 71
-  - code: 52
-    packed_xy: 78
-  - code: 177
-    packed_xy: 32
   - code: 177
     packed_xy: 132
-  - code: 177
-    packed_xy: 111
   - code: 48
     packed_xy: 174
   - code: 48
@@ -1016,9 +1010,7 @@ screens:
   - code: 11
     packed_xy: 2
   - code: 11
-    packed_xy: 81
-  - code: 11
-    packed_xy: 146
+    packed_xy: 18
   - code: 11
     packed_xy: 135
   - code: 8
@@ -1031,8 +1023,6 @@ screens:
     packed_xy: 169
   - code: 164
     packed_xy: 115
-  - code: 164
-    packed_xy: 0
   - code: 48
     packed_xy: 161
   - code: 51
@@ -1043,14 +1033,22 @@ screens:
     packed_xy: 171
   - code: 48
     packed_xy: 176
+  - code: 8
+    packed_xy: 0
+  - code: 8
+    packed_xy: 133
+  - code: 7
+    packed_xy: 113
+  - code: 48
+    packed_xy: 49
+  - code: 8
+    packed_xy: 78
 - id: TOLEM_07
   objects:
   - code: 167
     packed_xy: 44
   - code: 151
     packed_xy: 3
-  - code: 52
-    packed_xy: 109
   - code: 52
     packed_xy: 4
   - code: 31
@@ -1077,10 +1075,6 @@ screens:
     packed_xy: 145
   - code: 95
     packed_xy: 147
-  - code: 7
-    packed_xy: 110
-  - code: 182
-    packed_xy: 175
   - code: 48
     packed_xy: 178
   - code: 9
@@ -1101,14 +1095,28 @@ screens:
     packed_xy: 161
   - code: 4
     packed_xy: 104
-  - code: 52
-    packed_xy: 71
   - code: 53
     packed_xy: 168
   - code: 118
     packed_xy: 46
   - code: 118
     packed_xy: 128
+  - code: 4
+    packed_xy: 114
+  - code: 51
+    packed_xy: 83
+  - code: 51
+    packed_xy: 143
+  - code: 182
+    packed_xy: 176
+  - code: 8
+    packed_xy: 109
+  - code: 8
+    packed_xy: 103
+  - code: 8
+    packed_xy: 7
+  - code: 8
+    packed_xy: 0
 labyrinths:
 - id: LEVEL_01
   name: 'POZIOM 1 : ZIEMIE WORPALNE'

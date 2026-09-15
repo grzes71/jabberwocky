@@ -15,9 +15,13 @@ FLAME_COL_MIN           = 10            ; Mode 5 char column at dragon_x (64) + 
 flame_col_max_tbl
     dta 11, 12, 13, 15, 16, 17, 18, 18
 
-; Screen destroyed bitmask byte offsets (8 screens * 5 bytes = 40 bytes)
+; Screen destroyed bitmask byte offsets (32 screens * 8 bytes = 256 bytes)
+; 8 bytes per screen allows tracking up to 64 objects per screen without cross-screen pollution.
 screen_destroyed_offsets
-    dta 0, 5, 10, 15, 20, 25, 30, 35
+    dta 0,   8,  16,  24,  32,  40,  48,  56
+    dta 64,  72,  80,  88,  96, 104, 112, 120
+    dta 128, 136, 144, 152, 160, 168, 176, 184
+    dta 192, 200, 208, 216, 224, 232, 240, 248
 
 ; Single-bit bitmask lookup table (0..7)
 fc_bit_mask_tbl
@@ -63,7 +67,7 @@ screen40_row_offsets_hi
 ; DATA STORAGE (High RAM)
 ; ==============================================================================
 flame_m_pf              dta 0           ; Latched M0PF..M3PF from DLI 3 (action area)
-screen_obj_destroyed    :40 dta 0       ; 40 bytes: 8 screens * 5 bytes bitmask (up to 40 objs/screen)
+screen_obj_destroyed    :256 dta 0      ; 256 bytes: 32 screens * 8 bytes bitmask (up to 64 objs/screen)
 
 ; 22-byte spatial grid for dragon collision (dragon is fixed at cols 8..9 in VRAM)
 blocking_col8           :11 dta 0       ; Mode 5 blocking flags for VRAM col 8 (11 rows)
@@ -151,11 +155,11 @@ fc_energy_cnt           dta 0
 .proc init_flame_collision
     lda #0
     sta flame_m_pf
-    ldx #39
+    ldx #0
 @clr_loop
     sta screen_obj_destroyed,x
-    dex
-    bpl @clr_loop
+    inx
+    bne @clr_loop
     rts
 .endp
 

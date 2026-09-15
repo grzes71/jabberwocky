@@ -54,30 +54,8 @@ game_init
     ; Reset PMG
     jsr disable_pmg
 
-    ; Clear Player 0, 1, 2, 3 buffers ($2400-$27FF) and Missiles ($2300-$23FF)
-    ldx #0
-    lda #0
-@   sta P0_ADDR,x
-    sta P1_ADDR,x
-    sta P2_ADDR,x
-    sta P3_ADDR,x
-    sta M_ADDR,x
-    inx
-    bne @-
-
-    ; Fill 8 lines of Player 0, 1, 2, 3 and Missiles with $FF for bottom status bar overlay
-    ldx bot_bar_pmg_y
-    ldy #7
-    lda #$FF
-@fill_p_bot
-    sta P0_ADDR,x
-    sta P1_ADDR,x
-    sta P2_ADDR,x
-    sta P3_ADDR,x
-    sta M_ADDR,x
-    inx
-    dey
-    bpl @fill_p_bot
+    ; Clear PMG sprite buffers and restore bottom status bar overlay
+    jsr clear_action_pmg
 
     ; Set PMBASE (page $20 = $2000)
     lda #>PM_ADDR
@@ -654,6 +632,41 @@ vblank_anim_step
 
     tax                             ; X = safe animation frame index (0..7)
     rts
+
+; ==============================================================================
+; clear_action_pmg
+; Clears all Player 0, 1, 2, 3 and Missile buffers in RAM ($2300-$27FF),
+; then restores the 8-line $FF bottom status bar overlay at bot_bar_pmg_y.
+; Prevents leftover/ghost sprites when transitioning levels or respawning.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc clear_action_pmg
+    ldx #0
+    lda #0
+@clr_loop
+    sta P0_ADDR,x
+    sta P1_ADDR,x
+    sta P2_ADDR,x
+    sta P3_ADDR,x
+    sta M_ADDR,x
+    inx
+    bne @clr_loop
+
+    ; Fill 8 lines of Player 0, 1, 2, 3 and Missiles with $FF for bottom status bar overlay
+    ldx bot_bar_pmg_y
+    ldy #7
+    lda #$FF
+@fill_p_bot
+    sta P0_ADDR,x
+    sta P1_ADDR,x
+    sta P2_ADDR,x
+    sta P3_ADDR,x
+    sta M_ADDR,x
+    inx
+    dey
+    bpl @fill_p_bot
+    rts
+.endp
 
 ; ==============================================================================
 ; RENDER DRAGON — Clears previous 26 sprite lines and copies current frame to P0
@@ -1843,6 +1856,9 @@ respawn_dragon
     sta ANIM_PHASE+1
     jsr update_anim_speed
 
+    ; Clear PMG sprite buffers to prevent any ghost sprites
+    jsr clear_action_pmg
+
     ; Reset dragon coordinates
     lda #DRAGON_START_X
     sta dragon_x
@@ -2378,6 +2394,9 @@ advance_to_next_level
     sta SCROLL_SPEED
     lda #>SCROLL_BASE_SPEED
     sta SCROLL_SPEED+1
+
+    ; Clear PMG sprite buffers to prevent any ghost sprites from previous level
+    jsr clear_action_pmg
 
     lda #DRAGON_START_Y
     sta dragon_y

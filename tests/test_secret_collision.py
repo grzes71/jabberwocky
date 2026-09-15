@@ -599,3 +599,80 @@ def test_secret_empty_glyph_ignored_by_collision(labels: Dict[str, int], clean_m
     # Now it MUST collect the barrel because tile at (x=8, y=3) is 100 != 0!
     assert (mpu.memory[destroyed_mask] & 0x01) == 1, "Solid glyph (tile != 0) MUST trigger object collection!"
 
+
+def test_init_flame_collision_clears_all_256_bytes(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that init_flame_collision clears all 256 bytes of screen_obj_destroyed."""
+    mpu = clean_mpu
+    destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
+
+    # Fill all 256 bytes with dirty 0xFF
+    for i in range(256):
+        mpu.memory[destroyed_base + i] = 0xFF
+
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    for i in range(256):
+        assert mpu.memory[destroyed_base + i] == 0x00, f"Byte {i} of screen_obj_destroyed must be 0x00 after init!"
+
+
+def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that secrets on Level 1 screens (screen >= 8, e.g. TOLEM_01 = screen 9)
+    are correctly collected, persist across respawn, and restore properly on game_init
+    without being blocked by dirty or out-of-bounds bitmasks."""
+    mpu = clean_mpu
+
+    # Screen 9 is TOLEM_01. Secret at x=6, y=5 (code $64, 1x1, secret=True)
+    # Check initial tile and blocking mask
+    blk_addr = labels["SCREEN_TOLEM_01_BLOCKING"]
+    vram_addr = labels["SCREEN_TOLEM_01_VRAM"]
+    offset = 5 * 40 + 6
+    orig_blk = mpu.memory[blk_addr + offset]
+    orig_tile = mpu.memory[vram_addr + offset]
+    assert (orig_blk & 0x04) == 0x04, "TOLEM_01 at (6, 5) should be secret"
+    assert orig_tile == 0x64
+
+    # Level 1 index is 0 in labyrinths (LEVEL_01).
+    # Screen 9 is position 0 in LEVEL_01 screens (TOLEM_01)
+    # When incoming_col_idx = 6, Left Screen at col0 = 8 - 6 = 2.
+    # Object at x=6 aligns with VRAM col 2 + 6 = 8!
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0  # LEVEL_01
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1  # Screen 9 is Left Screen
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 6   # col0 = 8 - 6 = 2 -> cur_vram_x = 2 + 6 = 8
+    mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
+    # row 5: dragon_y = 34 + 5 * 16 = 114
+    mpu.memory[labels["DRAGON_Y"]] = 114
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+    mpu.memory[labels["BLOCKING_COL8"] + 5] = 0x04
+
+    # Run init_flame_collision
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    # Collect the secret
+    run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
+
+    # Verify source buffer cleared
+    assert mpu.memory[blk_addr + offset] == 0x00, "Secret mask must be cleared in source buffer"
+    assert mpu.memory[vram_addr + offset] == 0x00, "Secret tile must be cleared in source buffer"
+
+    # Verify screen 9 bitmask in screen_obj_destroyed:
+    # Screen 9 offset is 9 * 8 = 72!
+    destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
+    assert any(mpu.memory[destroyed_base + 72 + b] != 0 for b in range(8)), "Screen 9 destroyed bitmask must have bit set"
+    # And screen 0 (offset 0) must NOT be corrupted!
+    assert all(mpu.memory[destroyed_base + b] == 0x00 for b in range(8)), "Screen 0 destroyed bitmask must NOT be affected"
+
+    # Simulate dragon respawn:
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+    assert mpu.memory[blk_addr + offset] == 0x00, "Secret remains collected across respawn"
+
+    # Simulate brand new game: game_init
+    mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
+    run_subroutine(mpu, labels["GAME_INIT"])
+
+    # Must be RESTORED in source buffer!
+    assert (mpu.memory[blk_addr + offset] & 0x04) == 0x04, "Secret mask must be restored on game_init"
+    assert mpu.memory[vram_addr + offset] == 0x64, "Secret tile must be restored on game_init"
+    # Bitmask must be CLEARED for next game!
+    assert mpu.memory[destroyed_base + 72] == 0x00, "Screen 9 destroyed bitmask must be cleared on game_init"
+
+

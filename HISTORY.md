@@ -2,7 +2,24 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
-## [2026-09-15] - Precyzyjna detekcja kolizji z niezerowymi kaflami obiektów (Tile-Exact Collision)
+## [2026-09-15] - Eliminacja nieruchomego duszka (ghost sprite) po przejściu do nowego poziomu
+- **Obsługa buforów PMG ([scenes/game.asm](scenes/game.asm))**:
+  - Zidentyfikowano przyczynę pozostawania nieruchomego duszka smoka po przejściu na kolejny poziom: w `advance_to_next_level` rejestr `dragon_prev_y` był natychmiast nadpisywany wartością `DRAGON_START_Y` (114), bez wymazania poprzedniej pozycji smoka (np. Y=40 u góry ekranu). W rezultacie procedura `render_dragon` po zakończeniu ekranu tytułowego poziomu czyściła wyłącznie linie wokół 114, pozostawiając stary kształt duszka na skanliniach 40..66 w pamięci Player 0 RAM (`P0_ADDR`).
+  - Utworzono procedurę `clear_action_pmg`, która czyści do zera wszystkie bufory PMG graczy i pocisków ($2300–$27FF), a następnie odtwarza dolne 8 linii maski statusu ($FF) na pozycji `bot_bar_pmg_y`.
+  - Wpięto `clear_action_pmg` do procedury `advance_to_next_level`, `respawn_dragon` oraz `game_init`.
+- **Testy jednostkowe ([tests/test_scrolling.py](tests/test_scrolling.py))**:
+  - Rozszerzono `test_advance_to_next_level_refills_energy_to_100_percent` o weryfikację całkowitego wyczyszczenia pamięci `P0_ADDR` na poprzedniej pozycji smoka ($Y=80$).
+  - Dodano test `test_clear_action_pmg_clears_ghost_dragon_across_whole_buffer` sprawdzający kompletne zerowanie całego bufora `P0..P3` i `M` oraz nienaruszenie nakładki paska stanu.
+- **Silnik kolizji ([engine/flame_collision.asm](engine/flame_collision.asm))**:
+  - Zidentyfikowano przyczynę ignorowania sekretów w kolejnych rozgrywkach: tablica `screen_destroyed_offsets` posiadała jedynie 8 wpisów dla 8 ekranów, podczas gdy świat gry posiada 16 ekranów, a Poziom 1 (`LEVEL_01`) wykorzystuje ekrany o indeksach 9–15 (`TOLEM_01`..`TOLEM_07`).
+  - Dla ekranów $\ge 8$ odczyt przesunięcia z `screen_destroyed_offsets` wychodził poza tablicę, powodując nakładanie się masek obiektów oraz wyliczanie przesunięć 64 i 128 w buforze `screen_obj_destroyed`.
+  - Bufor `screen_obj_destroyed` miał rozmiar zaledwie 40 bajtów, a procedura `init_flame_collision` czyściła tylko 40 bajtów (`ldx #39`). W efekcie bajty powyżej 40 nigdy nie były zerowane i w kolejnych grach obiekty na tych ekranach były błędnie uznawane za zniszczone/zebrane (`bne @next_obj`), przez co smok przelatywał przez widoczne sekrety bez ich zbierania.
+  - Rozszerzono `screen_destroyed_offsets` do 32 ekranów (po 8 bajtów na ekran = do 64 obiektów/ekran bez kolizji).
+  - Rozszerzono `screen_obj_destroyed` do pełnych 256 bajtów (`:256 dta 0`).
+  - Zaktualizowano `init_flame_collision`, aby czyściła całe 256 bajtów (`ldx #0; sta screen_obj_destroyed,x; inx; bne @clr_loop`), zapewniając czysty stan wszystkich masek przy starcie gry (`game_init`) oraz po respawnie smoka (`respawn_dragon`).
+- **Testy jednostkowe ([tests/test_secret_collision.py](tests/test_secret_collision.py))**:
+  - Dodano test `test_init_flame_collision_clears_all_256_bytes` weryfikujący zerowanie całego 256-bajtowego bufora po wypełnieniu brudnymi danymi `$FF`.
+  - Dodano test `test_level1_screen_secret_persistence_and_game_init_restoration` weryfikujący zbieranie sekretów na ekranie Poziomu 1 (`TOLEM_01`, ekran 9), ich trwałość w trakcie rozgrywki oraz poprawne odnawianie w buforach i czyszczenie bitmaski po rozpoczęciu nowej gry (`game_init`).
 - **Kompilator świata ([scripts/labirynt_builder.py](scripts/labirynt_builder.py), [Makefile](Makefile))**:
   - Rozszerzono `obj_type_flags` o bit 7 (`$80`: `has_empty_tiles`), oznaczający obiekty zawierające co najmniej jeden pusty/przezroczysty kafelek (`tile == 0`).
   - Dodano generator `generate_obj_tiles_asm`, tworzący plik `gen/world_obj_tiles.asm` z tablicami kafli (`obj_code_<XX>_tiles`) oraz wskaźnikami Structure-of-Arrays (`obj_type_tiles_lo`, `obj_type_tiles_hi`).

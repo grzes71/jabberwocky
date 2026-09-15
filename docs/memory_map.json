@@ -9,29 +9,29 @@
   {
     "name": "CODE",
     "start_address": "$0800",
-    "end_address": "$1FAB",
-    "size": 6060,
+    "end_address": "$209B",
+    "size": 6300,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1FAC",
+    "start_address": "$209C",
     "end_address": "$27FF",
-    "size": 2132,
+    "size": 1892,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3FBE",
-    "size": 6079,
+    "end_address": "$3FC8",
+    "size": 6089,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3FBF",
+    "start_address": "$3FC9",
     "end_address": "$3FFF",
-    "size": 65,
+    "size": 55,
     "type": "free"
   },
   {
@@ -65,15 +65,15 @@
   {
     "name": "FONT",
     "start_address": "$7000",
-    "end_address": "$BB05",
-    "size": 19206,
+    "end_address": "$BADB",
+    "size": 19164,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BB06",
+    "start_address": "$BADC",
     "end_address": "$BFFF",
-    "size": 1274,
+    "size": 1316,
     "type": "free"
   }
 ]

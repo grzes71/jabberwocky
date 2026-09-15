@@ -344,4 +344,41 @@ def test_advance_to_next_level_refills_energy_to_100_percent(project_root: Path,
     assert mpu.memory[labels["DRAGON_Y"]] == labels["DRAGON_START_Y"]
     assert mpu.memory[labels["DRAGON_VEL_HI"]] == 0
 
+    # Verify PMG sprite buffer was cleared of old dragon position (Y=80)
+    p0_base = labels["P0_ADDR"]
+    for i in range(26):
+        assert mpu.memory[p0_base + 80 + i] == 0, f"Line {80 + i} in P0_ADDR must be 0 (no ghost sprite)"
+
+    # Verify bottom status bar overlay is preserved in P0..P3 and M
+    bot_y = mpu.memory[labels["BOT_BAR_PMG_Y"]]
+    for line in range(8):
+        assert mpu.memory[p0_base + bot_y + line] == 0xFF, "Bottom status bar overlay must remain 0xFF in P0"
+        assert mpu.memory[labels["P1_ADDR"] + bot_y + line] == 0xFF, "Bottom status bar overlay must remain 0xFF in P1"
+        assert mpu.memory[labels["M_ADDR"] + bot_y + line] == 0xFF, "Bottom status bar overlay must remain 0xFF in M"
+
+
+def test_clear_action_pmg_clears_ghost_dragon_across_whole_buffer(project_root: Path, labels: Dict[str, int]):
+    """Verify that clear_action_pmg wipes entire P0..P3 and M buffers except 8-line bottom overlay."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    # Fill all PMG buffers with garbage non-zero values
+    for addr_lbl in ["P0_ADDR", "P1_ADDR", "P2_ADDR", "P3_ADDR", "M_ADDR"]:
+        base = labels[addr_lbl]
+        for i in range(256):
+            mpu.memory[base + i] = 0xAA
+
+    run_subroutine(mpu, labels["CLEAR_ACTION_PMG"])
+
+    bot_y = mpu.memory[labels["BOT_BAR_PMG_Y"]]
+    for addr_lbl in ["P0_ADDR", "P1_ADDR", "P2_ADDR", "P3_ADDR", "M_ADDR"]:
+        base = labels[addr_lbl]
+        for i in range(256):
+            if bot_y <= i < bot_y + 8:
+                assert mpu.memory[base + i] == 0xFF, f"Line {i} in {addr_lbl} must be 0xFF (status overlay)"
+            else:
+                assert mpu.memory[base + i] == 0x00, f"Line {i} in {addr_lbl} must be 0x00 (cleared)"
+
+
 
