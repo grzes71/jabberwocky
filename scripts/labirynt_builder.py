@@ -429,9 +429,14 @@ def generate_world_asm(
             widths.append(f"${obj.size.width:02X}")
             heights.append(f"${obj.size.height:02X}")
             # Bit 0: blocking, Bit 1: interactive, Bit 2: secret
+            # Bit 7: has_empty_tiles (contains at least one tile == 0)
+            total_cells = obj.size.width * obj.size.height
+            obj_tiles = obj.tiles[:total_cells] + [0] * max(0, total_cells - len(obj.tiles))
+            has_empty = any(t == 0 for t in obj_tiles)
             fl_val = (1 if obj.flags.blocking else 0) | \
                      (2 if obj.flags.interactive else 0) | \
-                     (4 if obj.flags.secret else 0)
+                     (4 if obj.flags.secret else 0) | \
+                     (0x80 if has_empty else 0)
             flags.append(f"${fl_val:02X}")
         else:
             widths.append("$00")
@@ -454,6 +459,59 @@ def generate_world_asm(
     asm.append("obj_type_flags")
     for i in range(0, table_size, 16):
         asm.append("    dta " + ", ".join(flags[i:i+16]))
+    asm.append("")
+
+    return "\n".join(asm)
+
+
+def generate_obj_tiles_asm(objects_lib: ObjectsLibrary, table_size: int = 256) -> str:
+    """Generates MADS assembly for object tile data and pointers for tile-exact collision checking.
+    Only objects with at least one tile == 0 need explicit tile data arrays.
+    For objects without empty tiles, pointers point to a dummy $00 byte.
+    """
+    asm: List[str] = [
+        "; ==============================================================================",
+        "; WORLD_OBJ_TILES.ASM — Object tile tables for tile-exact collision detection",
+        "; Generated automatically by scripts/labirynt_builder.py — DO NOT EDIT",
+        "; ==============================================================================",
+        "",
+        "obj_code_dummy_tiles",
+        "    dta $00",
+        ""
+    ]
+
+    lo_ptrs: List[str] = []
+    hi_ptrs: List[str] = []
+
+    for code in range(table_size):
+        obj = objects_lib.get_by_code(code)
+        if obj:
+            total_cells = obj.size.width * obj.size.height
+            obj_tiles = obj.tiles[:total_cells] + [0] * max(0, total_cells - len(obj.tiles))
+            has_empty = any(t == 0 for t in obj_tiles)
+            if has_empty:
+                lbl = f"obj_code_{code:02X}_tiles"
+                t_bytes = [f"${(t & 0xFF):02X}" for t in obj_tiles]
+                asm.append(f"{lbl}")
+                asm.append("    dta " + ", ".join(t_bytes))
+                lo_ptrs.append(f"<{lbl}")
+                hi_ptrs.append(f">{lbl}")
+                continue
+
+        lo_ptrs.append("<obj_code_dummy_tiles")
+        hi_ptrs.append(">obj_code_dummy_tiles")
+
+    asm.append("")
+    asm.append("; ------------------------------------------------------------------------------")
+    asm.append("; OBJECT TILES POINTER TABLES (indexed by code 0..255)")
+    asm.append("; ------------------------------------------------------------------------------")
+    asm.append("obj_type_tiles_lo")
+    for i in range(0, table_size, 16):
+        asm.append("    dta " + ", ".join(lo_ptrs[i:i+16]))
+    asm.append("")
+    asm.append("obj_type_tiles_hi")
+    for i in range(0, table_size, 16):
+        asm.append("    dta " + ", ".join(hi_ptrs[i:i+16]))
     asm.append("")
 
     return "\n".join(asm)
@@ -487,12 +545,19 @@ def main() -> int:
         default="gen/world_data.asm",
         help="Output ASM path (default: gen/world_data.asm)"
     )
+    parser.add_argument(
+        "--tiles-output",
+        type=str,
+        default=None,
+        help="Path to world_obj_tiles.asm (default: [output_dir]/world_obj_tiles.asm)"
+    )
 
     args = parser.parse_args()
 
     project_path = Path(args.project)
     objects_path = Path(args.objects)
     output_path = Path(args.output)
+    tiles_output_path = Path(args.tiles_output) if args.tiles_output else (output_path.parent / "world_obj_tiles.asm")
 
     if not project_path.exists():
         print(f"Error: Project file not found: {project_path}", file=sys.stderr)
@@ -526,10 +591,17 @@ def main() -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(asm_content)
-
     print(f"Successfully generated {output_path} ({len(asm_content)} chars).")
+
+    tiles_asm_content = generate_obj_tiles_asm(objects_lib)
+    tiles_output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(tiles_output_path, "w", encoding="utf-8") as f:
+        f.write(tiles_asm_content)
+    print(f"Successfully generated {tiles_output_path} ({len(tiles_asm_content)} chars).")
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

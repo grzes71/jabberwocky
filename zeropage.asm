@@ -7,3 +7,5 @@ PTR_SRC     = $80       ; 16-bit pointer: source address (e.g. text)
 PTR_DST     = $82       ; 16-bit pointer: destination address (e.g. VRAM)
 ZP_TMP      = $84       ; 8-bit temporary scratchpad
 PTR_BLK     = $86       ; 16-bit pointer: blocking grid address (BLOCKING_VRAM)
+PTR_COLL    = $88       ; 16-bit pointer: object collision tiles lookup
+

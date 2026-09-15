@@ -101,7 +101,48 @@ fc_sec_idx              dta 0
 fc_tile_offset          dta 0
 fc_base_ptr             dta a(0)
 fc_cur_obj_flags        dta 0
+fc_cur_obj_code         dta 0
+fc_cur_dy               dta 0
+fc_cur_r                dta 0
+fc_dx8                  dta 0
+fc_dx9                  dta 0
+fc_has_col8             dta 0
+fc_has_col9             dta 0
+fc_cur_row_idx          dta 0
+fc_chk_r                dta 0
+fc_chk_r_end            dta 0
+fc_chk_c                dta 0
+fc_chk_c_start          dta 0
+fc_chk_c_end            dta 0
+fc_erase_row_idx        dta 0
 fc_energy_cnt           dta 0
+
+; ==============================================================================
+; fc_calc_tile_offset
+; Computes tile offset: Y = dy * fc_cur_obj_w + dx
+; Input:
+;   A = dy (0..10)
+;   X = dx (0..39)
+;   fc_cur_obj_w (1..40)
+; Output:
+;   Y = dy * width + dx
+; Clobbers:
+;   A, Y
+; ==============================================================================
+.proc fc_calc_tile_offset
+    tay
+    txa
+    cpy #0
+    beq @done
+@mul_loop
+    clc
+    adc fc_cur_obj_w
+    dey
+    bne @mul_loop
+@done
+    tay
+    rts
+.endp
 
 ; ==============================================================================
 ; init_flame_collision
@@ -150,6 +191,10 @@ fc_energy_cnt           dta 0
     lda PTR_DST
     pha
     lda PTR_DST+1
+    pha
+    lda PTR_COLL
+    pha
+    lda PTR_COLL+1
     pha
 
     ; --------------------------------------------------------------------------
@@ -275,6 +320,10 @@ fc_energy_cnt           dta 0
 @done_collision
     ; Restore ZP pointers
     pla
+    sta PTR_COLL+1
+    pla
+    sta PTR_COLL
+    pla
     sta PTR_DST+1
     pla
     sta PTR_DST
@@ -357,10 +406,12 @@ fc_energy_cnt           dta 0
     ; Fetch code & size
 @fetch_code
     lda $FFFF,y                 ; Target address modified above
+    sta fc_cur_obj_code
     tax
 
     ; Only objects with blocking=true (bit 0) can be destroyed by fire
     lda obj_type_flags,x
+    sta fc_cur_obj_flags
     and #$01
     beq @skip_to_next
 
@@ -415,7 +466,7 @@ fc_energy_cnt           dta 0
     cmp #FLAME_COL_MIN
     bcc @skip_to_next
     beq @skip_to_next
-    jmp @object_hit
+    jmp @check_flame_tiles
 
 @x_positive
     ; cur_vram_x is positive (0..47)
@@ -429,6 +480,102 @@ fc_energy_cnt           dta 0
     cmp #FLAME_COL_MIN
     bcc @skip_to_next
     beq @skip_to_next
+
+@check_flame_tiles
+    ; If object has no empty tiles (bit 7 = 0), any bounding-box overlap is a guaranteed hit!
+    lda fc_cur_obj_flags
+    bmi @flame_has_empty_tiles
+    jmp @object_hit
+
+@flame_has_empty_tiles
+    ; Object has empty tiles -> check intersection with flame bounding box
+    ldx fc_cur_obj_code
+    lda obj_type_tiles_lo,x
+    sta PTR_COLL
+    lda obj_type_tiles_hi,x
+    sta PTR_COLL+1
+
+    ; Determine row range:
+    ; r_start = max(fc_flame_row_min, fc_cur_obj_y)
+    lda fc_flame_row_min
+    cmp fc_cur_obj_y
+    bcs @r_start_flame
+    lda fc_cur_obj_y
+@r_start_flame
+    sta fc_chk_r
+
+    ; r_end = min(fc_flame_row_max, fc_cur_obj_y + fc_cur_obj_h - 1)
+    lda fc_cur_obj_y
+    clc
+    adc fc_cur_obj_h
+    sec
+    sbc #1
+    cmp fc_flame_row_max
+    bcc @r_end_obj
+    lda fc_flame_row_max
+@r_end_obj
+    sta fc_chk_r_end
+
+    ; Determine col range:
+    ; c_start = max(10, fc_cur_vram_x)
+    lda fc_cur_vram_x
+    bmi @c_start_min            ; negative vram_x -> start at FLAME_COL_MIN (10)
+    cmp #FLAME_COL_MIN          ; 10
+    bcs @c_start_obj
+@c_start_min
+    lda #FLAME_COL_MIN
+@c_start_obj
+    sta fc_chk_c_start
+
+    ; c_end = min(fc_flame_col_max, fc_cur_vram_x + fc_cur_obj_w - 1)
+    lda fc_cur_vram_x
+    clc
+    adc fc_cur_obj_w
+    sec
+    sbc #1
+    cmp fc_flame_col_max
+    bcc @c_end_obj
+    lda fc_flame_col_max
+@c_end_obj
+    sta fc_chk_c_end
+
+    lda fc_chk_r
+    sta fc_cur_r
+
+@flame_row_loop
+    lda fc_cur_r
+    sec
+    sbc fc_cur_obj_y
+    sta fc_cur_dy
+
+    lda fc_chk_c_start
+    sta fc_chk_c
+
+@flame_col_loop
+    lda fc_chk_c
+    sec
+    sbc fc_cur_vram_x
+    tax
+    lda fc_cur_dy
+    jsr fc_calc_tile_offset
+    lda (PTR_COLL),y
+    bne @object_hit             ; Hit non-zero tile!
+
+    lda fc_chk_c
+    cmp fc_chk_c_end
+    bcs @next_flame_row
+    inc fc_chk_c
+    jmp @flame_col_loop
+
+@next_flame_row
+    lda fc_cur_r
+    cmp fc_chk_r_end
+    bcs @no_flame_hit
+    inc fc_cur_r
+    jmp @flame_row_loop
+
+@no_flame_hit
+    jmp @next_obj
 
 @object_hit
     ; --------------------------------------------------------------------------
@@ -472,6 +619,15 @@ fc_energy_cnt           dta 0
 ; Clears fc_cur_obj_w * fc_cur_obj_h cells in GAME_ACTION_VRAM to $00
 ; ==============================================================================
 .proc erase_cur_object
+    ; If object has empty tiles, prepare PTR_COLL
+    lda fc_cur_obj_flags
+    bpl @flags_solid
+    ldx fc_cur_obj_code
+    lda obj_type_tiles_lo,x
+    sta PTR_COLL
+    lda obj_type_tiles_hi,x
+    sta PTR_COLL+1
+@flags_solid
     lda #0
     sta fc_erase_r
 
@@ -482,6 +638,7 @@ fc_energy_cnt           dta 0
     cmp #11
     bcs @erase_done             ; Beyond row 10
     tax                         ; X = row (0..10)
+    stx fc_erase_row_idx
 
     lda vram_row_offsets_lo,x
     sta PTR_DST
@@ -492,6 +649,17 @@ fc_energy_cnt           dta 0
     sta fc_erase_c
 
 @col_loop
+    lda fc_cur_obj_flags
+    bpl @do_erase_cell
+
+    ; Check if tile at (fc_erase_c, fc_erase_r) is non-zero
+    ldx fc_erase_c
+    lda fc_erase_r
+    jsr fc_calc_tile_offset
+    lda (PTR_COLL),y
+    beq @skip_cell              ; If tile == 0, leave background cell alone!
+
+@do_erase_cell
     lda fc_cur_vram_x
     clc
     adc fc_erase_c
@@ -504,11 +672,13 @@ fc_energy_cnt           dta 0
 
     cpy #8
     bne @chk_col9
+    ldx fc_erase_row_idx
     sta blocking_col8,x
     jmp @skip_cell
 @chk_col9
     cpy #9
     bne @skip_cell
+    ldx fc_erase_row_idx
     sta blocking_col9,x
 
 @skip_cell
@@ -875,6 +1045,10 @@ shift_blocking_vram_left    = shift_blocking_cols
     pha
     lda PTR_BLK+1
     pha
+    lda PTR_COLL
+    pha
+    lda PTR_COLL+1
+    pha
 
     ; Fetch labyrinth screen list pointer for current_level_idx
     ldx current_level_idx
@@ -939,6 +1113,10 @@ shift_blocking_vram_left    = shift_blocking_cols
     jsr check_single_screen_secret
 
 @done_secret
+    pla
+    sta PTR_COLL+1
+    pla
+    sta PTR_COLL
     pla
     sta PTR_BLK+1
     pla
@@ -1023,6 +1201,7 @@ shift_blocking_vram_left    = shift_blocking_cols
 
 @fetch_code
     lda $FFFF,y
+    sta fc_cur_obj_code
     tax
     lda obj_type_flags,x
     sta fc_cur_obj_flags
@@ -1075,7 +1254,7 @@ shift_blocking_vram_left    = shift_blocking_cols
     cmp #8
     bcc @skip_to_next
     beq @skip_to_next
-    jmp @secret_hit
+    jmp @check_secret_tiles
 
 @x_positive
     ; cur_vram_x is positive (0..47)
@@ -1089,6 +1268,110 @@ shift_blocking_vram_left    = shift_blocking_cols
     cmp #8
     bcc @skip_to_next
     beq @skip_to_next
+
+@check_secret_tiles
+    ; If object has no empty tiles (bit 7 = 0), any bounding-box overlap is a guaranteed hit!
+    lda fc_cur_obj_flags
+    bmi @secret_has_empty_tiles
+    jmp @secret_hit
+
+@secret_has_empty_tiles
+    ; Object has empty tiles -> check intersecting cells with dragon
+    ldx fc_cur_obj_code
+    lda obj_type_tiles_lo,x
+    sta PTR_COLL
+    lda obj_type_tiles_hi,x
+    sta PTR_COLL+1
+
+    ; Check column 8 overlap
+    lda #8
+    sec
+    sbc fc_cur_vram_x
+    bmi @col8_out
+    cmp fc_cur_obj_w
+    bcs @col8_out
+    sta fc_dx8
+    lda #1
+    sta fc_has_col8
+    bne @check_col9
+@col8_out
+    lda #0
+    sta fc_has_col8
+
+@check_col9
+    ; Check column 9 overlap
+    lda #9
+    sec
+    sbc fc_cur_vram_x
+    bmi @col9_out
+    cmp fc_cur_obj_w
+    bcs @col9_out
+    sta fc_dx9
+    lda #1
+    sta fc_has_col9
+    bne @cols_checked
+@col9_out
+    lda #0
+    sta fc_has_col9
+
+@cols_checked
+    lda fc_has_col8
+    ora fc_has_col9
+    beq @no_tile_hit            ; Neither column overlaps
+
+    ; Loop over dragon rows (dc_dragon_row_min .. dc_dragon_row_max_p1 - 1)
+    lda dc_dragon_row_min
+    sta fc_cur_row_idx
+
+@row_chk_loop
+    lda fc_cur_row_idx
+    ; Check if row is within object: fc_cur_obj_y <= row < fc_cur_obj_y + fc_cur_obj_h
+    cmp fc_cur_obj_y
+    bcc @advance_row
+    sec
+    sbc fc_cur_obj_y            ; A = dy
+    cmp fc_cur_obj_h
+    bcs @advance_row
+    sta fc_cur_dy
+
+    ; If col 8 overlaps AND blocking_col8[row] & $06 != 0:
+    lda fc_has_col8
+    beq @test_col9_cell
+    ldx fc_cur_row_idx
+    lda blocking_col8,x
+    and #$06
+    beq @test_col9_cell
+
+    ; Test tile at (dx8, dy)
+    ldx fc_dx8
+    lda fc_cur_dy
+    jsr fc_calc_tile_offset
+    lda (PTR_COLL),y
+    bne @secret_hit             ; Solid tile hit!
+
+@test_col9_cell
+    lda fc_has_col9
+    beq @advance_row
+    ldx fc_cur_row_idx
+    lda blocking_col9,x
+    and #$06
+    beq @advance_row
+
+    ; Test tile at (dx9, dy)
+    ldx fc_dx9
+    lda fc_cur_dy
+    jsr fc_calc_tile_offset
+    lda (PTR_COLL),y
+    bne @secret_hit             ; Solid tile hit!
+
+@advance_row
+    inc fc_cur_row_idx
+    lda fc_cur_row_idx
+    cmp dc_dragon_row_max_p1
+    bcc @row_chk_loop
+
+@no_tile_hit
+    jmp @next_obj
 
 @secret_hit
     ; 1. Mark as destroyed in bitmask
@@ -1143,7 +1426,8 @@ shift_blocking_vram_left    = shift_blocking_cols
 
 @play_sound
     ; 5. Start pickup sound chime
-    jsr start_secret_sound
+    lda #SECRET_CLICK_FRAMES
+    sta secret_sound_timer
 
 @next_obj
     inc fc_obj_idx
@@ -1171,6 +1455,15 @@ shift_blocking_vram_left    = shift_blocking_cols
     rts
 
 @valid_screen
+    ; If object has empty tiles, prepare PTR_COLL
+    lda fc_cur_obj_flags
+    bpl @flags_solid
+    ldx fc_cur_obj_code
+    lda obj_type_tiles_lo,x
+    sta PTR_COLL
+    lda obj_type_tiles_hi,x
+    sta PTR_COLL+1
+@flags_solid
     lda #0
     sta fc_erase_r
 
@@ -1205,6 +1498,17 @@ shift_blocking_vram_left    = shift_blocking_cols
     sta fc_erase_c
 
 @col_loop
+    lda fc_cur_obj_flags
+    bpl @do_erase_src_cell
+
+    ; Check if tile at (fc_erase_c, fc_erase_r) is non-zero
+    ldx fc_erase_c
+    lda fc_erase_r
+    jsr fc_calc_tile_offset
+    lda (PTR_COLL),y
+    beq @skip_col
+
+@do_erase_src_cell
     lda fc_cur_obj_x
     clc
     adc fc_erase_c

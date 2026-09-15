@@ -74,6 +74,7 @@ OBJECTS_YAML    := world/objects.yaml
 COLORS_YAML     := world/colors.yaml
 WORLD_SCRIPT    := scripts/labirynt_builder.py
 WORLD_GEN_ASM   := $(GEN_DIR)/world_data.asm
+OBJ_TILES_GEN_ASM := $(GEN_DIR)/world_obj_tiles.asm
 FONT_GAME       := fonts/game.fnt
 
 ROT_CHARS_JSON      := chars/rotated.json
@@ -94,13 +95,13 @@ $(ANIM_CHARS_ASM): $(ANIM_CHARS_JSON) $(ANIM_SCRIPT)
 	@echo === Generowanie tablic animacji znakow $(ANIM_CHARS_JSON) do $(ANIM_CHARS_ASM) ===
 	$(PYTHON) $(ANIM_SCRIPT) -i $(ANIM_CHARS_JSON) -o $(ANIM_CHARS_ASM) --charset-base 0x7400
 
-data: $(WORLD_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
+data: $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
 
-$(WORLD_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(COLORS_YAML) $(WORLD_SCRIPT)
+$(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(COLORS_YAML) $(WORLD_SCRIPT)
 	@echo === Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ===
-	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --colors $(COLORS_YAML) --output $(WORLD_GEN_ASM)
+	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --colors $(COLORS_YAML) --output $(WORLD_GEN_ASM) --tiles-output $(OBJ_TILES_GEN_ASM)
 
-$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
+$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
 	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 

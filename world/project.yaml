@@ -721,12 +721,6 @@ screens:
     packed_xy: 7
   - code: 118
     packed_xy: 5
-  - code: 118
-    packed_xy: 16
-  - code: 164
-    packed_xy: 15
-  - code: 164
-    packed_xy: 146
   - code: 164
     packed_xy: 171
   - code: 164
@@ -743,12 +737,14 @@ screens:
     packed_xy: 6
   - code: 177
     packed_xy: 65
-  - code: 18
-    packed_xy: 147
   - code: 62
     packed_xy: 17
   - code: 92
     packed_xy: 37
+  - code: 52
+    packed_xy: 50
+  - code: 52
+    packed_xy: 147
 - id: TOLEM_03
   objects:
   - code: 156
@@ -987,18 +983,6 @@ screens:
     packed_xy: 71
   - code: 52
     packed_xy: 78
-  - code: 164
-    packed_xy: 104
-  - code: 164
-    packed_xy: 105
-  - code: 164
-    packed_xy: 106
-  - code: 164
-    packed_xy: 107
-  - code: 164
-    packed_xy: 108
-  - code: 164
-    packed_xy: 109
   - code: 177
     packed_xy: 32
   - code: 177
@@ -1025,8 +1009,6 @@ screens:
     packed_xy: 16
   - code: 24
     packed_xy: 9
-  - code: 24
-    packed_xy: 171
   - code: 23
     packed_xy: 11
   - code: 83
@@ -1047,14 +1029,20 @@ screens:
     packed_xy: 4
   - code: 118
     packed_xy: 169
-  - code: 53
-    packed_xy: 170
   - code: 164
     packed_xy: 115
   - code: 164
     packed_xy: 0
   - code: 48
     packed_xy: 161
+  - code: 51
+    packed_xy: 138
+  - code: 51
+    packed_xy: 140
+  - code: 48
+    packed_xy: 171
+  - code: 48
+    packed_xy: 176
 - id: TOLEM_07
   objects:
   - code: 167
@@ -1067,48 +1055,60 @@ screens:
     packed_xy: 4
   - code: 31
     packed_xy: 2
-  - code: 96
-    packed_xy: 46
-  - code: 17
-    packed_xy: 111
-  - code: 67
-    packed_xy: 144
-  - code: 66
-    packed_xy: 143
-  - code: 9
-    packed_xy: 103
-  - code: 9
-    packed_xy: 128
-  - code: 51
-    packed_xy: 146
   - code: 177
     packed_xy: 1
   - code: 177
     packed_xy: 106
-  - code: 52
-    packed_xy: 82
   - code: 94
     packed_xy: 8
-  - code: 116
-    packed_xy: 66
-  - code: 163
-    packed_xy: 18
-  - code: 178
-    packed_xy: 6
   - code: 48
     packed_xy: 173
-  - code: 48
-    packed_xy: 11
   - code: 142
     packed_xy: 107
   - code: 142
     packed_xy: 105
-  - code: 142
-    packed_xy: 104
+  - code: 24
+    packed_xy: 64
+  - code: 61
+    packed_xy: 16
+  - code: 45
+    packed_xy: 18
+  - code: 51
+    packed_xy: 145
+  - code: 95
+    packed_xy: 147
+  - code: 7
+    packed_xy: 110
+  - code: 182
+    packed_xy: 175
+  - code: 48
+    packed_xy: 178
+  - code: 9
+    packed_xy: 15
+  - code: 102
+    packed_xy: 68
   - code: 22
     packed_xy: 166
   - code: 24
-    packed_xy: 64
+    packed_xy: 163
+  - code: 24
+    packed_xy: 5
+  - code: 177
+    packed_xy: 6
+  - code: 202
+    packed_xy: 98
+  - code: 56
+    packed_xy: 161
+  - code: 4
+    packed_xy: 104
+  - code: 52
+    packed_xy: 71
+  - code: 53
+    packed_xy: 168
+  - code: 118
+    packed_xy: 46
+  - code: 118
+    packed_xy: 128
 labyrinths:
 - id: LEVEL_01
   name: 'POZIOM 1 : ZIEMIE WORPALNE'

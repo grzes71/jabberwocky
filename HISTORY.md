@@ -2,6 +2,22 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-15] - Precyzyjna detekcja kolizji z niezerowymi kaflami obiektów (Tile-Exact Collision)
+- **Kompilator świata ([scripts/labirynt_builder.py](scripts/labirynt_builder.py), [Makefile](Makefile))**:
+  - Rozszerzono `obj_type_flags` o bit 7 (`$80`: `has_empty_tiles`), oznaczający obiekty zawierające co najmniej jeden pusty/przezroczysty kafelek (`tile == 0`).
+  - Dodano generator `generate_obj_tiles_asm`, tworzący plik `gen/world_obj_tiles.asm` z tablicami kafli (`obj_code_<XX>_tiles`) oraz wskaźnikami Structure-of-Arrays (`obj_type_tiles_lo`, `obj_type_tiles_hi`).
+  - Umieszczono tablice kafli w segmencie `LOW_CODE_ADDR` ($0800–$27FF, >2KB wolnego miejsca), chroniąc przestrzeń High RAM i granicę OS ROM ($C000+).
+- **Wskaźnik w Zero Page ([zeropage.asm](zeropage.asm))**:
+  - Zaalokowano 16-bitowy wskaźnik `PTR_COLL = $88` na potrzeby bezpośredniego adresowania matrycy kafli obiektu kanddata.
+- **Silnik kolizji ([engine/flame_collision.asm](engine/flame_collision.asm))**:
+  - Zaimplementowano procedurę `fc_calc_tile_offset` (`Y = dy * width + dx`) dla dynamicznego indeksowania kafli wewnątrz obiektu.
+  - Zoptymalizowano `check_single_screen_secret` oraz `check_single_screen_flame`: dla obiektów 100% litych (`bit 7 == 0`) kolizja po bounding boxie jest potwierdzana natychmiast (`bpl` -> 2 cykle). Dla obiektów o nieregularnym kształcie (`bit 7 == 1`, np. piramidy, palmy, beczki z pustymi rogami) sprawdzane są przecięcia ze smokiem/płomieniem – jeśli kafel na pozycji kolizji to 0, kandydat jest ignorowany i sprawdzane są kolejne obiekty na ekranie.
+  - Zaktualizowano procedury `erase_cur_object` oraz `erase_object_from_source_buffers`: dla obiektów z pustymi kaflami wymazywane są wyłącznie komórki z niezerowym kaflem, zapobiegając nadpisywaniu tła lub sąsiadujących obiektów w buforach VRAM i `blocking_col8/9`.
+- **Testy jednostkowe ([tests/test_secret_collision.py](tests/test_secret_collision.py), [tests/test_flame_collision.py](tests/test_flame_collision.py))**:
+  - Dodano test `test_obj_type_flags_has_empty_bit` weryfikujący flagę bitu 7 dla obiektów z pustymi kaflami i w 100% litych.
+  - Dodano test `test_secret_empty_glyph_ignored_by_collision` weryfikujący ignorowanie kolizji smoka z pustym narożnikiem `BARREL_2_2` oraz jej wykrywanie na kafelku litym.
+  - Dodano test `test_flame_empty_glyph_ignored_by_collision` weryfikujący brak zniszczenia `PALM_SWAMP` przy trafieniu w pusty kafelek narożnika i poprawne niszczenie przy sięgnięciu kafelka litego.
+
 ## [2026-09-14] - Aktualizacja reguł bonusów dla obiektów Secret i Interactive
 - **Mechanika nagród ([engine/flame_collision.asm](engine/flame_collision.asm))**:
   - Zaktualizowano procedurę `check_single_screen_secret` i logikę przyznawania bonusów:

@@ -523,3 +523,79 @@ def test_dragon_frame_dependent_collision_bounds(labels: Dict[str, int], clean_m
     mpu.memory[labels["ANIM_PHASE"] + 1] = 7
     run_subroutine(mpu, labels["CHECK_DRAGON_BLOCKING_COLLISION"])
     assert (mpu.p & 0x01) == 1, "Frame 7 with spread wings should collide with row 4 obstacle"
+
+
+def test_obj_type_flags_has_empty_bit(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify bit 7 ($80) is set for objects with tile 0, and clear for 100% solid objects."""
+    mpu = clean_mpu
+    flags_base = labels["OBJ_TYPE_FLAGS"]
+
+    # Code 31 (BARREL_2_2) has tiles: [0, 0, 100, 228] -> has tile 0!
+    assert (mpu.memory[flags_base + 31] & 0x80) == 0x80
+
+    # Code 154 (PYRAMID_BIG) has empty corners -> has tile 0!
+    assert (mpu.memory[flags_base + 154] & 0x80) == 0x80
+
+    # Code 118 (Star) has tiles: [118] -> 100% solid, NO tile 0!
+    assert (mpu.memory[flags_base + 118] & 0x80) == 0x00
+
+
+def test_secret_empty_glyph_ignored_by_collision(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that collision with empty/transparent glyphs (tile == 0) inside object bounding box
+    is ignored, while collision with solid glyphs (tile != 0) is collected.
+    """
+    mpu = clean_mpu
+
+    # BARREL_2_2 is code 31: width=2, height=2.
+    # Row 0: tiles [0, 0] (empty glyphs!)
+    # Row 1: tiles [100, 228] (solid glyphs!)
+    # Screen 0 objects: set object 0 to BARREL_2_2 at x=8, y=2
+    # packed_xy = (y << 4) | (x >> 1) = (2 << 4) | 4 = $24
+    screen0_codes = labels["SCREEN_FOREST_01_CODES"]
+    screen0_coords = labels["SCREEN_FOREST_01_COORDS"]
+    mpu.memory[screen0_codes] = 31
+    mpu.memory[screen0_coords] = 0x24  # x=8, y=2
+
+    # Level screen position 1, incoming_col_idx = 8 -> screen 0 is Left Screen at col0 = 8 - 8 = 0
+    # Object at x=8 aligns with VRAM col 0 + 8 = 8!
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 8
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+
+    # Clear destroyed bitmask
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    # CASE 1: Dragon at row 2 (which is row 0 of BARREL_2_2, tiles are 0, 0).
+    # scanline = 34 + 2 * 16 = 66
+    mpu.memory[labels["DRAGON_Y"]] = 66
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0  # Frame 0: lines 2..22 (stays within row 2)
+
+    # Put secret collision flag in blocking_col8 for row 2
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL8"] + 2] = 0x04
+
+    run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
+
+    # Must NOT collect barrel because tile at (x=8, y=2) is 0!
+    # Carry must be CLEAR (or no object collected)
+    destroyed_mask = labels["SCREEN_OBJ_DESTROYED"]
+    assert (mpu.memory[destroyed_mask] & 0x01) == 0, "Empty glyph (tile 0) must NOT trigger object collection!"
+
+    # CASE 2: Dragon at row 3 (which is row 1 of BARREL_2_2, tiles are 100, 228 != 0).
+    # scanline = 34 + 3 * 16 = 82
+    mpu.memory[labels["DRAGON_Y"]] = 82
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+
+    # Put secret collision flag in blocking_col8 for row 3
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL8"] + 3] = 0x04
+
+    run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
+
+    # Now it MUST collect the barrel because tile at (x=8, y=3) is 100 != 0!
+    assert (mpu.memory[destroyed_mask] & 0x01) == 1, "Solid glyph (tile != 0) MUST trigger object collection!"
+

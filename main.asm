@@ -48,6 +48,7 @@ engine
     icl 'engine/flame_collision.asm'
     icl 'engine/level_name.asm'
     icl 'gen/dragon_sprite.asm'
+    icl 'gen/world_obj_tiles.asm'
 
 ; ==============================================================================
 ; CODE SEGMENT

@@ -348,4 +348,52 @@ def test_dragon_no_crash_on_destroyed_blocking_object(clean_mpu: MPU, labels: Di
     assert mpu.memory[labels["DRAGON_DYING"]] == 0
 
 
+def test_flame_empty_glyph_ignored_by_collision(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that flame hitting an empty glyph (tile == 0) inside a blocking object's
+    bounding box does NOT destroy it, while hitting a solid glyph (tile != 0) DOES destroy it.
+    """
+    mpu = clean_mpu
+
+    # PALM_SWAMP is code 6: width=4, height=3, blocking=True.
+    # Row 0: tiles [0, 79, 114, 0] (dx=0 is empty glyph 0; dx=1 is solid glyph 79).
+    # Screen 0 objects: set object 0 to PALM_SWAMP at x=12, y=0
+    # packed_xy = (y << 4) | (x >> 1) = (0 << 4) | 6 = $06
+    screen0_codes = labels["SCREEN_FOREST_01_CODES"]
+    screen0_coords = labels["SCREEN_FOREST_01_COORDS"]
+    mpu.memory[screen0_codes] = 6
+    mpu.memory[screen0_coords] = 0x06  # x=12, y=0
+
+    # Level screen position 1, incoming_col_idx = 9 -> screen 0 is Left Screen at col0 = 8 - 9 = -1
+    # In VRAM: cur_vram_x = -1 + 12 = 11!
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 9
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    # Dragon at y=30 gives scanlines 30-24..30-18 = 6..12 -> row 0
+    mpu.memory[labels["DRAGON_Y"]] = 30
+    mpu.memory[labels["FIRE_STATE"]] = 1
+
+    # CASE 1: Flame frame 0 -> flame reaches col 11 (flame_col_max_tbl[0] = 11)
+    # At col 11, dx = 11 - 11 = 0. Row 0 tile at dx=0 is 0!
+    mpu.memory[labels["FIRE_FRAME"]] = 0
+    mpu.memory[labels["FLAME_M_PF"]] = 1  # Hardware latch triggered
+
+    run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
+
+    destroyed_mask = labels["SCREEN_OBJ_DESTROYED"]
+    assert (mpu.memory[destroyed_mask] & 0x01) == 0, "Flame hitting tile 0 in PALM_SWAMP must NOT destroy object!"
+
+    # CASE 2: Flame frame 1 -> flame reaches col 12 (flame_col_max_tbl[1] = 12)
+    # At col 12, dx = 12 - 11 = 1. Row 0 tile at dx=1 is 79 != 0!
+    mpu.memory[labels["FIRE_FRAME"]] = 1
+    mpu.memory[labels["FLAME_M_PF"]] = 1
+
+    run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
+
+    assert (mpu.memory[destroyed_mask] & 0x01) == 1, "Flame hitting solid tile 79 in PALM_SWAMP MUST destroy object!"
+
+
+
 
