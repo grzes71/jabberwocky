@@ -292,8 +292,8 @@ level_name_speed        dta 0
     lda #0
     sta SIZEP0
 
-    ; Priority: Player 0 in front of playfield + 5th player mode for missiles ($09)
-    lda #$09
+    ; Priority: Player 0 in front of ALL playfield colors + 5th player mode for missiles ($11)
+    lda #$11
     sta GPRIOR
     sta PRIOR
 

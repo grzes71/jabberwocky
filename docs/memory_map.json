@@ -1,5 +1,12 @@
 [
   {
+    "name": "INITAD",
+    "start_address": "$02E2",
+    "end_address": "$02E3",
+    "size": 2,
+    "type": "vector"
+  },
+  {
     "name": "RUNAD",
     "start_address": "$02E0",
     "end_address": "$02E1",
@@ -9,29 +16,36 @@
   {
     "name": "CODE",
     "start_address": "$0800",
-    "end_address": "$209B",
-    "size": 6300,
+    "end_address": "$080A",
+    "size": 11,
+    "type": "code"
+  },
+  {
+    "name": "ENGINE",
+    "start_address": "$080B",
+    "end_address": "$20AD",
+    "size": 6307,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$209C",
+    "start_address": "$20AE",
     "end_address": "$27FF",
-    "size": 1892,
+    "size": 1874,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3FC8",
-    "size": 6089,
+    "end_address": "$3FD5",
+    "size": 6102,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3FC9",
+    "start_address": "$3FD6",
     "end_address": "$3FFF",
-    "size": 55,
+    "size": 42,
     "type": "free"
   },
   {

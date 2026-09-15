@@ -21,6 +21,7 @@ $88      2      PTR_COLL             16-bit pointer: object collision tiles look
 --------------------------------------------------------------------------------
 Start - End     Size (B)   Segment / Name       Type
 --------------------------------------------------------------------------------
+$02E2 - $02E3          2   INITAD               vector
 $02E0 - $02E1          2   RUNAD                vector
 
 --------------------------------------------------------------------------------
@@ -28,10 +29,11 @@ $02E0 - $02E1          2   RUNAD                vector
 --------------------------------------------------------------------------------
 Start - End     Size (B)   Segment / Name       Type
 --------------------------------------------------------------------------------
-$0800 - $209B       6300   CODE                 code
-[ FREE SPACE: $209C - $27FF (1892 bytes) ]
-$2800 - $3FC8       6089   CODE                 code
-[ FREE SPACE: $3FC9 - $3FFF (55 bytes) ]
+$0800 - $080A         11   CODE                 code
+$080B - $20AD       6307   ENGINE               code
+[ FREE SPACE: $20AE - $27FF (1874 bytes) ]
+$2800 - $3FD5       6102   CODE                 code
+[ FREE SPACE: $3FD6 - $3FFF (42 bytes) ]
 $4000 - $5B67       7016   VRAM                 data
 [ FREE SPACE: $5B68 - $67FF (3224 bytes) ]
 $6800 - $693B        316   DLIST                display_list
@@ -39,8 +41,8 @@ $6800 - $693B        316   DLIST                display_list
 $7000 - $BADB      19164   FONT                 data
 [ FREE SPACE: $BADC - $BFFF (1316 bytes) ]
 ================================================================================
-Total RAM Used:   38885 bytes
-Total Free RAM:    8219 bytes (17.4% free headroom)
+Total RAM Used:   38916 bytes
+Total Free RAM:    8188 bytes (17.4% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

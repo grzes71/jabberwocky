@@ -55,6 +55,7 @@ def test_parse_real_jabberwocky_lab_and_lst(tmp_path: Path) -> None:
     # Check specific known segments
     seg_names = [s["name"] for s in data]
     assert "RUNAD" in seg_names
+    assert "INITAD" in seg_names
     assert "CODE" in seg_names
     assert "DLIST" in seg_names
     assert "VRAM" in seg_names

@@ -676,3 +676,74 @@ def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict
     assert mpu.memory[destroyed_base + 72] == 0x00, "Screen 9 destroyed bitmask must be cleared on game_init"
 
 
+def test_fire_breathing_invincibility_against_blocking_objects(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that when dragon is breathing fire (fire_state != 0), blocking collisions do NOT crash/kill dragon."""
+    mpu = clean_mpu
+
+    # Place dragon at scanline 82 (row 3)
+    mpu.memory[labels["DRAGON_Y"]] = 82
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+
+    # Put solid blocking obstacle flag ($01) at row 3
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL8"] + 3] = 0x01
+
+    # CASE 1: fire_state == 0 (not breathing fire) -> normal blocking collision!
+    mpu.memory[labels["FIRE_STATE"]] = 0
+    run_subroutine(mpu, labels["CHECK_DRAGON_BLOCKING_COLLISION"])
+    assert (mpu.p & 0x01) == 0x01, "Normal flight without fire must detect blocking obstacle (Carry SET)"
+
+    # CASE 2: fire_state == 1 (expanding flame) -> INVINCIBLE!
+    mpu.memory[labels["FIRE_STATE"]] = 1
+    run_subroutine(mpu, labels["CHECK_DRAGON_BLOCKING_COLLISION"])
+    assert (mpu.p & 0x01) == 0x00, "Breathing fire (state 1) must be invincible to blocking obstacle (Carry CLEAR)"
+
+    # CASE 3: fire_state == 2 (peak hold flame) -> INVINCIBLE!
+    mpu.memory[labels["FIRE_STATE"]] = 2
+    run_subroutine(mpu, labels["CHECK_DRAGON_BLOCKING_COLLISION"])
+    assert (mpu.p & 0x01) == 0x00, "Breathing fire (state 2) must be invincible to blocking obstacle (Carry CLEAR)"
+
+    # CASE 4: Full check_dragon_collisions with hardware hit (dragon_p0pf = 1: PF0 wall collision)
+    mpu.memory[labels["DRAGON_DYING"]] = 0
+    mpu.memory[labels["GAME_OVER_REASON"]] = 0
+    mpu.memory[labels["DRAGON_P0PF"]] = 0x01  # Wall hit latched
+    mpu.memory[labels["FIRE_STATE"]] = 2      # Breathing fire
+    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0, "Dragon must NOT start dying from wall collision while breathing fire"
+
+
+def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that while breathing fire (fire_state != 0), dragon still collects secret objects."""
+    mpu = clean_mpu
+
+    # Screen 0 FOREST_01 secret at (x=34, y=8)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1  # LEVEL_02 (FOREST_01..09)
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1  # screen 0 is left screen
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 34
+    mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
+    mpu.memory[labels["DRAGON_Y"]] = 162
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+
+    # Put secret flag in blocking_col8
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x04
+
+    # Dragon is breathing fire!
+    mpu.memory[labels["FIRE_STATE"]] = 2
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    # Run check_dragon_secret_collision
+    run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
+    assert (mpu.p & 0x01) == 0x01, "Secret collection must succeed while breathing fire (Carry SET)"
+
+    # Verify secret was erased
+    blk_addr = labels["SCREEN_FOREST_01_BLOCKING"]
+    offset = 8 * 40 + 34
+    assert mpu.memory[blk_addr + offset] == 0x00, "Secret must be collected and cleared even when breathing fire"
+
+
+

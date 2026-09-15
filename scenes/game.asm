@@ -70,8 +70,10 @@ game_init
     sta PCOLR0
     sta COLPM0
 
-    ; Priority: Player 0 in front of playfield + 5th player mode for missiles ($09)
-    lda #$09
+    ; Priority: Player 0 in front of ALL playfield colors + 5th player mode for missiles ($11)
+    ; Bit 0 ($01): P0..3 > PF0..3 > BAK (dragon is always top foreground, covering all playfield colors)
+    ; Bit 4 ($10): 5th player enable (missiles grouped with color from COLPF3)
+    lda #$11
     sta GPRIOR
     sta PRIOR
 
@@ -1172,6 +1174,10 @@ dli_game_action
     lda pal_action_bk           ; [4] (87) Background color & border
     sta COLBK                   ; [4] (91)
 
+    ; Ensure dragon (Player 0) is strictly in front of all playfield colors in action area ($11)
+    lda #$11
+    sta PRIOR
+
     sta HITCLR                  ; [4] (95) Clear collision latches right before action area starts
 
     lda #<dli_game_bottom       ; [2] (97) Chain to DLI 3 (bottom status)
@@ -1206,6 +1212,10 @@ dli_game_bottom
     sta VDSLST                  ; [4] (28)
     lda #>dli_game_top          ; [2] (30)
     sta VDSLST+1                ; [4] (34)
+
+    ; Switch priority for bottom status bar: playfield text in front of player background blocks ($09)
+    lda #$09
+    sta PRIOR
 
     ; Reconfigure Players 0, 1, 2, 3 for bottom status overlay (x4 width)
     lda bot_bar_p0_x            ; [4] (30) "LEVEL:01"

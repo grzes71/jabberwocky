@@ -910,6 +910,13 @@ shift_blocking_vram_left    = shift_blocking_cols
 ; Clobbers: A, X
 ; ==============================================================================
 .proc check_dragon_blocking_collision
+    ; If dragon is breathing fire (fire_state != 0), dragon is invincible to blocking obstacles
+    lda fire_state
+    beq @not_fire_invincible
+    clc
+    rts
+
+@not_fire_invincible
     ; Dynamic vertical bounding box based on current animation frame (0..7)
     ; Dragon spans scanlines (dragon_y + min_y) .. (dragon_y + max_y)
     ; Action playfield starts at scanline 34

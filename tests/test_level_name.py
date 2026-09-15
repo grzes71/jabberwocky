@@ -122,7 +122,7 @@ def test_update_level_name_screen_full_cycle(clean_mpu: MPU, labels: Dict[str, i
     # GTIA PMG latching and Player 0 positioning must be restored
     assert mpu.memory[labels["GRACTL"]] == 3
     assert mpu.memory[labels["HPOSP0"]] == labels["DRAGON_START_X"]
-    assert mpu.memory[labels["GPRIOR"]] == 0x09
+    assert mpu.memory[labels["GPRIOR"]] == 0x11
     assert mpu.memory[labels["SIZEP0"]] == 0
     assert mpu.memory[labels["PMBASE"]] == (labels["PM_ADDR"] >> 8)
 

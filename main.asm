@@ -42,6 +42,23 @@ STATE_GAME_OVER = 3
 ; LOW CODE / AUXILIARY ENGINES (Low RAM $0800-$1FFF)
 ; ==============================================================================
     org LOW_CODE_ADDR
+
+; Disable BASIC ROM in PORTB ($D301) during XEX load via INITAD vector ($02E2).
+; Bit 1 = 1 disables BASIC ROM, unlocking 8 KB of RAM ($A000-$BFFF) needed for world_data.
+; Bit 0 = 1 keeps OS ROM enabled ($C000-$FFFF) for VBLANK / RTCLOK interrupts.
+disable_basic
+    sei
+    lda PORTB
+    ora #$02
+    sta PORTB
+    cli
+    rts
+@end
+
+    org INITAD
+    dta a(disable_basic)
+
+    org @end
 engine
     icl 'engine/charset_anim.asm'
     icl 'engine/sound.asm'
@@ -56,7 +73,8 @@ engine
     org CODE_ADDR
 
 start
-    ; Enable interrupts for OS VBLANK / RTCLOK
+    ; Ensure BASIC ROM is disabled and interrupts are enabled for OS VBLANK / RTCLOK
+    jsr disable_basic
     cli
 
     ; Set default text font ($7000)

@@ -2,7 +2,40 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
-## [2026-09-15] - Eliminacja nieruchomego duszka (ghost sprite) po przejściu do nowego poziomu
+## [2026-09-15] - Priorytet sprajta smoka na pierwszym planie (GTIA PRIOR)
+- **Konfiguracja priorytetów GTIA ([scenes/game.asm](scenes/game.asm), [engine/level_name.asm](engine/level_name.asm))**:
+  - Poprawiono wartość rejestru `GPRIOR`/`PRIOR` z błędnej wartości `$09` (%00001001) na `$11` (%00010001).
+  - Wartość `$09` miała ustawiony bit 3 (`$08`), który w układzie GTIA przypisuje priorytet playfieldu nad sprajtami (`PF0 > PF1 > P0..P3 > PF2 > PF3 > BAK`). W efekcie kafelki tła rysowane kolorami `COLPF0` i `COLPF1` (np. drzewa, ściany, przeszkody) przykrywały sprajt smoka (`P0`).
+  - Ustawienie bitu 0 (`$01`) bez bitu 3 wymusza ścisły priorytet 1 (`P0 > P1 > P2 > P3 > PF0 > PF1 > PF2 > PF3 > BAK`), gwarantując, że sprajt smoka Jabberwocky (`Player 0`) jest zawsze rysowany na pierwszym planie i przykrywa wszystkie kolory playfield'u (`PF0..PF3`) oraz tło (`BAK`).
+  - Ustawienie bitu 4 (`$10`) poprawnie włącza tryb 5. gracza (Multiple Player Enable) dla 4 pocisków PMG reprezentujących jęzor ognia smoka, pobierających barwę z rejestru `COLPF3` (`pal_action_breath`).
+  - W przerwaniu `dli_game_action` dodano bezpośredni zapis `lda #$11; sta PRIOR` zabezpieczający priorytet pierwszoplanowy smoka w obszarze gry.
+  - W przerwaniu `dli_game_bottom` dodano przełączenie `lda #$09; sta PRIOR` wyłącznie na czas dolnego paska stanu, zapewniając widoczność tekstu trybu 2 (`PF1`) nad podkładowymi 4-krotnymi blokami sprajtów `P0..P3`.
+- **Testy jednostkowe ([tests/test_dragon_priority.py](tests/test_dragon_priority.py), [tests/test_level_name.py](tests/test_level_name.py))**:
+  - Utworzono zestaw testów `test_dragon_priority.py` weryfikujący:
+    - Ustawienie `GPRIOR` i `PRIOR` na `$11` (bit 0 = 1, bit 4 = 1, bit 3 = 0) w procedurze `game_init`.
+    - Ustawienie `PRIOR = $11` w przerwaniu DLI obszaru akcji (`dli_game_action`).
+    - Przełączenie `PRIOR = $09` w przerwaniu dolnego paska stanu (`dli_game_bottom`).
+  - Zaktualizowano asercję w `test_level_name.py` do wartości `0x11`.
+
+## [2026-09-15] - Automatyczne wyłączanie interpretera BASIC przez wektor INITAD
+- **Główny moduł startowy ([main.asm](main.asm))**:
+  - Zaimplementowano procedurę `disable_basic` (wykonywaną z zablokowanymi przerwaniami `sei`/`cli`), która ustawia bit 1 w rejestrze `PORTB` (`$D301`), bezpiecznie wyłączając 8 KB ROM interpretera BASIC i udostępniając ten obszar (`$A000-$BFFF`) jako pełnoprawny RAM pod dane świata gry.
+  - Skonfigurowano wektor inicjalizacji DOS **`INITAD` (`$02E2`)** wskazujący na `disable_basic`, dzięki czemu wyłączenie BASIC następuje natychmiast podczas ładowania pliku XEX, zanim loader zacznie wczytywać segment danych świata (`$7800-$BADB`) do pamięci.
+  - Dodano wywołanie `jsr disable_basic` w procedurze `start`, gwarantując wyłączenie BASIC-a również w przypadku bezpośredniego skoku pod wektor `RUNAD`.
+- **Weryfikacja mapy pamięci ([scripts/generate_memory_map.py](scripts/generate_memory_map.py), [tests/test_generate_memory_map.py](tests/test_generate_memory_map.py))**:
+  - Zweryfikowano poprawną identyfikację wektora `INITAD` ($02E2-$02E3) jako typu `vector` oraz brak naruszenia ciągłości segmentu `LOW_CODE_ADDR` ($0800-$20AD).
+  - Rozszerzono `test_parse_real_jabberwocky_lab_and_lst` o weryfikację obecności wektora `INITAD` w generowanej mapie pamięci.
+- **Testy jednostkowe ([tests/test_disable_basic.py](tests/test_disable_basic.py))**:
+  - Dodano `test_disable_basic_sets_portb_bit1` symulujący stan początkowy z włączonym BASIC-em i weryfikujący ustawienie bitu 1 w `PORTB` przy zachowaniu bitu 0 (aktywny OS ROM).
+  - Dodano `test_xex_contains_initad_vector` sprawdzający obecność bloku `INITAD` w wynikowym pliku binarnym `jabberwocky.xex` oraz zgodność adresu docelowego z symbolem `DISABLE_BASIC`.
+
+## [2026-09-15] - Nieśmiertelność smoka podczas ziania ogniem (Fire Invincibility)
+- **Silnik kolizji ([engine/flame_collision.asm](engine/flame_collision.asm))**:
+  - Dodano warunek w procedurze `check_dragon_blocking_collision`: gdy smok zieje ogniem (`fire_state != 0`), procedura natychmiast wychodzi z wyczyszczoną flagą Carry (`clc; rts`), ignorując kolizje śmiertelne z obiektami blokującymi (`blocking == true`).
+  - Procedura `check_dragon_secret_collision` nie sprawdza `fire_state`, dzięki czemu smok podczas ziania ogniem wciąż w pełni zbiera obiekty typu Secret i Interactive oraz otrzymuje punkty i bonusy.
+- **Testy jednostkowe ([tests/test_secret_collision.py](tests/test_secret_collision.py))**:
+  - Dodano test `test_fire_breathing_invincibility_against_blocking_objects` sprawdzający, że przy `fire_state == 0` kolizja ze ścianą jest wykrywana, natomiast przy `fire_state != 0` (faza 1 oraz 2) kolizja jest ignorowana i smok nie ginie (`dragon_dying == 0`).
+  - Dodano test `test_fire_breathing_still_collects_secrets` potwierdzający zbieranie i wymazywanie sekretów podczas aktywnego ziania ogniem.
 - **Obsługa buforów PMG ([scenes/game.asm](scenes/game.asm))**:
   - Zidentyfikowano przyczynę pozostawania nieruchomego duszka smoka po przejściu na kolejny poziom: w `advance_to_next_level` rejestr `dragon_prev_y` był natychmiast nadpisywany wartością `DRAGON_START_Y` (114), bez wymazania poprzedniej pozycji smoka (np. Y=40 u góry ekranu). W rezultacie procedura `render_dragon` po zakończeniu ekranu tytułowego poziomu czyściła wyłącznie linie wokół 114, pozostawiając stary kształt duszka na skanliniach 40..66 w pamięci Player 0 RAM (`P0_ADDR`).
   - Utworzono procedurę `clear_action_pmg`, która czyści do zera wszystkie bufory PMG graczy i pocisków ($2300–$27FF), a następnie odtwarza dolne 8 linii maski statusu ($FF) na pozycji `bot_bar_pmg_y`.

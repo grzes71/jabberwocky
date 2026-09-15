@@ -41,7 +41,7 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
 - **Animacja i fizyka sprajtów PMG (Player/Missile Graphics)**:
   - Wieloklatkowy sprajt smoka Jabberwocky (Player 0) z akumulatorem fazy 16-bit (format 8.8) zapewniającym płynne machanie skrzydłami skorelowane z prędkością lotu.
   - Fizyka ruchu pionowego i poziomego w arytmetyce stałoprzecinkowej (prędkość, akceleracja, hamowanie, inercja).
-  - Zianie ogniem oparte na pociskach PMG (tryb 5th player, `GPRIOR = $09`, `COLPF3`), 8-klatkowa animacja rozszerzania i zwijania jęzora ognia z dedykowanymi efektami dźwiękowymi POKEY.
+  - Zianie ogniem oparte na pociskach PMG (tryb 5th player, `GPRIOR = $11`, `COLPF3`), 8-klatkowa animacja rozszerzania i zwijania jęzora ognia z dedykowanymi efektami dźwiękowymi POKEY.
   - Pasek energii smoka ze stałoprzecinkowym przelicznikiem Bresenhama i automatyczną detekcją standardu telewizyjnego (PAL 50Hz / NTSC 60Hz).
   - Dwufazowa sekwencja śmierci smoka (zanik luminancji + przesunięcie w lewo, eksplozja POKEY).
 - **Strumieniowanie świata gry (World Streaming)**:
