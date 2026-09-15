@@ -2,7 +2,7 @@
 ; ENGINE/CHARSET_ANIM.ASM — Charset Animation Engine
 ; Target: Atari 800XL / 65XE
 ; Animates all characters defined in chars/rotated.json and chars/animated.json
-; Target Font: GAME_FONT_ADDR ($7400)
+; Target Font: GAME_FONT_ADDR ($6800)
 ; ==============================================================================
 
     icl 'gen/rotated_chars_global.asm'
@@ -63,7 +63,7 @@
     lda anim_char_speeds,x
     sta anim_char_counters,x
 
-    ; Calculate character address: GAME_FONT_ADDR ($7400) + ID * 8
+    ; Calculate character address: GAME_FONT_ADDR ($6800) + ID * 8
     lda #0
     sta PTR_SRC+1
     lda anim_char_ids,x
@@ -77,7 +77,7 @@
     clc
     sta PTR_SRC
     lda PTR_SRC+1
-    adc #>GAME_FONT_ADDR        ; $7400 -> >GAME_FONT_ADDR = $74
+    adc #>GAME_FONT_ADDR        ; $6800 -> >GAME_FONT_ADDR = $68
     sta PTR_SRC+1
 
     ; Rotate 8 bytes of character 2 bits left (horizontal shift in Mode 4/5)
@@ -108,7 +108,7 @@
 ; ==============================================================================
 ; update_animated_charset
 ; Multi-segment, frame-timed character animation state machine
-; Copies 8-byte frame data into GAME_FONT_ADDR ($7400 + ID * 8)
+; Copies 8-byte frame data into GAME_FONT_ADDR ($6800 + ID * 8)
 ; ==============================================================================
 .proc update_animated_charset
     .if NUM_ANIM_CHARS > 0

@@ -211,24 +211,14 @@ def generate_world_asm(
     # Map screen ID to index
     screen_id_to_idx: Dict[str, int] = {s.id: idx for idx, s in enumerate(project.screens)}
 
-    # 1. Screen VRAM Buffers and Object Lists
+    # 1. Screen Object Lists
     asm.append("; ------------------------------------------------------------------------------")
-    asm.append("; SCREEN BUFFERS & OBJECT INSTANCE DATA")
+    asm.append("; SCREEN OBJECT INSTANCE DATA")
     asm.append("; ------------------------------------------------------------------------------")
     for idx, screen in enumerate(project.screens):
-        vram = bake_screen_vram(screen, objects_lib)
-        blocking = bake_screen_blocking(screen, objects_lib)
         safe_id = screen.id.replace("-", "_").replace(" ", "_")
 
         asm.append(f"; --- Screen {idx}: {screen.id} ---")
-        asm.append(f"screen_{safe_id}_vram")
-        asm.extend(format_vram_dta(vram))
-        asm.append("")
-
-        asm.append(f"screen_{safe_id}_blocking")
-        asm.extend(format_vram_dta(blocking))
-        asm.append("")
-
         asm.append(f"screen_{safe_id}_obj_count")
         asm.append(f"    dta {len(screen.objects)}")
 
@@ -252,21 +242,9 @@ def generate_world_asm(
     asm.append("; SCREENS INDEX TABLES (Structure-of-Arrays)")
     asm.append("; ------------------------------------------------------------------------------")
     if project.screens:
-        vram_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_vram" for s in project.screens]
-        blocking_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_blocking" for s in project.screens]
         codes_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_codes" for s in project.screens]
         coords_labels = [f"screen_{s.id.replace('-', '_').replace(' ', '_')}_coords" for s in project.screens]
         counts = [f"{len(s.objects)}" for s in project.screens]
-
-        asm.append("screens_vram_lo")
-        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in vram_labels))
-        asm.append("screens_vram_hi")
-        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in vram_labels))
-
-        asm.append("screens_blocking_lo")
-        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in blocking_labels))
-        asm.append("screens_blocking_hi")
-        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in blocking_labels))
 
         asm.append("screens_obj_count")
         asm.append("    dta " + ", ".join(counts))
@@ -281,10 +259,6 @@ def generate_world_asm(
         asm.append("screens_coords_hi")
         asm.append("    dta " + ", ".join(f">{lbl}" for lbl in coords_labels))
     else:
-        asm.append("screens_vram_lo      dta 0")
-        asm.append("screens_vram_hi      dta 0")
-        asm.append("screens_blocking_lo  dta 0")
-        asm.append("screens_blocking_hi  dta 0")
         asm.append("screens_obj_count    dta 0")
         asm.append("screens_codes_lo     dta 0")
         asm.append("screens_codes_hi     dta 0")
@@ -338,96 +312,17 @@ def generate_world_asm(
         asm.append("labyrinths_name_hi      dta 0")
     asm.append("")
 
-    # 3.5. Secret Objects Backup Tables (for restore_all_secrets on game_init)
-    asm.append("; ------------------------------------------------------------------------------")
-    asm.append("; SECRET OBJECTS BACKUP (for restore_all_secrets on game_init)")
-    asm.append("; ------------------------------------------------------------------------------")
-    secret_instances = []
-    for s_idx, screen in enumerate(project.screens):
-        for obj_idx, inst in enumerate(screen.objects):
-            obj_def = objects_lib.get_by_code(inst.code)
-            if obj_def and (obj_def.flags.secret or obj_def.flags.interactive):
-                secret_instances.append({
-                    "screen_idx": s_idx,
-                    "obj_idx": obj_idx,
-                    "x": inst.x,
-                    "y": inst.y,
-                    "w": obj_def.size.width,
-                    "h": obj_def.size.height,
-                    "tiles": obj_def.tiles,
-                    "blocking": obj_def.flags.blocking,
-                    "interactive": obj_def.flags.interactive,
-                    "secret": obj_def.flags.secret,
-                })
-
-    asm.append(f"secret_objs_total       dta {len(secret_instances)}")
-    if secret_instances:
-        asm.append("secret_objs_screen")
-        asm.append("    dta " + ", ".join(str(item["screen_idx"]) for item in secret_instances))
-        asm.append("secret_objs_x")
-        asm.append("    dta " + ", ".join(str(item["x"]) for item in secret_instances))
-        asm.append("secret_objs_y")
-        asm.append("    dta " + ", ".join(str(item["y"]) for item in secret_instances))
-        asm.append("secret_objs_w")
-        asm.append("    dta " + ", ".join(str(item["w"]) for item in secret_instances))
-        asm.append("secret_objs_h")
-        asm.append("    dta " + ", ".join(str(item["h"]) for item in secret_instances))
-
-        tiles_labels = []
-        coll_labels = []
-        for i, item in enumerate(secret_instances):
-            t_lbl = f"secret_inst_{i}_tiles"
-            c_lbl = f"secret_inst_{i}_coll"
-            tiles_labels.append(t_lbl)
-            coll_labels.append(c_lbl)
-
-            total_cells = item["w"] * item["h"]
-            t_bytes = [f"${b:02X}" for b in item["tiles"][:total_cells]]
-            coll_val = (0x01 if item["blocking"] else 0) | \
-                       (0x02 if item["interactive"] else 0) | \
-                       (0x04 if item["secret"] else 0)
-            c_bytes = [f"${coll_val:02X}" if b != 0 else "$00" for b in item["tiles"][:total_cells]]
-
-            asm.append(f"{t_lbl}")
-            asm.append("    dta " + ", ".join(t_bytes))
-            asm.append(f"{c_lbl}")
-            asm.append("    dta " + ", ".join(c_bytes))
-
-        asm.append("secret_objs_tiles_lo")
-        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in tiles_labels))
-        asm.append("secret_objs_tiles_hi")
-        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in tiles_labels))
-        asm.append("secret_objs_coll_lo")
-        asm.append("    dta " + ", ".join(f"<{lbl}" for lbl in coll_labels))
-        asm.append("secret_objs_coll_hi")
-        asm.append("    dta " + ", ".join(f">{lbl}" for lbl in coll_labels))
-    else:
-        asm.append("secret_objs_screen      dta 0")
-        asm.append("secret_objs_x           dta 0")
-        asm.append("secret_objs_y           dta 0")
-        asm.append("secret_objs_w           dta 0")
-        asm.append("secret_objs_h           dta 0")
-        asm.append("secret_objs_tiles_lo    dta 0")
-        asm.append("secret_objs_tiles_hi    dta 0")
-        asm.append("secret_objs_coll_lo     dta 0")
-        asm.append("secret_objs_coll_hi     dta 0")
-    asm.append("")
-
-    # 4. Object Metadata Tables (size, flags for collision/interaction)
+    # 4. Object Metadata Tables (flags for collision/interaction)
     # Scan max code used or up to 256
     used_codes = {inst.code for s in project.screens for inst in s.objects}
     max_code = max(used_codes) if used_codes else 0
     table_size = max(256, max_code + 1)
 
-    widths = []
-    heights = []
     flags = []
 
     for code in range(table_size):
         obj = objects_lib.get_by_code(code)
         if obj:
-            widths.append(f"${obj.size.width:02X}")
-            heights.append(f"${obj.size.height:02X}")
             # Bit 0: blocking, Bit 1: interactive, Bit 2: secret
             # Bit 7: has_empty_tiles (contains at least one tile == 0)
             total_cells = obj.size.width * obj.size.height
@@ -439,23 +334,11 @@ def generate_world_asm(
                      (0x80 if has_empty else 0)
             flags.append(f"${fl_val:02X}")
         else:
-            widths.append("$00")
-            heights.append("$00")
             flags.append("$00")
 
     asm.append("; ------------------------------------------------------------------------------")
     asm.append("; OBJECT DEFINITIONS TABLE (indexed by code 0..255)")
     asm.append("; ------------------------------------------------------------------------------")
-    asm.append("obj_type_width")
-    for i in range(0, table_size, 16):
-        asm.append("    dta " + ", ".join(widths[i:i+16]))
-    asm.append("")
-
-    asm.append("obj_type_height")
-    for i in range(0, table_size, 16):
-        asm.append("    dta " + ", ".join(heights[i:i+16]))
-    asm.append("")
-
     asm.append("obj_type_flags")
     for i in range(0, table_size, 16):
         asm.append("    dta " + ", ".join(flags[i:i+16]))
@@ -465,13 +348,14 @@ def generate_world_asm(
 
 
 def generate_obj_tiles_asm(objects_lib: ObjectsLibrary, table_size: int = 256) -> str:
-    """Generates MADS assembly for object tile data and pointers for tile-exact collision checking.
+    """Generates MADS assembly for object dimensions and tile data/pointers.
+    Includes obj_type_width and obj_type_height tables (Structure-of-Arrays).
     Only objects with at least one tile == 0 need explicit tile data arrays.
     For objects without empty tiles, pointers point to a dummy $00 byte.
     """
     asm: List[str] = [
         "; ==============================================================================",
-        "; WORLD_OBJ_TILES.ASM — Object tile tables for tile-exact collision detection",
+        "; WORLD_OBJ_TILES.ASM — Object tile tables and dimensions for engine",
         "; Generated automatically by scripts/labirynt_builder.py — DO NOT EDIT",
         "; ==============================================================================",
         "",
@@ -480,26 +364,29 @@ def generate_obj_tiles_asm(objects_lib: ObjectsLibrary, table_size: int = 256) -
         ""
     ]
 
+    widths: List[str] = []
+    heights: List[str] = []
     lo_ptrs: List[str] = []
     hi_ptrs: List[str] = []
 
     for code in range(table_size):
         obj = objects_lib.get_by_code(code)
         if obj:
+            widths.append(f"${obj.size.width:02X}")
+            heights.append(f"${obj.size.height:02X}")
             total_cells = obj.size.width * obj.size.height
             obj_tiles = obj.tiles[:total_cells] + [0] * max(0, total_cells - len(obj.tiles))
-            has_empty = any(t == 0 for t in obj_tiles)
-            if has_empty:
-                lbl = f"obj_code_{code:02X}_tiles"
-                t_bytes = [f"${(t & 0xFF):02X}" for t in obj_tiles]
-                asm.append(f"{lbl}")
-                asm.append("    dta " + ", ".join(t_bytes))
-                lo_ptrs.append(f"<{lbl}")
-                hi_ptrs.append(f">{lbl}")
-                continue
-
-        lo_ptrs.append("<obj_code_dummy_tiles")
-        hi_ptrs.append(">obj_code_dummy_tiles")
+            lbl = f"obj_code_{code:02X}_tiles"
+            t_bytes = [f"${(t & 0xFF):02X}" for t in obj_tiles]
+            asm.append(f"{lbl}")
+            asm.append("    dta " + ", ".join(t_bytes))
+            lo_ptrs.append(f"<{lbl}")
+            hi_ptrs.append(f">{lbl}")
+        else:
+            widths.append("$00")
+            heights.append("$00")
+            lo_ptrs.append("<obj_code_dummy_tiles")
+            hi_ptrs.append(">obj_code_dummy_tiles")
 
     asm.append("")
     asm.append("; ------------------------------------------------------------------------------")
@@ -512,6 +399,17 @@ def generate_obj_tiles_asm(objects_lib: ObjectsLibrary, table_size: int = 256) -
     asm.append("obj_type_tiles_hi")
     for i in range(0, table_size, 16):
         asm.append("    dta " + ", ".join(hi_ptrs[i:i+16]))
+    asm.append("")
+    asm.append("; ------------------------------------------------------------------------------")
+    asm.append("; OBJECT DIMENSIONS TABLES (indexed by code 0..255)")
+    asm.append("; ------------------------------------------------------------------------------")
+    asm.append("obj_type_width")
+    for i in range(0, table_size, 16):
+        asm.append("    dta " + ", ".join(widths[i:i+16]))
+    asm.append("")
+    asm.append("obj_type_height")
+    for i in range(0, table_size, 16):
+        asm.append("    dta " + ", ".join(heights[i:i+16]))
     asm.append("")
 
     return "\n".join(asm)

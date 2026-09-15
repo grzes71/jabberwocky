@@ -133,9 +133,9 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
     assert mpu.memory[labels["LAB_TOTAL_SCREENS"]] >= 8
     assert mpu.memory[labels["HSCROL_FINE"]] == 3
 
-    # Check that visible columns 4..43 match Screen 0
-    screen0_vram = labels["SCREEN_FOREST_01_VRAM"]
-    screen0_blk = labels["SCREEN_FOREST_01_BLOCKING"]
+    # Check that visible columns 4..43 match Screen 0 (baked into Buffer A)
+    screen0_vram = labels["SCREEN_BUF_A_VRAM"]
+    screen0_blk = labels["SCREEN_BUF_A_BLK"]
     action_vram = labels["GAME_ACTION_VRAM"]
     for r in range(11):
         for c in range(40):
@@ -143,8 +143,8 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
             actual = mpu.memory[action_vram + r * 48 + 4 + c]
             assert actual == expected, f"Row {r} visible col {c}: expected {expected}, got {actual}"
 
-    # Check that right margin columns 44..47 match cols 0..3 of Screen 1
-    screen1_vram = labels["SCREEN_FOREST_02_VRAM"]
+    # Check that right margin columns 44..47 match cols 0..3 of Screen 1 (baked into Buffer B)
+    screen1_vram = labels["SCREEN_BUF_B_VRAM"]
     for r in range(11):
         for c in range(4):
             expected = mpu.memory[screen1_vram + r * 40 + c]
@@ -173,9 +173,9 @@ def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[s
 
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 5
 
-    # Check that column 47 in each row equals column 4 from screen 1 (screen_FOREST_02_vram)
-    screen0_blk = labels["SCREEN_FOREST_01_BLOCKING"]
-    screen1_vram = labels["SCREEN_FOREST_02_VRAM"]
+    # Check that column 47 in each row equals column 4 from screen 1 (Buffer B)
+    screen0_blk = labels["SCREEN_BUF_A_BLK"]
+    screen1_vram = labels["SCREEN_BUF_B_VRAM"]
     action_vram = labels["GAME_ACTION_VRAM"]
     for r in range(11):
         expected_char = mpu.memory[screen1_vram + r * 40 + 4]  # col 4 of row r
@@ -291,7 +291,7 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
     assert mpu.memory[labels["DRAGON_Y"]] == labels["DRAGON_START_Y"]
 
     # Playfield reloaded with screen 0
-    screen0_vram = labels["SCREEN_FOREST_01_VRAM"]
+    screen0_vram = labels["SCREEN_BUF_A_VRAM"]
     for r in range(11):
         for c in range(40):
             expected = mpu.memory[screen0_vram + r * 40 + c]

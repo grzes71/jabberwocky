@@ -23,29 +23,29 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$20AD",
-    "size": 6307,
+    "end_address": "$1D81",
+    "size": 5495,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$20AE",
+    "start_address": "$1D82",
     "end_address": "$27FF",
-    "size": 1874,
+    "size": 2686,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3FD5",
-    "size": 6102,
+    "end_address": "$3EED",
+    "size": 5870,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3FD6",
+    "start_address": "$3EEE",
     "end_address": "$3FFF",
-    "size": 42,
+    "size": 274,
     "type": "free"
   },
   {
@@ -58,36 +58,64 @@
   {
     "name": "FREE_SPACE",
     "start_address": "$5B68",
-    "end_address": "$67FF",
-    "size": 3224,
+    "end_address": "$5BFF",
+    "size": 152,
+    "type": "free"
+  },
+  {
+    "name": "FONT",
+    "start_address": "$5C00",
+    "end_address": "$5FFF",
+    "size": 1024,
+    "type": "data"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$6000",
+    "end_address": "$660F",
+    "size": 1552,
     "type": "free"
   },
   {
     "name": "DLIST",
-    "start_address": "$6800",
-    "end_address": "$693B",
+    "start_address": "$6610",
+    "end_address": "$674B",
     "size": 316,
     "type": "display_list"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$693C",
-    "end_address": "$6FFF",
-    "size": 1732,
+    "start_address": "$674C",
+    "end_address": "$67FF",
+    "size": 180,
     "type": "free"
   },
   {
     "name": "FONT",
-    "start_address": "$7000",
-    "end_address": "$BADB",
-    "size": 19164,
+    "start_address": "$6800",
+    "end_address": "$845E",
+    "size": 7263,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BADC",
+    "start_address": "$845F",
+    "end_address": "$87FF",
+    "size": 929,
+    "type": "free"
+  },
+  {
+    "name": "VRAM",
+    "start_address": "$8800",
+    "end_address": "$8BBF",
+    "size": 960,
+    "type": "data"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$8BC0",
     "end_address": "$BFFF",
-    "size": 1316,
+    "size": 13376,
     "type": "free"
   }
 ]

@@ -123,3 +123,50 @@ def test_labyrinths_widget_create_labyrinth_with_name(qapp, monkeypatch):
     assert project.labyrinths[1].name == "Snark Caverns"
     assert widget.lab_list.item(1).text() == "LEVEL_02 (Snark Caverns)"
     assert len(changed_called) == 1
+
+
+def test_labyrinths_widget_move_up_down(qapp):
+    """Test reordering labyrinths up and down updates project list, UI, and emits signal."""
+    project = Project(
+        name="Test",
+        labyrinths=[
+            Labyrinth(id="LEVEL_01", name="Poziom 1", screens=[]),
+            Labyrinth(id="LEVEL_02", name="Poziom 2", screens=[]),
+            Labyrinth(id="LEVEL_03", name="Poziom 3", screens=[]),
+        ],
+    )
+    widget = LabyrinthsWidget(project)
+
+    changed_events = []
+    widget.labyrinths_changed.connect(lambda: changed_events.append(True))
+
+    # Select LEVEL_02 (row 1) and move UP
+    widget.lab_list.setCurrentRow(1)
+    widget._move_labyrinth_up()
+
+    assert [l.id for l in project.labyrinths] == ["LEVEL_02", "LEVEL_01", "LEVEL_03"]
+    assert widget.lab_list.currentRow() == 0
+    assert len(changed_events) == 1
+
+    # Moving UP when already at top (row 0) should do nothing
+    widget._move_labyrinth_up()
+    assert [l.id for l in project.labyrinths] == ["LEVEL_02", "LEVEL_01", "LEVEL_03"]
+    assert len(changed_events) == 1
+
+    # Move LEVEL_02 DOWN
+    widget._move_labyrinth_down()
+    assert [l.id for l in project.labyrinths] == ["LEVEL_01", "LEVEL_02", "LEVEL_03"]
+    assert widget.lab_list.currentRow() == 1
+    assert len(changed_events) == 2
+
+    # Move LEVEL_02 DOWN again
+    widget._move_labyrinth_down()
+    assert [l.id for l in project.labyrinths] == ["LEVEL_01", "LEVEL_03", "LEVEL_02"]
+    assert widget.lab_list.currentRow() == 2
+    assert len(changed_events) == 3
+
+    # Moving DOWN when at bottom (row 2) should do nothing
+    widget._move_labyrinth_down()
+    assert [l.id for l in project.labyrinths] == ["LEVEL_01", "LEVEL_03", "LEVEL_02"]
+    assert len(changed_events) == 3
+

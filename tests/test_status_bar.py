@@ -642,6 +642,12 @@ def test_check_dragon_crash_collisions_emulation(project_root: Path, labels: Dic
             mpu.step()
 
     # Initialize level screens and position dragon overlapping blocking object 12 (cols 8..9, rows 0..1)
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    tolem_level_idx = next(i for i, lab in enumerate(proj.get("labyrinths", [])) if "TOLEM_01" in lab.get("screens", []))
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = tolem_level_idx
+
     mpu.sp = 0xFD
     mpu.stPushWord(0x0100 - 1)
     mpu.pc = labels["INIT_LEVEL_SCREENS"]

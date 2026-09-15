@@ -104,6 +104,8 @@ fc_erase_c              dta 0
 fc_sec_idx              dta 0
 fc_tile_offset          dta 0
 fc_base_ptr             dta a(0)
+fc_buf_vram             dta a(0)
+fc_buf_blk              dta a(0)
 fc_cur_obj_flags        dta 0
 fc_cur_obj_code         dta 0
 fc_cur_dy               dta 0
@@ -712,20 +714,11 @@ fc_energy_cnt           dta 0
 ; Initializes blocking_col8 (from Screen 0, col 4) and blocking_col9 (from Screen 0, col 5).
 ; Primes dragon_stream_col = 6, dragon_stream_screen = 0.
 .proc init_blocking_cols
-    ; Screen 0 of current level labyrinth
-    ldx current_level_idx
-    lda labyrinths_screens_lo,x
-    sta PTR_SRC
-    lda labyrinths_screens_hi,x
-    sta PTR_SRC+1
-    ldy #0
-    lda (PTR_SRC),y
-    tax                         ; X = screen index (0..WORLD_SCREENS_COUNT-1)
-
-    lda screens_blocking_lo,x
+    ; Point dragon_stream_ptr to cur_left_blk_ptr (Screen 0 blocking buffer)
+    lda cur_left_blk_ptr
     sta dragon_stream_ptr
     sta PTR_SRC
-    lda screens_blocking_hi,x
+    lda cur_left_blk_ptr+1
     sta dragon_stream_ptr+1
     sta PTR_SRC+1
 
@@ -869,18 +862,10 @@ fc_energy_cnt           dta 0
     cmp lab_total_screens
     bcs @done
 
-    ; Update dragon_stream_ptr to next screen
-    ldx current_level_idx
-    lda labyrinths_screens_lo,x
-    sta PTR_SRC
-    lda labyrinths_screens_hi,x
-    sta PTR_SRC+1
-    ldy dragon_stream_screen
-    lda (PTR_SRC),y
-    tax
-    lda screens_blocking_lo,x
+    ; Update dragon_stream_ptr to incoming staging buffer
+    lda incoming_screen_blk_ptr
     sta dragon_stream_ptr
-    lda screens_blocking_hi,x
+    lda incoming_screen_blk_ptr+1
     sta dragon_stream_ptr+1
     rts
 
@@ -1460,12 +1445,37 @@ shift_blocking_vram_left    = shift_blocking_cols
 ; Clobbers: A, X, Y, PTR_DST, PTR_BLK
 ; ==============================================================================
 .proc erase_object_from_source_buffers
+    ; Determine if fc_screen_id matches cur_left or incoming staging buffer
     ldx fc_screen_id
-    cpx #WORLD_SCREENS_COUNT
-    bcc @valid_screen
+    cpx cur_left_screen_id
+    beq @target_cur_left
+    cpx incoming_screen_id
+    beq @target_incoming
+    ; Screen is not in either staging buffer, nothing in RAM to erase
     rts
 
-@valid_screen
+@target_cur_left
+    lda cur_left_vram_ptr
+    sta fc_buf_vram
+    lda cur_left_vram_ptr+1
+    sta fc_buf_vram+1
+    lda cur_left_blk_ptr
+    sta fc_buf_blk
+    lda cur_left_blk_ptr+1
+    sta fc_buf_blk+1
+    jmp @do_erase
+
+@target_incoming
+    lda incoming_screen_vram_ptr
+    sta fc_buf_vram
+    lda incoming_screen_vram_ptr+1
+    sta fc_buf_vram+1
+    lda incoming_screen_blk_ptr
+    sta fc_buf_blk
+    lda incoming_screen_blk_ptr+1
+    sta fc_buf_blk+1
+
+@do_erase
     ; If object has empty tiles, prepare PTR_COLL
     lda fc_cur_obj_flags
     bpl @flags_solid
@@ -1486,22 +1496,21 @@ shift_blocking_vram_left    = shift_blocking_cols
     bcs @done                   ; Beyond row 10
     tax                         ; X = row index (0..10)
 
-    ; Calculate row pointer for screens_vram[fc_screen_id] + screen40_row_offsets[X]
-    ldy fc_screen_id
-    lda screens_vram_lo,y
+    ; Calculate row pointer for target VRAM buffer + screen40_row_offsets[X]
+    lda fc_buf_vram
     clc
     adc screen40_row_offsets_lo,x
     sta PTR_DST
-    lda screens_vram_hi,y
+    lda fc_buf_vram+1
     adc screen40_row_offsets_hi,x
     sta PTR_DST+1
 
-    ; Calculate row pointer for screens_blocking[fc_screen_id] + screen40_row_offsets[X]
-    lda screens_blocking_lo,y
+    ; Calculate row pointer for target BLK buffer + screen40_row_offsets[X]
+    lda fc_buf_blk
     clc
     adc screen40_row_offsets_lo,x
     sta PTR_BLK
-    lda screens_blocking_hi,y
+    lda fc_buf_blk+1
     adc screen40_row_offsets_hi,x
     sta PTR_BLK+1
 
@@ -1750,124 +1759,6 @@ restore_all_collectibles   = restore_all_secrets
 ; Clobbers: A, X, Y, PTR_SRC, PTR_DST, PTR_BLK, ZP_TMP
 ; ==============================================================================
 .proc restore_all_secrets
-    lda secret_objs_total
-    bne @has_secrets
-    rts
-
-@has_secrets
-    lda #0
-    sta fc_sec_idx
-
-@sec_loop
-    ldx fc_sec_idx
-    lda secret_objs_screen,x
-    sta fc_screen_id
-
-    lda secret_objs_x,x
-    sta fc_cur_obj_x
-
-    lda secret_objs_y,x
-    sta fc_cur_obj_y
-
-    lda secret_objs_w,x
-    sta fc_cur_obj_w
-
-    lda secret_objs_h,x
-    sta fc_cur_obj_h
-
-    ; Base pointers for tiles and coll masks (self-modifying operands)
-    lda secret_objs_tiles_lo,x
-    sta @fetch_tile + 1
-    lda secret_objs_tiles_hi,x
-    sta @fetch_tile + 2
-
-    lda secret_objs_coll_lo,x
-    sta @fetch_coll + 1
-    lda secret_objs_coll_hi,x
-    sta @fetch_coll + 2
-
-    lda #0
-    sta fc_tile_offset
-    sta fc_erase_r
-
-@row_loop
-    lda fc_cur_obj_y
-    clc
-    adc fc_erase_r
-    cmp #11
-    bcs @next_sec
-    tax                         ; X = row index (0..10)
-
-    ; Calculate row pointer for screens_vram[fc_screen_id] + screen40_row_offsets[X]
-    ldy fc_screen_id
-    lda screens_vram_lo,y
-    clc
-    adc screen40_row_offsets_lo,x
-    sta PTR_DST
-    lda screens_vram_hi,y
-    adc screen40_row_offsets_hi,x
-    sta PTR_DST+1
-
-    ; Calculate row pointer for screens_blocking[fc_screen_id] + screen40_row_offsets[X]
-    lda screens_blocking_lo,y
-    clc
-    adc screen40_row_offsets_lo,x
-    sta PTR_BLK
-    lda screens_blocking_hi,y
-    adc screen40_row_offsets_hi,x
-    sta PTR_BLK+1
-
-    lda #0
-    sta fc_erase_c
-
-@col_loop
-    ; Fetch original tile and collision mask via self-modifying operands
-    ldy fc_tile_offset
-@fetch_tile
-    lda $FFFF,y
-    sta ZP_TMP
-@fetch_coll
-    lda $FFFF,y
-    pha
-
-    inc fc_tile_offset
-
-    ; Target column in row
-    lda fc_cur_obj_x
-    clc
-    adc fc_erase_c
-    cmp #40
-    bcs @skip_restore_cell
-    tay
-
-    lda ZP_TMP
-    sta (PTR_DST),y             ; Restore tile in screens_vram
-    pla
-    sta (PTR_BLK),y             ; Restore mask in screens_blocking
-    jmp @advance_col
-
-@skip_restore_cell
-    pla                         ; Balance stack if column was skipped
-
-@advance_col
-    inc fc_erase_c
-    lda fc_erase_c
-    cmp fc_cur_obj_w
-    bcc @col_loop
-
-    inc fc_erase_r
-    lda fc_erase_r
-    cmp fc_cur_obj_h
-    bcc @row_loop
-
-@next_sec
-    inc fc_sec_idx
-    lda fc_sec_idx
-    cmp secret_objs_total
-    bcs @done_all
-    jmp @sec_loop
-
-@done_all
     rts
 .endp
 

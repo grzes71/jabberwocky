@@ -32,8 +32,8 @@ def main() -> int:
     parser.add_argument(
         "--charset-base",
         type=lambda x: int(x, 0),
-        default=0x7400,
-        help="Base address of target character set in RAM (default: 0x7400 / GAME_FONT_ADDR)",
+        default=0x6800,
+        help="Base address of target character set in RAM (default: 0x6800 / GAME_FONT_ADDR)",
     )
     args = parser.parse_args()
 

@@ -85,7 +85,7 @@ def test_charset_animation_symbols_and_config(project_root: Path, labels: Dict[s
 
     for idx in range(6):
         char_id = mpu.memory[ids_base + idx]
-        expected_addr = 0x7400 + char_id * 8
+        expected_addr = labels["GAME_FONT_ADDR"] + char_id * 8
         lo = mpu.memory[dest_lo_base + idx]
         hi = mpu.memory[dest_hi_base + idx]
         actual_addr = lo | (hi << 8)
@@ -133,8 +133,8 @@ def test_animate_charset_rotation_emulation(project_root: Path, labels: Dict[str
     mpu.memory[ptr_src] = 0x34
     mpu.memory[ptr_src + 1] = 0x12
 
-    # Character index for rotated character 0 is 5: address $7400 + 5 * 8 = $7428
-    char_addr = 0x7400 + 5 * 8
+    # Character index for rotated character 0 is 5: address GAME_FONT_ADDR + 5 * 8
+    char_addr = labels["GAME_FONT_ADDR"] + 5 * 8
     # Test pattern: 0x81 (%10000001) rotated 2 bits left should become 0x06 (%00000110)
     test_bytes = [0x81, 0xAA, 0x55, 0xFF, 0x00, 0x40, 0x01, 0xC3]
     expected_rotated = [
@@ -189,7 +189,7 @@ def test_update_animated_charset_first_frame(project_root: Path, labels: Dict[st
     run_subroutine(mpu, labels["UPDATE_ANIMATED_CHARSET"])
 
     # Entry 0 is character 112: segment 0 has 1 frame, duration 100, data all 00
-    char112_addr = 0x7400 + 112 * 8
+    char112_addr = labels["GAME_FONT_ADDR"] + 112 * 8
     for i in range(8):
         assert mpu.memory[char112_addr + i] == 0
 
@@ -224,7 +224,7 @@ def test_update_animated_charset_segment_transition(project_root: Path, labels: 
     assert mpu.memory[labels["ANIMATED_CHAR_TIMERS"]] == 5
 
     # Char 112 segment 1 frame 0 data: "00 3C C3 83 C3 00 3C 2C"
-    char112_addr = 0x7400 + 112 * 8
+    char112_addr = labels["GAME_FONT_ADDR"] + 112 * 8
     expected_f0 = [0x00, 0x3C, 0xC3, 0x83, 0xC3, 0x00, 0x3C, 0x2C]
     for i in range(8):
         assert mpu.memory[char112_addr + i] == expected_f0[i]

@@ -2,6 +2,70 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-15] - Naprawa uszkodzonego obrazu tytułowego po rozgrywce (Relokacja STUB_VRAM)
+- **Problem**: Po zakończeniu rozgrywki (Game Over -> Title Screen) górna część obrazu tytułowego (~1/4 ekranu) była uszkodzona (nadpisana zerami/znakami).
+- **Przyczyna**: Bufor tekstu `STUB_VRAM = $4000` nakładał się bezpośrednio na pamięć bitmapy ekranu tytułowego (`VRAM_ADDR = $4000`, `$4000-$5B67`). Procedury `clear_stub_vram` oraz `print_at` wywoływane przez ekrany Intro, Level Name oraz Game Over trwale nadpisywały pierwsze 960 bajtów (24 linie Mode F) obrazka tytułowego.
+- **Rozwiązanie ([main.asm](main.asm))**:
+  - Przeniesiono `STUB_VRAM` z `$4000` na dedykowany adres **`$8800`** (`$8800-$8BBF`, 960 B), w obszarze wolnej pamięci RAM powyżej buforów stagingowych świata.
+  - Zaalokowano bufor `stub_vram_buf :960 dta 0` pod adresem `org STUB_VRAM`.
+  - Bitmapa ekranu tytułowego pod adresem `$4000` jest teraz całkowicie odizolowana i pozostaje nienaruszona przez cały czas trwania gry.
+  - Wszystkie 124 testy py65 przeszły pomyślnie (`124 passed in 9.79s`), pomyślna walidacja mapy pamięci w `make check_memory`.
+
+## [2026-09-15] - Dynamiczne pieczenie ekranów z list obiektów (Uwolnienie >20 KB RAM)
+- **Architektura Ping-Pong Staging Buffers i kompresja danych świata ([scripts/labirynt_builder.py](scripts/labirynt_builder.py), [main.asm](main.asm), [scenes/game.asm](scenes/game.asm), [engine/flame_collision.asm](engine/flame_collision.asm))**:
+  - Wyeliminowano przechowywanie statycznych 440-bajtowych matryc VRAM oraz siatek kolizji dla każdego ekranu w pamięci RAM (co dla 20 ekranów pochłaniało ~18 KB, uniemożliwiając rozbudowę gry do 10 ekranów na poziom).
+  - Wprowadzono kompaktową reprezentację ekranów jako list instancji obiektów: `screen_XXX_codes` (1 bajt na obiekt), `screen_XXX_coords` (1 spakowany bajt X/Y na obiekt) oraz `screen_XXX_obj_count`. Rozmiar danych 20 ekranów w pliku wynikowym spadł z 31,5 KB do ~1,5 KB danych maszynowych.
+  - Zaalokowano podwójny bufor roboczy (`screen_buf_a_vram/blk`, `screen_buf_b_vram/blk`, łącznie 1760 bajtów) tuż za danymi świata w [main.asm](main.asm).
+  - Zaimplementowano ultraszybką procedurę `bake_screen` w [scenes/game.asm](scenes/game.asm), która w czasie rzeczywistym renderuje kafelki obiektów oraz maski kolizji (blocking, interactive, secret) do wyznaczonego bufora stagingowego, z automatycznym pomijaniem obiektów zniszczonych na podstawie 256-bajtowej bitmaski `screen_obj_destroyed`.
+  - Wprowadzono wskaźniki buforów ping-pong: `cur_left_vram_ptr`/`cur_left_blk_ptr` (lewy, schodzący ekran) oraz `incoming_screen_vram_ptr`/`incoming_screen_blk_ptr` (prawy, wjeżdżający ekran).
+  - W procedurze `scroll_playfield_step` przy `incoming_col_idx == 40` wskaźniki buforów zamieniają się miejscami (swap), a kolejny ekran labiryntu jest natychmiast pieczony do zwolnionego bufora (~0.3 klatki, wykonywane raz na kilkaset klatek).
+  - Zaktualizowano procedury kolizji [engine/flame_collision.asm](engine/flame_collision.asm) (`init_blocking_cols`, `shift_blocking_cols`, `erase_object_from_source_buffers`) do pracy na dynamicznych buforach stagingowych. Usunięto zbędne tablice backupowe sekretów, upraszczając `restore_all_secrets` do `rts`.
+  - Przeniesiono moduły `scenes/text_utils.asm` oraz `scenes/intro.asm` do `LOW_CODE_ADDR` ($080B-$1D81), zabezpieczając segment `CODE_ADDR` przed kolizją z adresem `$4000`.
+  - **Efekt**: Uwolniono ponad **20 KB** pamięci RAM (w tym 15,265 bajtów ciągłej wolnej przestrzeni `$845F-$BFFF`), co pozwala bez przeszkód rozbudować grę do 10+ ekranów na każdy labirynt.
+- **Weryfikacja i testy ([tests/test_labirynt_builder.py](tests/test_labirynt_builder.py), [tests/test_scrolling.py](tests/test_scrolling.py), [tests/test_secret_collision.py](tests/test_secret_collision.py))**:
+  - Zaktualizowano asercje testów emulatora `py65` do weryfikacji buforów stagingowych i list obiektów.
+  - Wszystkie 124 testy jednostkowe przeszły pomyślnie (`124 passed in 10.22s`), pełna weryfikacja mapy pamięci zakończona sukcesem.
+
+## [2026-09-15] - Relokacja pamięci dla 20 ekranów i rozszerzonego świata poniżej $BFFF
+- **Relokacja DLIST, GAME_FONT oraz WORLD_DATA ([main.asm](main.asm), [Makefile](Makefile), [scripts/gen_animated_charset.py](scripts/gen_animated_charset.py), [engine/charset_anim.asm](engine/charset_anim.asm))**:
+  - Rozwiązano błąd przekroczenia granicy pamięci RAM (`$BFFF`) po dodaniu kolejnych ekranów `CITY_03` i `CITY_04` (łącznie 20 ekranów i 3 labirynty, zajmujących wcześniej przestrzeń aż do `$C4B5`).
+  - Przeniesiono `DLIST_ADDR` na adres **`$6610`** (316 B w luce po buforze siatki kolizji `BLOCKING_VRAM` `$6400-$660F`, mieszcząc się w całości w 1 KB bloku `$6400-$67FF`).
+  - Przeniesiono czcionkę gry `GAME_FONT_ADDR` z `$6C00` na **`$6800`** (`$6800-$6BFF`, wyrównana do 1 KB dla `CHBASE`). Zaktualizowano parametr `--charset-base 0x6800` w `Makefile` i generatorze.
+  - Przesunięto początek danych świata `WORLD_DATA_ADDR` z `$7000` na **`$6C00`**, zyskując 1024 bajty ciągłej przestrzeni RAM.
+- **Przeniesienie tablic wymiarów obiektów do nieużywanego obszaru PMG ([scripts/labirynt_builder.py](scripts/labirynt_builder.py))**:
+  - Przeniesiono generowanie 256-bajtowych tablic `obj_type_width` i `obj_type_height` (Structure-of-Arrays) z segmentu danych świata (`gen/world_data.asm`) do pliku `gen/world_obj_tiles.asm` dołączanego na końcu bloku `ENGINE`.
+  - Tablice te ulokowano w bezpiecznym, nieużywanym przez DMA ANTIC obszarze bufora PMG single-line (`$20AE-$22AD`), z zachowaniem 82-bajtowego bufora bezpieczeństwa przed buforem pocisków ognia smoka (`$2300-$23FF`). Zysk w strefie world data: 512 bajtów.
+  - W sumie odzyskano 1536 bajtów przestrzeni. Dane świata kończą się na `$BEDA`, z 293 bajtami bezpiecznego headroomu do limitu OS ROM `$BFFF`.
+- **Weryfikacja testów ([tests/test_flame_collision.py](tests/test_flame_collision.py), [tests/test_status_bar.py](tests/test_status_bar.py), [tests/test_secret_collision.py](tests/test_secret_collision.py))**:
+  - Zaktualizowano testy emulacji py65 do dynamicznego ustalania indeksu labiryntu zawierającego ekran `TOLEM_01`, dzięki czemu testy poprawnie przechodzą niezależnie od kolejności labiryntów ustalonej w `world/project.yaml`.
+  - Wszystkie 124 testy jednostkowe przeszły pomyślnie (`124 passed in 18.12s`).
+
+## [2026-09-15] - Zmiana kolejności labiryntów (Góra/Dół) w Labirynt Studio
+- **UI Labirynt Studio ([labirynt_studio/ui/labyrinths_widget.py](labirynt_studio/ui/labyrinths_widget.py))**:
+  - Dodano przyciski przesuwania labiryntów w górę (`▲`, `btn_lab_up`) oraz w dół (`▼`, `btn_lab_down`) obok przycisku "Usuń" w panelu zarządzania labiryntami.
+  - Zaimplementowano metody `_move_labyrinth_up()` oraz `_move_labyrinth_down()`, które zamieniają sąsiednie elementy na liście `project.labyrinths`, odświeżają widok z zachowaniem zaznaczenia aktywnego labiryntu i emitują sygnał `labyrinths_changed` (oznaczający projekt jako zmodyfikowany `dirty`).
+- **Respektowanie kolejności przez grę**:
+  - Kompilator świata [scripts/labirynt_builder.py](scripts/labirynt_builder.py) generuje tablice labiryntów (`labyrinths_screen_count`, `labyrinths_screens_lo`/`hi`, `labyrinths_name_lo`/`hi`) dokładnie w kolejności listy `project.labyrinths` zdefiniowanej w `world/project.yaml`.
+  - Silnik gry [scenes/game.asm](scenes/game.asm) rozpoczyna rozgrywkę od indeksu `current_level_idx = 0` (pierwszy labirynt na liście) i przy przejściu na kolejny poziom wykonuje `inc current_level_idx`, w pełni respektując kolejność ustaloną w edytorze.
+- **Testy jednostkowe ([tests/test_labyrinths_widget.py](tests/test_labyrinths_widget.py))**:
+  - Dodano test `test_labyrinths_widget_move_up_down` weryfikujący przestawianie pozycji labiryntów góra/dół, zachowanie na skrajnych pozycjach oraz emisję zdarzeń `labyrinths_changed`.
+  - Wszystkie 124 testy jednostkowe przeszły pomyślnie (`124 passed`).
+
+
+## [2026-09-15] - Relokacja segmentów pamięci RAM dla obsługi 3 poziomów poniżej $C000
+- **Optymalizacja mapy pamięci RAM ([main.asm](main.asm), [Makefile](Makefile), [scripts/gen_animated_charset.py](scripts/gen_animated_charset.py))**:
+  - Rozwiązano błąd przekroczenia granicy pamięci użytkownika (`Memory boundary violation: Segment 'FONT' ends at $C2D6, exceeding user RAM limit of $BFFF`) po dodaniu trzeciego poziomu (`LEVEL_01: Chmurny Gród`, ekrany `CITY_01`, `CITY_02`).
+  - Przeniesiono segment czcionki tekstowej `FONT_ADDR` z `$7000` na **`$5C00`** (`$5C00-$5FFF`, 1024 bajty, wyrównana do 1 KB dla `CHBASE`).
+  - Przeniesiono segment czcionki gry `GAME_FONT_ADDR` z `$7400` na **`$6C00`** (`$6C00-$6FFF`, 1024 bajty, wyrównana do 1 KB dla `CHBASE`), optymalnie wypełniając nieużywaną lukę za listami ekranowymi `DLIST_ADDR` ($6800-$693B).
+  - Skonfigurowano `STUB_VRAM = $4000` (bufor tekstu 960 B dla ekranów statycznych Intro, Level Name i Game Over), wykorzystujący przestrzeń bufora obrazu tytułowego po zakończeniu sceny tytułowej.
+  - Zwolniono 2048 bajtów ciągłej przestrzeni i przesunięto początek danych świata **`WORLD_DATA_ADDR` z `$7800` na `$7000`**.
+  - Zaktualizowano parametr generatora `--charset-base 0x6C00` w `Makefile` oraz `scripts/gen_animated_charset.py`.
+  - Dane świata 18 ekranów i 3 poziomów kończą się teraz bezpiecznie na `$BAD6`, pozostawiając **1321 bajtów wolnego zapasu** do granicy OS ROM (`$C000`).
+- **Testy jednostkowe ([tests/test_charset_anim.py](tests/test_charset_anim.py))**:
+  - Zaktualizowano testy animacji czcionek do dynamicznego pobierania adresu bazowego `labels['GAME_FONT_ADDR']` zamiast sztywnego `$7400`.
+  - Wszystkie 123 testy jednostkowe przeszły pomyślnie (`123 passed`).
+
+
 ## [2026-09-15] - Priorytet sprajta smoka na pierwszym planie (GTIA PRIOR)
 - **Konfiguracja priorytetów GTIA ([scenes/game.asm](scenes/game.asm), [engine/level_name.asm](engine/level_name.asm))**:
   - Poprawiono wartość rejestru `GPRIOR`/`PRIOR` z błędnej wartości `$09` (%00001001) na `$11` (%00010001).

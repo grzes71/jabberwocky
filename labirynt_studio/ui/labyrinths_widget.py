@@ -110,7 +110,15 @@ class LabyrinthsWidget(QWidget):
         lab_btns_2 = QHBoxLayout()
         self.btn_delete_lab = QPushButton("Usuń")
         self.btn_delete_lab.clicked.connect(self._delete_labyrinth)
+        self.btn_lab_up = QPushButton("▲")
+        self.btn_lab_up.setToolTip("Przesuń labirynt w górę (wcześniejszy w kolejności gry)")
+        self.btn_lab_up.clicked.connect(self._move_labyrinth_up)
+        self.btn_lab_down = QPushButton("▼")
+        self.btn_lab_down.setToolTip("Przesuń labirynt w dół (późniejszy w kolejności gry)")
+        self.btn_lab_down.clicked.connect(self._move_labyrinth_down)
         lab_btns_2.addWidget(self.btn_delete_lab)
+        lab_btns_2.addWidget(self.btn_lab_up)
+        lab_btns_2.addWidget(self.btn_lab_down)
         top_layout.addLayout(lab_btns_2)
 
         splitter.addWidget(top_widget)
@@ -247,6 +255,28 @@ class LabyrinthsWidget(QWidget):
         if resp == QMessageBox.StandardButton.Yes:
             self.project.labyrinths.remove(lab)
             self.refresh()
+            self.labyrinths_changed.emit()
+
+    def _move_labyrinth_up(self):
+        row = self.lab_list.currentRow()
+        if 0 < row < len(self.project.labyrinths):
+            cur_lab_id = self.project.labyrinths[row].id
+            self.project.labyrinths[row - 1], self.project.labyrinths[row] = (
+                self.project.labyrinths[row],
+                self.project.labyrinths[row - 1],
+            )
+            self.refresh(select_id=cur_lab_id)
+            self.labyrinths_changed.emit()
+
+    def _move_labyrinth_down(self):
+        row = self.lab_list.currentRow()
+        if 0 <= row < len(self.project.labyrinths) - 1:
+            cur_lab_id = self.project.labyrinths[row].id
+            self.project.labyrinths[row], self.project.labyrinths[row + 1] = (
+                self.project.labyrinths[row + 1],
+                self.project.labyrinths[row],
+            )
+            self.refresh(select_id=cur_lab_id)
             self.labyrinths_changed.emit()
 
     def _add_screen_to_lab(self):

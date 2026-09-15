@@ -1117,20 +1117,328 @@ screens:
     packed_xy: 7
   - code: 8
     packed_xy: 0
+- id: CITY_01
+  objects:
+  - code: 9
+    packed_xy: 130
+  - code: 9
+    packed_xy: 38
+  - code: 9
+    packed_xy: 1
+  - code: 7
+    packed_xy: 18
+  - code: 8
+    packed_xy: 17
+  - code: 178
+    packed_xy: 128
+  - code: 65
+    packed_xy: 138
+  - code: 148
+    packed_xy: 101
+  - code: 74
+    packed_xy: 73
+  - code: 88
+    packed_xy: 12
+  - code: 99
+    packed_xy: 146
+  - code: 103
+    packed_xy: 78
+  - code: 76
+    packed_xy: 3
+  - code: 82
+    packed_xy: 169
+  - code: 24
+    packed_xy: 144
+  - code: 24
+    packed_xy: 141
+  - code: 197
+    packed_xy: 9
+  - code: 48
+    packed_xy: 107
+  - code: 182
+    packed_xy: 114
+  - code: 182
+    packed_xy: 83
+  - code: 182
+    packed_xy: 5
+  - code: 182
+    packed_xy: 8
+  - code: 182
+    packed_xy: 15
+  - code: 182
+    packed_xy: 168
+  - code: 182
+    packed_xy: 164
+  - code: 52
+    packed_xy: 14
+  - code: 53
+    packed_xy: 132
+  - code: 164
+    packed_xy: 82
+  - code: 164
+    packed_xy: 115
+  - code: 118
+    packed_xy: 68
+- id: CITY_02
+  objects:
+  - code: 55
+    packed_xy: 129
+  - code: 85
+    packed_xy: 36
+  - code: 87
+    packed_xy: 9
+  - code: 73
+    packed_xy: 18
+  - code: 150
+    packed_xy: 145
+  - code: 113
+    packed_xy: 135
+  - code: 37
+    packed_xy: 172
+  - code: 37
+    packed_xy: 176
+  - code: 80
+    packed_xy: 144
+  - code: 97
+    packed_xy: 140
+  - code: 3
+    packed_xy: 141
+  - code: 3
+    packed_xy: 143
+  - code: 37
+    packed_xy: 173
+  - code: 37
+    packed_xy: 174
+  - code: 37
+    packed_xy: 175
+  - code: 8
+    packed_xy: 8
+  - code: 8
+    packed_xy: 16
+  - code: 8
+    packed_xy: 128
+  - code: 9
+    packed_xy: 66
+  - code: 9
+    packed_xy: 0
+  - code: 9
+    packed_xy: 73
+  - code: 7
+    packed_xy: 82
+  - code: 62
+    packed_xy: 165
+  - code: 74
+    packed_xy: 12
+  - code: 78
+    packed_xy: 109
+  - code: 81
+    packed_xy: 142
+  - code: 32
+    packed_xy: 78
+  - code: 32
+    packed_xy: 46
+  - code: 32
+    packed_xy: 14
+  - code: 54
+    packed_xy: 72
+  - code: 54
+    packed_xy: 71
+  - code: 54
+    packed_xy: 70
+  - code: 127
+    packed_xy: 17
+  - code: 104
+    packed_xy: 164
+  - code: 82
+    packed_xy: 2
+  - code: 197
+    packed_xy: 133
+  - code: 52
+    packed_xy: 13
+  - code: 53
+    packed_xy: 179
+  - code: 164
+    packed_xy: 65
+  - code: 164
+    packed_xy: 7
+  - code: 164
+    packed_xy: 6
+  - code: 125
+    packed_xy: 75
+  - code: 125
+    packed_xy: 76
+  - code: 118
+    packed_xy: 81
+- id: CITY_03
+  objects:
+  - code: 110
+    packed_xy: 74
+  - code: 147
+    packed_xy: 132
+  - code: 149
+    packed_xy: 14
+  - code: 186
+    packed_xy: 143
+  - code: 184
+    packed_xy: 4
+  - code: 72
+    packed_xy: 0
+  - code: 74
+    packed_xy: 67
+  - code: 7
+    packed_xy: 9
+  - code: 51
+    packed_xy: 142
+  - code: 51
+    packed_xy: 135
+  - code: 95
+    packed_xy: 136
+  - code: 95
+    packed_xy: 17
+  - code: 95
+    packed_xy: 128
+  - code: 178
+    packed_xy: 129
+  - code: 95
+    packed_xy: 70
+  - code: 95
+    packed_xy: 13
+  - code: 48
+    packed_xy: 11
+  - code: 48
+    packed_xy: 171
+  - code: 48
+    packed_xy: 179
+  - code: 48
+    packed_xy: 19
+  - code: 48
+    packed_xy: 163
+  - code: 48
+    packed_xy: 97
+  - code: 48
+    packed_xy: 2
+  - code: 48
+    packed_xy: 104
+  - code: 182
+    packed_xy: 96
+  - code: 182
+    packed_xy: 105
+  - code: 182
+    packed_xy: 173
+  - code: 182
+    packed_xy: 169
+  - code: 182
+    packed_xy: 12
+  - code: 11
+    packed_xy: 10
+  - code: 14
+    packed_xy: 78
+  - code: 15
+    packed_xy: 79
+  - code: 19
+    packed_xy: 80
+  - code: 40
+    packed_xy: 98
+  - code: 40
+    packed_xy: 100
+  - code: 40
+    packed_xy: 99
+  - code: 40
+    packed_xy: 101
+  - code: 40
+    packed_xy: 108
+  - code: 40
+    packed_xy: 110
+  - code: 40
+    packed_xy: 111
+  - code: 40
+    packed_xy: 112
+  - code: 40
+    packed_xy: 113
+  - code: 40
+    packed_xy: 109
+  - code: 128
+    packed_xy: 114
+  - code: 202
+    packed_xy: 83
+  - code: 20
+    packed_xy: 77
+- id: CITY_04
+  objects:
+  - code: 132
+    packed_xy: 71
+  - code: 133
+    packed_xy: 13
+  - code: 121
+    packed_xy: 0
+  - code: 112
+    packed_xy: 128
+  - code: 95
+    packed_xy: 133
+  - code: 11
+    packed_xy: 107
+  - code: 11
+    packed_xy: 6
+  - code: 48
+    packed_xy: 172
+  - code: 48
+    packed_xy: 167
+  - code: 51
+    packed_xy: 147
+  - code: 48
+    packed_xy: 19
+  - code: 9
+    packed_xy: 11
+  - code: 8
+    packed_xy: 145
+  - code: 8
+    packed_xy: 68
+  - code: 11
+    packed_xy: 67
+  - code: 11
+    packed_xy: 102
+  - code: 95
+    packed_xy: 12
+  - code: 95
+    packed_xy: 17
+  - code: 88
+    packed_xy: 142
+  - code: 158
+    packed_xy: 8
+  - code: 118
+    packed_xy: 7
+  - code: 118
+    packed_xy: 110
+  - code: 118
+    packed_xy: 112
+  - code: 118
+    packed_xy: 109
+  - code: 118
+    packed_xy: 111
+  - code: 23
+    packed_xy: 66
+  - code: 24
+    packed_xy: 65
+  - code: 24
+    packed_xy: 169
+  - code: 24
+    packed_xy: 170
+  - code: 24
+    packed_xy: 178
+  - code: 24
+    packed_xy: 18
+  - code: 23
+    packed_xy: 83
+  - code: 21
+    packed_xy: 10
 labyrinths:
 - id: LEVEL_01
-  name: 'POZIOM 1 : ZIEMIE WORPALNE'
+  name: 'POZIOM 1 : Chmurny Gród'
   screens:
-  - TOLEM_01
-  - TOLEM_02
-  - TOLEM_03
-  - TOLEM_03
-  - TOLEM_04
-  - TOLEM_05
-  - TOLEM_06
-  - TOLEM_07
+  - CITY_01
+  - CITY_02
 - id: LEVEL_02
-  name: 'POZIOM 2 : KRZAKI WYTĘPY'
+  name: 'POZIOM 2 : Krzaki Wytępy'
   screens:
   - FOREST_01
   - FOREST_02
@@ -1141,3 +1449,14 @@ labyrinths:
   - FOREST_07
   - FOREST_08
   - FOREST_09
+- id: LEVEL_03
+  name: 'POZIOM 3 : Błonia Tolemu'
+  screens:
+  - TOLEM_01
+  - TOLEM_02
+  - TOLEM_03
+  - TOLEM_03
+  - TOLEM_04
+  - TOLEM_05
+  - TOLEM_06
+  - TOLEM_07

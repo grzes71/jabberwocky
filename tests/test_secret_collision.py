@@ -88,13 +88,11 @@ def test_secret_metadata_and_bitmask(labels: Dict[str, int], clean_mpu: MPU):
     assert mpu.memory[flags_addr + 118] & 0x04 == 0x04
 
     # Screen 0 (FOREST_01) has object 118 at packed_xy=145 -> (x=17*2=34, y=(145>>4)&0x0E = 8)
-    blk_addr = labels["SCREEN_FOREST_01_BLOCKING"]
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1  # LEVEL_02 containing FOREST_01
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+    blk_addr = labels["SCREEN_BUF_A_BLK"]
     # Row 8, col 34 in 40-col matrix: 8 * 40 + 34 = 354
     assert mpu.memory[blk_addr + 354] & 0x04 == 0x04
-
-    # Total secret objects backup count
-    total_secrets = mpu.memory[labels["SECRET_OBJS_TOTAL"]]
-    assert total_secrets > 0
 
 
 def test_add_score_1_bcd_increment(labels: Dict[str, int], clean_mpu: MPU):
@@ -214,9 +212,13 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     """Verify that collected secret stays erased across respawns, but restores on game_init."""
     mpu = clean_mpu
 
+    # Initialize level screens to bake Screen 0 into Buffer A
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
     # Check initial tile and blocking mask for Screen 0 at row 8, col 34
-    blk_addr = labels["SCREEN_FOREST_01_BLOCKING"]
-    vram_addr = labels["SCREEN_FOREST_01_VRAM"]
+    blk_addr = labels["SCREEN_BUF_A_BLK"]
+    vram_addr = labels["SCREEN_BUF_A_VRAM"]
     offset = 8 * 40 + 34
     orig_blk = mpu.memory[blk_addr + offset]
     orig_tile = mpu.memory[vram_addr + offset]
@@ -247,13 +249,15 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
     run_subroutine(mpu, labels["GAME_INIT"])
 
-    # Secret must now be RESTORED to original tile and mask in source buffers...
+    # Load level 1 screens to bake Level 1 Screen 0 into staging buffer A
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
+    # Secret must now be RESTORED to original tile and mask in staging buffers...
     assert mpu.memory[blk_addr + offset] == orig_blk
     assert mpu.memory[vram_addr + offset] == orig_tile
 
     # ...AND loaded into active GAME_ACTION_VRAM when level 1 screens are loaded (col 4 + 34 = 38)!
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
-    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     action_vram = labels["GAME_ACTION_VRAM"]
     assert mpu.memory[action_vram + 8 * 48 + 38] == orig_tile
 
@@ -615,27 +619,35 @@ def test_init_flame_collision_clears_all_256_bytes(labels: Dict[str, int], clean
         assert mpu.memory[destroyed_base + i] == 0x00, f"Byte {i} of screen_obj_destroyed must be 0x00 after init!"
 
 
-def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU):
+def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that secrets on Level 1 screens (screen >= 8, e.g. TOLEM_01 = screen 9)
     are correctly collected, persist across respawn, and restore properly on game_init
     without being blocked by dirty or out-of-bounds bitmasks."""
     mpu = clean_mpu
 
+    # Find labyrinth index containing TOLEM_01 (screen 9)
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    tolem_level_idx = next(i for i, lab in enumerate(proj.get("labyrinths", [])) if "TOLEM_01" in lab.get("screens", []))
+
+    # Initialize level screens for tolem_level_idx to bake TOLEM_01 into Buffer A
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = tolem_level_idx
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
     # Screen 9 is TOLEM_01. Secret at x=6, y=5 (code $64, 1x1, secret=True)
     # Check initial tile and blocking mask
-    blk_addr = labels["SCREEN_TOLEM_01_BLOCKING"]
-    vram_addr = labels["SCREEN_TOLEM_01_VRAM"]
+    blk_addr = labels["SCREEN_BUF_A_BLK"]
+    vram_addr = labels["SCREEN_BUF_A_VRAM"]
     offset = 5 * 40 + 6
     orig_blk = mpu.memory[blk_addr + offset]
     orig_tile = mpu.memory[vram_addr + offset]
     assert (orig_blk & 0x04) == 0x04, "TOLEM_01 at (6, 5) should be secret"
     assert orig_tile == 0x64
 
-    # Level 1 index is 0 in labyrinths (LEVEL_01).
-    # Screen 9 is position 0 in LEVEL_01 screens (TOLEM_01)
     # When incoming_col_idx = 6, Left Screen at col0 = 8 - 6 = 2.
     # Object at x=6 aligns with VRAM col 2 + 6 = 8!
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0  # LEVEL_01
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = tolem_level_idx
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1  # Screen 9 is Left Screen
     mpu.memory[labels["INCOMING_COL_IDX"]] = 6   # col0 = 8 - 6 = 2 -> cur_vram_x = 2 + 6 = 8
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -668,6 +680,8 @@ def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict
     # Simulate brand new game: game_init
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
     run_subroutine(mpu, labels["GAME_INIT"])
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = tolem_level_idx
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Must be RESTORED in source buffer!
     assert (mpu.memory[blk_addr + offset] & 0x04) == 0x04, "Secret mask must be restored on game_init"
@@ -720,6 +734,7 @@ def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu
 
     # Screen 0 FOREST_01 secret at (x=34, y=8)
     mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1  # LEVEL_02 (FOREST_01..09)
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1  # screen 0 is left screen
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -740,8 +755,8 @@ def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
     assert (mpu.p & 0x01) == 0x01, "Secret collection must succeed while breathing fire (Carry SET)"
 
-    # Verify secret was erased
-    blk_addr = labels["SCREEN_FOREST_01_BLOCKING"]
+    # Verify secret was erased in staging buffer
+    blk_addr = labels["SCREEN_BUF_A_BLK"]
     offset = 8 * 40 + 34
     assert mpu.memory[blk_addr + offset] == 0x00, "Secret must be collected and cleared even when breathing fire"
 

@@ -272,9 +272,20 @@ def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[st
     assert (mpu.memory[destroyed_base + 2] & 0x80) == 0, "Non-blocking object bit must not be set"
 
 
-def test_dragon_crash_on_blocking_object(clean_mpu: MPU, labels: Dict[str, int]):
+def get_tolem_level_idx(project_root: Path) -> int:
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    for idx, lab in enumerate(proj.get("labyrinths", [])):
+        if "TOLEM_01" in lab.get("screens", []):
+            return idx
+    return 0
+
+
+def test_dragon_crash_on_blocking_object(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify that colliding with playfield triggers crash when object has blocking=true."""
     mpu = clean_mpu
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_tolem_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -314,9 +325,10 @@ def test_dragon_no_crash_on_non_blocking_object(clean_mpu: MPU, labels: Dict[str
     assert mpu.memory[labels["DRAGON_DYING"]] == 0
 
 
-def test_dragon_no_crash_on_destroyed_blocking_object(clean_mpu: MPU, labels: Dict[str, int]):
+def test_dragon_no_crash_on_destroyed_blocking_object(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify that a blocking object destroyed by flame does NOT cause crash."""
     mpu = clean_mpu
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_tolem_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 

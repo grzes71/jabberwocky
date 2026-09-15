@@ -106,14 +106,14 @@ def test_labirynt_builder_cli(tmp_path):
     proj, _ = load_project_from_yaml(Path("world/project.yaml"))
     assert f"WORLD_SCREENS_COUNT     = {len(proj.screens)}" in content
     assert f"WORLD_LABYRINTHS_COUNT  = {len(proj.labyrinths)}" in content
-    assert "screen_FOREST_01_vram" in content
-    assert "screen_FOREST_01_blocking" in content
-    assert "screen_FOREST_02_vram" in content
-    assert "screen_FOREST_03_vram" in content
-    assert "screens_vram_lo" in content
-    assert "screens_vram_hi" in content
-    assert "screens_blocking_lo" in content
-    assert "screens_blocking_hi" in content
+    assert "screen_FOREST_01_codes" in content
+    assert "screen_FOREST_01_coords" in content
+    assert "screen_FOREST_01_obj_count" in content
+    assert "screens_codes_lo" in content
+    assert "screens_codes_hi" in content
+    assert "screens_coords_lo" in content
+    assert "screens_coords_hi" in content
+    assert "screens_obj_count" in content
     assert "labyrinths_screens_lo" in content
     assert "labyrinths_name_lo" in content
     assert "labyrinths_name_hi" in content

@@ -1951,20 +1951,230 @@ calc_energy_frames
 
 ; ==============================================================================
 ; ==============================================================================
+; BAKE_SCREEN — Dynamically renders screen VRAM and collision blocking matrix
+; from object lists (codes, coords) into 440-byte staging buffers.
+; Input:
+;   X       = Screen index (0..WORLD_SCREENS_COUNT-1)
+;   PTR_DST = Destination 440-byte VRAM buffer address
+;   PTR_BLK = Destination 440-byte BLK buffer address
+; Clobbers: A, X, Y, ZP_TMP, PTR_DST, PTR_BLK, PTR_COLL
+; ==============================================================================
+.proc bake_screen
+    stx bs_screen_id
+
+    ; Save buffer base addresses
+    lda PTR_DST
+    sta bs_target_vram
+    lda PTR_DST+1
+    sta bs_target_vram+1
+
+    lda PTR_BLK
+    sta bs_target_blk
+    lda PTR_BLK+1
+    sta bs_target_blk+1
+
+    ; 1. Clear 440 bytes of target VRAM and 440 bytes of target BLK to $00
+    ldy #0
+    lda #0
+@clr_page1
+    sta (PTR_DST),y
+    sta (PTR_BLK),y
+    iny
+    bne @clr_page1
+
+    inc PTR_DST+1
+    inc PTR_BLK+1
+    ldy #0
+@clr_page2
+    sta (PTR_DST),y
+    sta (PTR_BLK),y
+    iny
+    cpy #184                    ; 256 + 184 = 440 bytes
+    bne @clr_page2
+
+    ; 2. Validate screen index and fetch object count
+    ldx bs_screen_id
+    cpx #WORLD_SCREENS_COUNT
+    bcc @valid_screen_id
+    rts
+
+@valid_screen_id
+    lda screens_obj_count,x
+    sta bs_obj_count
+    bne @has_objects
+    rts
+
+@has_objects
+    ; Setup source pointers for object lists
+    lda screens_coords_lo,x
+    sta @fetch_coords+1
+    lda screens_coords_hi,x
+    sta @fetch_coords+2
+
+    lda screens_codes_lo,x
+    sta @fetch_code+1
+    lda screens_codes_hi,x
+    sta @fetch_code+2
+
+    lda #0
+    sta bs_obj_idx
+
+@obj_loop
+    ; Check if this object is destroyed (screen_obj_destroyed bitmask)
+    ldx bs_screen_id
+    lda screen_destroyed_offsets,x
+    sta ZP_TMP
+
+    lda bs_obj_idx
+    lsr
+    lsr
+    lsr
+    clc
+    adc ZP_TMP
+    tax                         ; X = byte offset in screen_obj_destroyed
+
+    lda bs_obj_idx
+    and #$07
+    tay                         ; Y = bit index (0..7)
+
+    lda screen_obj_destroyed,x
+    and fc_bit_mask_tbl,y
+    beq @obj_alive
+@skip_obj
+    jmp @next_obj               ; Destroyed or invalid -> skip baking!
+
+@obj_alive
+    ldy bs_obj_idx
+@fetch_coords
+    lda $FFFF,y
+    sta bs_packed_xy
+
+@fetch_code
+    lda $FFFF,y
+    sta bs_obj_code
+    tax
+
+    ; Fetch dimensions and flags
+    lda obj_type_width,x
+    sta bs_obj_w
+    beq @skip_obj
+    lda obj_type_height,x
+    sta bs_obj_h
+    beq @skip_obj
+
+    lda obj_type_flags,x
+    and #$07
+    sta bs_obj_mask             ; bit 0=blocking, bit 1=interactive, bit 2=secret
+
+    ; Fetch tile data pointer into PTR_COLL
+    lda obj_type_tiles_lo,x
+    sta PTR_COLL
+    lda obj_type_tiles_hi,x
+    sta PTR_COLL+1
+
+    ; Unpack Y: ((packed_xy >> 4) & $0E)
+    lda bs_packed_xy
+    lsr
+    lsr
+    lsr
+    lsr
+    and #$0E
+    sta bs_obj_y
+
+    ; Unpack X: ((packed_xy & $1F) * 2)
+    lda bs_packed_xy
+    and #$1F
+    asl
+    sta bs_obj_x
+
+    ; Render object rows (0..h-1)
+    lda #0
+    sta bs_r_idx
+
+@row_loop
+    lda bs_obj_y
+    clc
+    adc bs_r_idx
+    cmp #11
+    bcs @obj_done               ; row >= 11 -> beyond screen height
+
+    tax                         ; X = target_row (0..10)
+    lda bs_target_vram
+    clc
+    adc screen40_row_offsets_lo,x
+    sta PTR_DST
+    lda bs_target_vram+1
+    adc screen40_row_offsets_hi,x
+    sta PTR_DST+1
+
+    lda bs_target_blk
+    clc
+    adc screen40_row_offsets_lo,x
+    sta PTR_BLK
+    lda bs_target_blk+1
+    adc screen40_row_offsets_hi,x
+    sta PTR_BLK+1
+
+    lda #0
+    sta bs_c_idx
+
+@col_loop
+    ldy #0
+    lda (PTR_COLL),y
+    inc PTR_COLL
+    bne @no_coll_c
+    inc PTR_COLL+1
+@no_coll_c
+    tax                         ; X = tile byte
+    beq @skip_tile_draw
+
+    lda bs_obj_x
+    clc
+    adc bs_c_idx
+    cmp #40
+    bcs @skip_tile_draw         ; col >= 40 -> beyond screen width
+    tay                         ; Y = target column (0..39)
+
+    txa
+    sta (PTR_DST),y             ; Store tile into VRAM staging buffer
+
+    lda bs_obj_mask
+    beq @skip_tile_draw
+    ora (PTR_BLK),y
+    sta (PTR_BLK),y             ; Store collision mask into BLK staging buffer
+
+@skip_tile_draw
+    inc bs_c_idx
+    lda bs_c_idx
+    cmp bs_obj_w
+    bcc @col_loop
+
+    inc bs_r_idx
+    lda bs_r_idx
+    cmp bs_obj_h
+    bcc @row_loop
+
+@obj_done
+@next_obj
+    inc bs_obj_idx
+    lda bs_obj_idx
+    cmp bs_obj_count
+    bcc @obj_loop_jmp
+    rts
+
+@obj_loop_jmp
+    jmp @obj_loop
+.endp
+
+; ==============================================================================
 ; LOAD_WORLD_SCREEN — Loads 440-byte screen buffer into visible cols 4..43 of GAME_ACTION_VRAM (48-byte rows)
-; Input: X = screen index (0..WORLD_SCREENS_COUNT-1)
+; Input: cur_left_vram_ptr points to active 440-byte VRAM staging buffer
 ; Clobbers: A, X, Y, PTR_SRC ($80/$81), PTR_DST ($82/$83)
 ; ==============================================================================
 load_world_screen
-    cpx #WORLD_SCREENS_COUNT
-    bcc @valid_screen
-    ldx #0
-@valid_screen
-    stx current_screen_idx
-
-    lda screens_vram_lo,x
+    lda cur_left_vram_ptr
     sta PTR_SRC
-    lda screens_vram_hi,x
+    lda cur_left_vram_ptr+1
     sta PTR_SRC+1
 
     lda #<GAME_ACTION_VRAM
@@ -2039,6 +2249,27 @@ init_level_screens
     lda #3
     sta hscrol_fine
 
+    ; Reset staging buffer pointers to initial configuration
+    lda #<screen_buf_a_vram
+    sta cur_left_vram_ptr
+    lda #>screen_buf_a_vram
+    sta cur_left_vram_ptr+1
+
+    lda #<screen_buf_a_blk
+    sta cur_left_blk_ptr
+    lda #>screen_buf_a_blk
+    sta cur_left_blk_ptr+1
+
+    lda #<screen_buf_b_vram
+    sta incoming_screen_vram_ptr
+    lda #>screen_buf_b_vram
+    sta incoming_screen_vram_ptr+1
+
+    lda #<screen_buf_b_blk
+    sta incoming_screen_blk_ptr
+    lda #>screen_buf_b_blk
+    sta incoming_screen_blk_ptr+1
+
     ; Fetch total screens count for current_level_idx
     ldx current_level_idx
     lda labyrinths_screen_count,x
@@ -2058,8 +2289,31 @@ init_level_screens
     dex
     bpl @clr_vram_tail
 
-    ; Load screen 0 of this labyrinth into cols 4..43
-    jsr setup_incoming_screen_ptr
+    ; Bake screen 0 of this labyrinth into cur_left staging buffer
+    ldx current_level_idx
+    lda labyrinths_screens_lo,x
+    sta PTR_SRC
+    lda labyrinths_screens_hi,x
+    sta PTR_SRC+1
+    ldy #0
+    lda (PTR_SRC),y
+    tax                         ; X = screen index of screen 0
+    stx cur_left_screen_id
+    stx current_screen_idx
+
+    lda cur_left_vram_ptr
+    sta PTR_DST
+    lda cur_left_vram_ptr+1
+    sta PTR_DST+1
+
+    lda cur_left_blk_ptr
+    sta PTR_BLK
+    lda cur_left_blk_ptr+1
+    sta PTR_BLK+1
+
+    jsr bake_screen
+
+    ; Load screen 0 of this labyrinth into visible cols 4..43 of GAME_ACTION_VRAM
     jsr load_world_screen
     jsr init_blocking_cols
 
@@ -2147,10 +2401,21 @@ setup_incoming_screen_ptr
     ldy level_screen_pos
     lda (PTR_SRC),y
     tax                         ; X = screen index (0..WORLD_SCREENS_COUNT-1)
-    lda screens_vram_lo,x
+    stx incoming_screen_id
+
+    lda incoming_screen_vram_ptr
     sta incoming_screen_ptr
-    lda screens_vram_hi,x
+    sta PTR_DST
+    lda incoming_screen_vram_ptr+1
     sta incoming_screen_ptr+1
+    sta PTR_DST+1
+
+    lda incoming_screen_blk_ptr
+    sta PTR_BLK
+    lda incoming_screen_blk_ptr+1
+    sta PTR_BLK+1
+
+    jsr bake_screen
     rts
 
 update_world_scrolling
@@ -2353,6 +2618,30 @@ scroll_playfield_step
     lda #0
     sta incoming_col_idx
 
+    ; Swap ping-pong staging buffer pointers
+    ; What was incoming becomes cur_left!
+    lda cur_left_vram_ptr
+    ldx incoming_screen_vram_ptr
+    sta incoming_screen_vram_ptr
+    stx cur_left_vram_ptr
+    lda cur_left_vram_ptr+1
+    ldx incoming_screen_vram_ptr+1
+    sta incoming_screen_vram_ptr+1
+    stx cur_left_vram_ptr+1
+
+    lda cur_left_blk_ptr
+    ldx incoming_screen_blk_ptr
+    sta incoming_screen_blk_ptr
+    stx cur_left_blk_ptr
+    lda cur_left_blk_ptr+1
+    ldx incoming_screen_blk_ptr+1
+    sta incoming_screen_blk_ptr+1
+    stx cur_left_blk_ptr+1
+
+    lda incoming_screen_id
+    sta cur_left_screen_id
+    sta current_screen_idx
+
     inc level_screen_pos
     lda level_screen_pos
     cmp lab_total_screens
@@ -2434,6 +2723,30 @@ scroll_accum_lo     dta 0           ; 16-bit scroll sub-pixel accumulator (low b
 scroll_accum_hi     dta 0           ; 16-bit scroll sub-pixel accumulator (high byte)
 hscrol_fine         dta 3           ; Fine horizontal scroll value (0..3 color clocks) for HSCROL ($D404)
 incoming_screen_ptr dta a(0)        ; 16-bit pointer to currently streaming screen's VRAM buffer
+
+; Ping-Pong Staging Buffer Pointers & Screen IDs
+cur_left_vram_ptr        dta a(0)
+cur_left_blk_ptr         dta a(0)
+cur_left_screen_id       dta 0
+incoming_screen_vram_ptr dta a(0)
+incoming_screen_blk_ptr  dta a(0)
+incoming_screen_id       dta 0
+
+; Dynamic Screen Baking Workspace Variables
+bs_screen_id             dta 0
+bs_obj_count             dta 0
+bs_obj_idx               dta 0
+bs_target_vram           dta a(0)
+bs_target_blk            dta a(0)
+bs_packed_xy             dta 0
+bs_obj_code              dta 0
+bs_obj_w                 dta 0
+bs_obj_h                 dta 0
+bs_obj_mask              dta 0
+bs_obj_x                 dta 0
+bs_obj_y                 dta 0
+bs_r_idx                 dta 0
+bs_c_idx                 dta 0
 
 ; --- Game Substate Variables ---
 SUBSTATE_LEVEL_NAME = 0
