@@ -12,6 +12,7 @@ objects:
     interactive: false
     secret: false
   tiles: [230, 230, 243, 243]
+  tags: [woda]
 - object: TREE_2
   id: TREE_2
   code: 4
@@ -239,7 +240,7 @@ objects:
     interactive: false
     secret: false
   tiles: [160]
-  tags: [tło]
+  tags: [woda, tło]
 - object: REED
   id: REED
   code: 26
@@ -856,7 +857,7 @@ objects:
     blocking: true
     interactive: false
     secret: false
-  tiles: [0, 171, 172, 0, 0, 103, 106, 0, 0, 185, 56, 0, 0, 61, 189, 0, 16, 33, 33,
+  tiles: [0, 46, 47, 0, 0, 103, 106, 0, 0, 185, 56, 0, 0, 61, 189, 0, 16, 33, 33,
     18, 33, 163, 164, 33, 33, 27, 28, 33]
   tags: [dom]
 - object: CHURCH_SMALL
@@ -869,8 +870,8 @@ objects:
     blocking: true
     interactive: false
     secret: false
-  tiles: [0, 171, 172, 0, 0, 231, 234, 0, 0, 57, 56, 0, 104, 61, 61, 105, 33, 193,
-    194, 33, 116, 116, 116, 116]
+  tiles: [0, 46, 47, 0, 0, 231, 234, 0, 0, 57, 56, 0, 104, 61, 61, 105, 33, 193, 194,
+    33, 116, 116, 116, 116]
   tags: [dom]
 - object: CROSS_3
   id: CROSS_3
@@ -1565,6 +1566,7 @@ objects:
     interactive: false
     secret: false
   tiles: [202]
+  tags: [woda]
 - object: WATER_2
   id: WATER_2
   code: 169

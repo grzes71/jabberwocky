@@ -93,15 +93,15 @@
   {
     "name": "FONT",
     "start_address": "$6800",
-    "end_address": "$8489",
-    "size": 7306,
+    "end_address": "$8495",
+    "size": 7318,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$848A",
+    "start_address": "$8496",
     "end_address": "$87FF",
-    "size": 886,
+    "size": 874,
     "type": "free"
   },
   {

@@ -1382,8 +1382,6 @@ screens:
   - code: 8
     packed_xy: 68
   - code: 11
-    packed_xy: 67
-  - code: 11
     packed_xy: 102
   - code: 95
     packed_xy: 12
@@ -1395,10 +1393,6 @@ screens:
     packed_xy: 8
   - code: 118
     packed_xy: 7
-  - code: 23
-    packed_xy: 66
-  - code: 24
-    packed_xy: 65
   - code: 24
     packed_xy: 169
   - code: 24
@@ -1413,6 +1407,20 @@ screens:
     packed_xy: 173
   - code: 4
     packed_xy: 18
+  - code: 48
+    packed_xy: 114
+  - code: 8
+    packed_xy: 108
+  - code: 164
+    packed_xy: 110
+  - code: 164
+    packed_xy: 112
+  - code: 178
+    packed_xy: 66
+  - code: 182
+    packed_xy: 96
+  - code: 182
+    packed_xy: 97
 - id: CITY_05
   objects:
   - code: 134
@@ -1430,7 +1438,7 @@ screens:
   - code: 102
     packed_xy: 67
   - code: 167
-    packed_xy: 1
+    packed_xy: 0
   - code: 99
     packed_xy: 11
   - code: 51
@@ -1467,6 +1475,10 @@ screens:
     packed_xy: 169
   - code: 53
     packed_xy: 170
+  - code: 31
+    packed_xy: 2
+  - code: 48
+    packed_xy: 160
 labyrinths:
 - id: LEVEL_01
   name: 'POZIOM 1 : Chmurny Gród'
