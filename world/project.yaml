@@ -1479,6 +1479,84 @@ screens:
     packed_xy: 2
   - code: 48
     packed_xy: 160
+  - code: 164
+    packed_xy: 66
+- id: CITY_06
+  objects:
+  - code: 149
+    packed_xy: 36
+  - code: 147
+    packed_xy: 129
+  - code: 112
+    packed_xy: 136
+  - code: 113
+    packed_xy: 47
+  - code: 4
+    packed_xy: 8
+  - code: 177
+    packed_xy: 1
+  - code: 177
+    packed_xy: 76
+  - code: 177
+    packed_xy: 71
+  - code: 177
+    packed_xy: 13
+  - code: 178
+    packed_xy: 132
+  - code: 178
+    packed_xy: 128
+  - code: 178
+    packed_xy: 35
+  - code: 178
+    packed_xy: 46
+  - code: 178
+    packed_xy: 146
+  - code: 178
+    packed_xy: 142
+  - code: 48
+    packed_xy: 176
+  - code: 48
+    packed_xy: 66
+  - code: 48
+    packed_xy: 165
+  - code: 182
+    packed_xy: 167
+  - code: 82
+    packed_xy: 6
+  - code: 82
+    packed_xy: 3
+  - code: 82
+    packed_xy: 17
+  - code: 82
+    packed_xy: 19
+  - code: 83
+    packed_xy: 0
+  - code: 15
+    packed_xy: 73
+  - code: 29
+    packed_xy: 74
+  - code: 19
+    packed_xy: 75
+  - code: 29
+    packed_xy: 42
+  - code: 120
+    packed_xy: 10
+  - code: 15
+    packed_xy: 11
+  - code: 21
+    packed_xy: 43
+  - code: 23
+    packed_xy: 112
+  - code: 53
+    packed_xy: 134
+  - code: 52
+    packed_xy: 64
+  - code: 164
+    packed_xy: 115
+  - code: 164
+    packed_xy: 15
+  - code: 164
+    packed_xy: 5
 labyrinths:
 - id: LEVEL_01
   name: 'POZIOM 1 : Chmurny Gród'
@@ -1488,6 +1566,7 @@ labyrinths:
   - CITY_03
   - CITY_04
   - CITY_05
+  - CITY_06
 - id: LEVEL_02
   name: 'POZIOM 2 : Krzaki Wytępy'
   screens:
