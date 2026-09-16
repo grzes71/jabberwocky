@@ -239,11 +239,14 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     assert mpu.memory[blk_addr + offset] == 0x00
     assert mpu.memory[vram_addr + offset] == 0x00
 
-    # Simulate dragon respawn: respawn_dragon calls init_flame_collision
-    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
-    # Secret must STILL BE ERASED in source buffers!
+    # Simulate dragon respawn: respawn_dragon restarts level and re-bakes screen 0
+    mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
+    run_subroutine(mpu, labels["RESPAWN_DRAGON"])
+    # Secret must STILL BE ERASED in source buffers and active VRAM!
     assert mpu.memory[blk_addr + offset] == 0x00
     assert mpu.memory[vram_addr + offset] == 0x00
+    action_vram = labels["GAME_ACTION_VRAM"]
+    assert mpu.memory[action_vram + 8 * 48 + 38] == 0x00
 
     # Now simulate brand new game: call game_init (stubbing show_level_name_screen with RTS)
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
@@ -674,8 +677,10 @@ def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict
     assert all(mpu.memory[destroyed_base + b] == 0x00 for b in range(8)), "Screen 0 destroyed bitmask must NOT be affected"
 
     # Simulate dragon respawn:
-    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+    mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
+    run_subroutine(mpu, labels["RESPAWN_DRAGON"])
     assert mpu.memory[blk_addr + offset] == 0x00, "Secret remains collected across respawn"
+    assert any(mpu.memory[destroyed_base + 72 + b] != 0 for b in range(8)), "Screen 9 destroyed bitmask must remain set across respawn"
 
     # Simulate brand new game: game_init
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60

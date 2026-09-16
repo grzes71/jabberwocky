@@ -2,6 +2,15 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-16] - Naprawa odnawiania się zebranych obiektów secret po śmierci smoka (Respawn Persistence)
+- **Problem**: Gdy smok zebrał obiekty typu `secret`, a następnie zginął i poziom rozpoczynał się od nowa, zebrane wcześniej sekrety pojawiały się ponownie na planszy (umożliwiając wielokrotne zbieranie tych samych bonusów).
+- **Przyczyna**: Procedura `respawn_dragon` w [scenes/game.asm](scenes/game.asm) wywoływała procedurę `init_flame_collision`, która zerowała całą 256-bajtową tablicę bitmasek `screen_obj_destroyed`. Gdy po zresetowaniu parametrów smoka wywoływana była procedura `init_level_screens` -> `bake_screen`, z powodu wyczyszczonej maski `screen_obj_destroyed` silnik traktował wszystkie obiekty jako niezebrane/żywe i wypiekał je na nowo do bufora VRAM i kolizji.
+- **Rozwiązanie ([scenes/game.asm](scenes/game.asm), [tests/test_secret_collision.py](tests/test_secret_collision.py))**:
+  - Usunięto zbędne wywołanie `jsr init_flame_collision` z procedury `respawn_dragon` w [scenes/game.asm](scenes/game.asm). `screen_obj_destroyed` jest teraz zerowany wyłącznie przy inicjalizacji nowej gry w `game_init`, natomiast pozostaje zachowany w trakcie trwania całej rozgrywki (run persistence).
+  - Zaktualizowano testy integracyjne py65 w [tests/test_secret_collision.py](tests/test_secret_collision.py) (`test_secret_run_persistence_and_game_init_restoration` oraz `test_level1_screen_secret_persistence_and_game_init_restoration`), aby symulowały rzeczywistą procedurę `RESPAWN_DRAGON` i weryfikowały, że zebrane sekrety nie są re-renderowane do buforów stagingowych ani aktywnego pola gry `GAME_ACTION_VRAM`.
+  - Wszystkie 124 testy py65 przeszły pomyślnie (`124 passed in 9.83s`), weryfikacja mapy pamięci `make all` zakończona sukcesem.
+
+
 ## [2026-09-15] - Naprawa uszkodzonego obrazu tytułowego po rozgrywce (Relokacja STUB_VRAM)
 - **Problem**: Po zakończeniu rozgrywki (Game Over -> Title Screen) górna część obrazu tytułowego (~1/4 ekranu) była uszkodzona (nadpisana zerami/znakami).
 - **Przyczyna**: Bufor tekstu `STUB_VRAM = $4000` nakładał się bezpośrednio na pamięć bitmapy ekranu tytułowego (`VRAM_ADDR = $4000`, `$4000-$5B67`). Procedury `clear_stub_vram` oraz `print_at` wywoływane przez ekrany Intro, Level Name oraz Game Over trwale nadpisywały pierwsze 960 bajtów (24 linie Mode F) obrazka tytułowego.

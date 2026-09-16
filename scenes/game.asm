@@ -1830,7 +1830,7 @@ respawn_dragon
     sta death_timer
     sta death_move_timer
     sta HITCLR
-    jsr init_flame_collision
+    lda #0
     sta dragon_sub_y
     sta dragon_vel_lo
     sta dragon_vel_hi
