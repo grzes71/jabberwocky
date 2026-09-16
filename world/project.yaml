@@ -1525,10 +1525,6 @@ screens:
     packed_xy: 6
   - code: 82
     packed_xy: 3
-  - code: 82
-    packed_xy: 17
-  - code: 82
-    packed_xy: 19
   - code: 83
     packed_xy: 0
   - code: 15
@@ -1557,6 +1553,204 @@ screens:
     packed_xy: 15
   - code: 164
     packed_xy: 5
+  - code: 182
+    packed_xy: 19
+  - code: 182
+    packed_xy: 17
+  - code: 182
+    packed_xy: 18
+  - code: 182
+    packed_xy: 16
+- id: CITY_07
+  objects:
+  - code: 87
+    packed_xy: 2
+  - code: 150
+    packed_xy: 142
+  - code: 149
+    packed_xy: 72
+  - code: 148
+    packed_xy: 17
+  - code: 147
+    packed_xy: 128
+  - code: 8
+    packed_xy: 1
+  - code: 177
+    packed_xy: 67
+  - code: 177
+    packed_xy: 12
+  - code: 177
+    packed_xy: 114
+  - code: 95
+    packed_xy: 131
+  - code: 95
+    packed_xy: 144
+  - code: 178
+    packed_xy: 16
+  - code: 51
+    packed_xy: 75
+  - code: 65
+    packed_xy: 133
+  - code: 48
+    packed_xy: 164
+  - code: 48
+    packed_xy: 47
+  - code: 48
+    packed_xy: 177
+  - code: 48
+    packed_xy: 173
+  - code: 14
+    packed_xy: 7
+  - code: 14
+    packed_xy: 69
+  - code: 15
+    packed_xy: 38
+  - code: 29
+    packed_xy: 37
+  - code: 19
+    packed_xy: 70
+  - code: 15
+    packed_xy: 6
+  - code: 19
+    packed_xy: 9
+  - code: 19
+    packed_xy: 39
+  - code: 19
+    packed_xy: 101
+  - code: 24
+    packed_xy: 179
+  - code: 24
+    packed_xy: 166
+  - code: 23
+    packed_xy: 5
+  - code: 11
+    packed_xy: 115
+  - code: 11
+    packed_xy: 68
+  - code: 23
+    packed_xy: 15
+  - code: 172
+    packed_xy: 8
+  - code: 26
+    packed_xy: 10
+  - code: 182
+    packed_xy: 77
+  - code: 118
+    packed_xy: 111
+  - code: 118
+    packed_xy: 112
+  - code: 164
+    packed_xy: 65
+  - code: 164
+    packed_xy: 168
+  - code: 164
+    packed_xy: 170
+  - code: 164
+    packed_xy: 169
+  - code: 164
+    packed_xy: 43
+- id: CITY_08
+  objects:
+  - code: 5
+    packed_xy: 5
+  - code: 5
+    packed_xy: 6
+  - code: 5
+    packed_xy: 7
+  - code: 5
+    packed_xy: 8
+  - code: 66
+    packed_xy: 4
+  - code: 192
+    packed_xy: 133
+  - code: 32
+    packed_xy: 102
+  - code: 32
+    packed_xy: 70
+  - code: 32
+    packed_xy: 38
+  - code: 32
+    packed_xy: 39
+  - code: 32
+    packed_xy: 71
+  - code: 32
+    packed_xy: 103
+  - code: 51
+    packed_xy: 132
+  - code: 51
+    packed_xy: 137
+  - code: 67
+    packed_xy: 9
+  - code: 200
+    packed_xy: 128
+  - code: 194
+    packed_xy: 144
+  - code: 180
+    packed_xy: 100
+  - code: 180
+    packed_xy: 68
+  - code: 180
+    packed_xy: 36
+  - code: 180
+    packed_xy: 41
+  - code: 180
+    packed_xy: 73
+  - code: 180
+    packed_xy: 105
+  - code: 29
+    packed_xy: 65
+  - code: 29
+    packed_xy: 66
+  - code: 14
+    packed_xy: 33
+  - code: 15
+    packed_xy: 34
+  - code: 120
+    packed_xy: 32
+  - code: 120
+    packed_xy: 64
+  - code: 65
+    packed_xy: 140
+  - code: 95
+    packed_xy: 142
+  - code: 7
+    packed_xy: 11
+  - code: 9
+    packed_xy: 13
+  - code: 4
+    packed_xy: 76
+  - code: 4
+    packed_xy: 15
+  - code: 95
+    packed_xy: 46
+  - code: 48
+    packed_xy: 111
+  - code: 51
+    packed_xy: 17
+  - code: 51
+    packed_xy: 51
+  - code: 177
+    packed_xy: 18
+  - code: 182
+    packed_xy: 19
+  - code: 182
+    packed_xy: 170
+  - code: 178
+    packed_xy: 139
+  - code: 164
+    packed_xy: 80
+  - code: 164
+    packed_xy: 81
+  - code: 164
+    packed_xy: 113
+  - code: 164
+    packed_xy: 114
+  - code: 21
+    packed_xy: 2
+  - code: 20
+    packed_xy: 0
+  - code: 29
+    packed_xy: 1
 labyrinths:
 - id: LEVEL_01
   name: 'POZIOM 1 : Chmurny Gród'
@@ -1567,6 +1761,8 @@ labyrinths:
   - CITY_04
   - CITY_05
   - CITY_06
+  - CITY_07
+  - CITY_08
 - id: LEVEL_02
   name: 'POZIOM 2 : Krzaki Wytępy'
   screens:
