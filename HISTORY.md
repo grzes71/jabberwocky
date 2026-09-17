@@ -2,6 +2,19 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Naprawa natychmiastowej ponownej śmierci smoka po restarcie poziomu (Energy Respawn Race Condition)
+- **Problem**: Po wyczerpaniu energii smoka i zakończeniu procedury śmierci (fade + explosion), poziom restartował się od nowa, jednak natychmiast na starcie uruchamiała się kolejna procedura śmierci, powodując utratę kolejnego życia.
+- **Przyczyna**:
+  - W procedurze `respawn_dragon` w [scenes/game.asm](scenes/game.asm) flaga `dragon_dying` była zerowana (`sta dragon_dying`) na samym początku, podczas gdy licznik energii `COUNTER_FULL` miał wciąż wartość `0` (uzupełnienie energii `init_energy_bar` znajdowało się dopiero pod koniec procedury, po długotrwałym pieczeniu ekranów w `init_level_screens`).
+  - W przerwaniu VBLANK `vblank_game` procedura `update_energy_bar` działała nieustannie (nawet na ekranie nazwy poziomu `SUBSTATE_LEVEL_NAME`), nie weryfikując podstanu gry. W momencie gdy przerwanie VBLANK trafiło w okno pomiędzy wyzerowaniem `dragon_dying` a odnowieniem energii, `update_energy_bar` wykrywał `COUNTER_FULL == 0` i natychmiast wywoływał `start_dragon_death`, ustawiając `dragon_dying = 1` zanim poziom zdążył wystartować.
+  - Ponadto w przerwaniu VBLANK brakowało blokady sprawdzania kolizji i poboru energii na ekranie nazwy poziomu (`show_level_name_screen`).
+- **Rozwiązanie ([scenes/game.asm](scenes/game.asm), [tests/test_status_bar.py](tests/test_status_bar.py))**:
+  - W procedurach `respawn_dragon` oraz `advance_to_next_level` w [scenes/game.asm](scenes/game.asm) natychmiast na wejściu przełączono podstan gry `game_substate = SUBSTATE_LEVEL_NAME` oraz przesunięto odnawianie energii `init_energy_bar` i `calc_energy_frames` na sam początek, przed wyzerowaniem flagi `dragon_dying`.
+  - W procedurze VBLANK `vblank_game` dodano warunek `lda game_substate; cmp #SUBSTATE_PLAYING; bne @skip_gameplay_vbl`, dzięki czemu procedury sprawdzania kolizji (`check_dragon_collisions`, `check_flame_object_collision`) oraz ubytku energii (`update_energy_bar`) są aktywne wyłącznie podczas właściwego lotu na planszy.
+  - W pętli `game_run` dodano zabezpieczenie pomijające renderowanie klatki gry, gdy po zakończeniu sekwencji śmierci nastąpiło przełączenie na podstan nazwy poziomu.
+  - W [tests/test_status_bar.py](tests/test_status_bar.py) dodano test `test_respawn_after_energy_depletion_prevents_immediate_re_death`, weryfikujący poprawny przebieg respawnu po ubytku energii i odporność na przerwania VBLANK.
+  - Wszystkie 127 testów py65 zakończone sukcesem (`127 passed`), mapa pamięci w pełni poprawna.
+
 ## [2026-09-17] - Eliminacja szarpnięcia przy przejściu między ekranami poprzez odroczone pieczenie bufora (Deferred Bake)
 - **Problem**: Podczas lotu smoka w prawo, dokładnie w momencie przejścia między kolejnymi ekranami labiryntu (co 40 kroków koarsowych po zapełnieniu bufora strumieniowania), pojawiało się widoczne szarpnięcie / chwilowe przycięcie animacji (stutter).
 - **Przyczyna**:

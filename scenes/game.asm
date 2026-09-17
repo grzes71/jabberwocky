@@ -303,7 +303,11 @@ game_run
     jsr update_dragon_death
     lda GAME_OVER_REASON
     bne @exit_to_game_over
+    lda game_substate
+    beq @death_substate_done
     jmp @render_frame
+@death_substate_done
+    rts
 
 @dragon_controls_active
     ; 4. Check FIRE button to trigger fire breathing
@@ -1322,6 +1326,11 @@ vblank_game
     lda pal_action_p3
     sta COLPM3
 
+    ; Only run gameplay collision and energy depletion logic when actively playing flight screen
+    lda game_substate
+    cmp #SUBSTATE_PLAYING
+    bne @skip_gameplay_vbl
+
     ; Check dragon collisions with playfield (PF0/1/2 = crash, PF3 = recharge)
     jsr check_dragon_collisions
 
@@ -1330,6 +1339,8 @@ vblank_game
 
     ; Update dragon energy bar counter during VBLANK (depletion)
     jsr update_energy_bar
+
+@skip_gameplay_vbl
 
     ; Update animated and rotated characters in GAME_FONT_ADDR ($7400)
     jsr animate_charset
@@ -1835,6 +1846,14 @@ update_dragon_death
 ; Called when dragon died but player still has lives remaining.
 ; ==============================================================================
 respawn_dragon
+    ; Immediately isolate state: switch to level name substate so VBLANK skips gameplay logic
+    lda #SUBSTATE_LEVEL_NAME
+    sta game_substate
+
+    ; Refill dragon energy bar in VRAM and reset counters FIRST (prevent 0-energy race condition in VBLANK)
+    jsr init_energy_bar
+    jsr calc_energy_frames
+
     lda #DEATH_STATE_INACTIVE
     sta dragon_dying
     sta dragon_recharging
@@ -1895,10 +1914,6 @@ respawn_dragon
 
     ; Restart current level from the very beginning (screen 0, hscrol_fine=3, reset buffers)
     jsr init_level_screens
-
-    ; Refill dragon energy bar in VRAM and reset counters
-    jsr init_energy_bar
-    jsr calc_energy_frames
 
     ; Re-render dragon in respawned position
     jsr render_dragon
@@ -2892,6 +2907,13 @@ advance_to_next_level
     inc LEVEL
     jsr update_bottom_status
 
+    lda #SUBSTATE_LEVEL_NAME
+    sta game_substate
+
+    ; Refill dragon energy bar to 100% on starting a new level FIRST
+    jsr init_energy_bar
+    jsr calc_energy_frames
+
     lda #0
     sta dragon_dying
     sta death_timer
@@ -2924,10 +2946,6 @@ advance_to_next_level
     sta pal_action_dragon
 
     jsr init_level_screens
-
-    ; Refill dragon energy bar to 100% on starting a new level
-    jsr init_energy_bar
-    jsr calc_energy_frames
 
     jsr show_level_name_screen
     rts

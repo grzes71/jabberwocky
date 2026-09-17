@@ -1426,7 +1426,7 @@ screens:
   - code: 164
     packed_xy: 112
   - code: 178
-    packed_xy: 66
+    packed_xy: 34
   - code: 182
     packed_xy: 96
   - code: 182
@@ -1479,8 +1479,6 @@ screens:
     packed_xy: 82
   - code: 4
     packed_xy: 8
-  - code: 52
-    packed_xy: 10
   - code: 53
     packed_xy: 169
   - code: 53
@@ -1489,8 +1487,6 @@ screens:
     packed_xy: 2
   - code: 48
     packed_xy: 160
-  - code: 164
-    packed_xy: 66
 - id: CITY_06
   objects:
   - code: 149
@@ -1506,7 +1502,7 @@ screens:
   - code: 177
     packed_xy: 1
   - code: 177
-    packed_xy: 76
+    packed_xy: 108
   - code: 177
     packed_xy: 71
   - code: 177
@@ -1541,8 +1537,6 @@ screens:
     packed_xy: 73
   - code: 29
     packed_xy: 74
-  - code: 19
-    packed_xy: 75
   - code: 29
     packed_xy: 42
   - code: 120
@@ -1624,8 +1618,6 @@ screens:
   - code: 19
     packed_xy: 9
   - code: 19
-    packed_xy: 39
-  - code: 19
     packed_xy: 101
   - code: 24
     packed_xy: 179
@@ -1641,8 +1633,6 @@ screens:
     packed_xy: 15
   - code: 172
     packed_xy: 8
-  - code: 26
-    packed_xy: 10
   - code: 182
     packed_xy: 77
   - code: 118
@@ -1659,6 +1649,12 @@ screens:
     packed_xy: 169
   - code: 164
     packed_xy: 43
+  - code: 19
+    packed_xy: 39
+  - code: 48
+    packed_xy: 11
+  - code: 48
+    packed_xy: 171
 - id: CITY_08
   objects:
   - code: 5

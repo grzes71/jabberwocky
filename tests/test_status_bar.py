@@ -728,6 +728,52 @@ def test_dragon_crash_death_sequence_and_sound_emulation(project_root: Path, lab
     assert mpu.memory[game_over_reason] == labels["REASON_LIVES_OUT"]
 
 
+def test_respawn_after_energy_depletion_prevents_immediate_re_death(project_root: Path, labels: Dict[str, int]):
+    """Verify that when the dragon dies from zero energy, respawn_dragon refills energy and sets
+    game_substate to SUBSTATE_LEVEL_NAME so that vblank_game does NOT re-trigger death immediately.
+    """
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    # Mock XITVBV with RTS
+    xitvbv_addr = labels.get("XITVBV", 0xE462)
+    mpu.memory[xitvbv_addr] = 0x60
+
+    # Simulate dragon dying from energy depletion: COUNTER_FULL = 0, dragon_dying = 1
+    mpu.memory[labels["COUNTER_FULL"]] = 0
+    mpu.memory[labels["COUNTER_EIGHT"]] = 90
+    mpu.memory[labels["DRAGON_DYING"]] = 1  # DEATH_STATE_FADING
+    mpu.memory[labels["LIVES"]] = 3
+    mpu.memory[labels["GAME_OVER_REASON"]] = 0
+    mpu.memory[labels["GAME_SUBSTATE"]] = labels["SUBSTATE_PLAYING"]
+
+    # Call RESPAWN_DRAGON directly (as invoked at the end of the death sequence)
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.pc = labels["RESPAWN_DRAGON"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+
+    # Verify that energy bar was refilled to 40 characters and substate is LEVEL_NAME
+    assert mpu.memory[labels["COUNTER_FULL"]] == 40
+    assert mpu.memory[labels["COUNTER_EIGHT"]] == 83
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0
+    assert mpu.memory[labels["GAME_SUBSTATE"]] == labels["SUBSTATE_LEVEL_NAME"]
+
+    # Now simulate a VBLANK frame occurring during the level name screen
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.pc = labels["VBLANK_GAME"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+
+    # Verify that dragon_dying remained 0 and was NOT prematurely re-triggered
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0
+    assert mpu.memory[labels["COUNTER_FULL"]] == 40
+
+
+
 
 
 
