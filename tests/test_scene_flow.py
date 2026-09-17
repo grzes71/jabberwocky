@@ -70,8 +70,8 @@ def test_title_run_transitions_to_game(clean_mpu: MPU, labels: Dict[str, int]):
     )
 
 
-def test_gameover_run_transitions_to_title(clean_mpu: MPU, labels: Dict[str, int]):
-    """Verify that pressing FIRE on the game over screen transitions to STATE_TITLE (not intro)."""
+def test_gameover_run_transitions_to_top_scores(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that pressing FIRE on the game over screen transitions to STATE_TOP_SCORES."""
     mpu = clean_mpu
     mpu.memory[labels["FIRE_PRESSED"]] = 1
     mpu.memory[labels["GAME_STATE"]] = labels["STATE_GAME_OVER"]
@@ -79,14 +79,14 @@ def test_gameover_run_transitions_to_title(clean_mpu: MPU, labels: Dict[str, int
     run_subroutine(mpu, labels["GAMEOVER_RUN"])
 
     assert mpu.memory[labels["FIRE_PRESSED"]] == 0, "FIRE flag must be consumed by gameover_run"
-    assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_TITLE"], (
-        f"Expected transition to STATE_TITLE ({labels['STATE_TITLE']}), "
+    assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_TOP_SCORES"], (
+        f"Expected transition to STATE_TOP_SCORES ({labels['STATE_TOP_SCORES']}), "
         f"got {mpu.memory[labels['GAME_STATE']]}"
     )
 
 
 def test_full_loop_intro_never_revisited(clean_mpu: MPU, labels: Dict[str, int]):
-    """Verify full loop: Intro -> Title -> Game -> Game Over -> Title -> Game."""
+    """Verify full loop: Intro -> Title -> Game -> Game Over -> Top Scores -> Title -> Game."""
     mpu = clean_mpu
 
     # 1. Start at Intro
@@ -103,12 +103,17 @@ def test_full_loop_intro_never_revisited(clean_mpu: MPU, labels: Dict[str, int])
     # 3. Game ends -> Game Over
     mpu.memory[labels["GAME_STATE"]] = labels["STATE_GAME_OVER"]
 
-    # 4. Game Over -> Title (NOT Intro)
+    # 4. Game Over -> Top Scores
     mpu.memory[labels["FIRE_PRESSED"]] = 1
     run_subroutine(mpu, labels["GAMEOVER_RUN"])
+    assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_TOP_SCORES"]
+
+    # 5. Top Scores -> Title (NOT Intro)
+    mpu.memory[labels["FIRE_PRESSED"]] = 1
+    run_subroutine(mpu, labels["TOP_SCORES_RUN"])
     assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_TITLE"]
 
-    # 5. Title -> Game (direct start, Intro is bypassed)
+    # 6. Title -> Game (direct start, Intro is bypassed)
     mpu.memory[labels["FIRE_PRESSED"]] = 1
     run_subroutine(mpu, labels["TITLE_RUN"])
     assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_GAME"]

@@ -2,6 +2,49 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Rozszerzenie odstępów w liście TOP SCORES (DL_BLANK4) oraz ujednolicenie koloru tła i ramki
+- **Cel**: Dalsze zwiększenie czytelności tabeli `TOP SCORES` poprzez zwiększenie odstępów między wierszami wyników do 4 pustych linii rastra ANTIC (`DL_BLANK4`) oraz ujednolicenie koloru tła (`COLOR2`/`COLPF2`) z kolorem ramki (`COLOR4`/`COLBK` = `$70`).
+- **Wprowadzone modyfikacje**:
+  - [main.asm](main.asm):
+    - W `dlist_top_scores` zastąpiono `DL_BLANK2` instrukcjami `DL_BLANK4` pomiędzy każdym z 10 wierszy wyników graczy oraz ustawiono 2 linie `DL_BLANK8` na górnym marginesie (łączna wysokość rastra ekranu: 182 linie, idealnie w bezpiecznym oknie 192 linii).
+  - [scenes/top_scores.asm](scenes/top_scores.asm):
+    - W `top_scores_init` ustawiono kolor tła `COLOR2` / `COLPF2` na `$70`, uzyskując jednolite, spójne niebieskie tło z ramką.
+  - [tests/test_top_scores.py](tests/test_top_scores.py):
+    - Zaktualizowano `test_top_scores_display_list_structure` do weryfikacji instrukcji `DL_BLANK4` ($30) pomiędzy wierszami wyników.
+    - Zaktualizowano `test_top_scores_init_activates_dlist_and_renders_rows` do weryfikacji spójnego koloru `$70` dla `COLOR2`, `COLPF2`, `COLOR4`, `COLBK`.
+- **Weryfikacja**:
+  - `make all`: bezbłędna kompilacja, walidacja [docs/memory_map.txt](docs/memory_map.txt) bez kolizji (DLIST: $6610-$676D, 350 B, 146 B wolnego do granicy 1 KB, 36.0% wolnego RAM).
+  - `make test`: 145/145 testów py65/pytest zakończonych sukcesem (`145 passed in 5.61s`).
+
+## [2026-09-17] - Implementacja tabeli TOP SCORES oraz wprowadzania 5-znakowego imienia joystickiem (ENTER NAME)
+- **Cel**: Dodanie nowego systemu najlepszych wyników (Top 10 High Scores) po zakończeniu rozgrywki, z pełnym zachowaniem dotychczasowego stanu `GAME OVER`.
+- **Architektura przepływu stanów**:
+  - `GAMEPLAY` -> `GAME OVER` (100% zachowany stan, wiersz i komunikaty) -> po naciśnięciu FIRE -> `TOP SCORES` -> (jeśli wynik > 10. miejsca -> `ENTER NAME` -> zapis wyniku i powrót do `TOP SCORES`) -> po naciśnięciu FIRE -> `TITLE SCREEN`.
+- **Wprowadzone modyfikacje**:
+  - [scenes/top_scores.asm](scenes/top_scores.asm):
+    - Nowy moduł umieszczony w High RAM (`$8BC0+`, po `STUB_VRAM`), obsługujący dwa stany: `STATE_TOP_SCORES` (4) oraz `STATE_ENTER_NAME` (5).
+    - Tabela 10 wyników w formacie SoA: `hs_scores` (10 x 4 bajty dziesiętne 0..9) oraz `hs_names` (10 x 5 znaków w kodach wewnętrznych ekranu Atari).
+    - Domyślne wyniki (0500..0020) z tematycznymi nazwami (`DRACO`, `WITCH`, `VORPL`, `JABBY`, `BANDR`, `JUBJB`, `BOROG`, `MOME `, `SLITH`, `TOVES`).
+    - Procedura `check_score_qualified`: rygorystyczne porównanie `SCORE > hs_scores[9]` (wyniki równe nie kwalifikują się).
+    - Procedura `compare_score_entry`: 4-bajtowe porównanie bez naruszania rejestru X.
+    - Procedura `insert_high_score`: lokalizacja indeksu wstawienia (0..9), przesuwanie w dół wpisów 8..X do 9..X+1 z odrzuceniem starego 10. wyniku, wpisanie nowego wyniku i imienia.
+    - Procedura `draw_name_field`: wyświetlanie 5-literowego pola `[ A A A A A ]` z wyróżnieniem aktywnego znaku odwróconym wideo (`ora #$80`).
+    - Procedura `enter_name_run`: obsługa joysticka 0 (`STICK0`) — GÓRA/DÓŁ: zmiana znaku w alfabecie (`A`..`Z`, `0`..`9`, spacja), LEWO/PRAWO: przesunięcie pozycji kursora (0..4), FIRE: zatwierdzenie imienia, zapisanie do tabeli i powrót do `TOP SCORES`.
+    - Zabezpieczenie przed podwójnym dodaniem: flaga `score_processed` czyszczona dopiero przy powrocie do ekranu tytułowego.
+  - [main.asm](main.asm):
+    - Zdefiniowano `STATE_TOP_SCORES = 4` oraz `STATE_ENTER_NAME = 5`.
+    - Zaktualizowano tablice skoków `scene_init_tbl` i `scene_run_tbl` o procedury `top_scores_init/run` i `enter_name_init/run`.
+    - Dołączono `scenes/top_scores.asm` pod adresem `STUB_VRAM + 960` (`$8BC0+`).
+  - [scenes/gameover.asm](scenes/gameover.asm):
+    - W procedurze `gameover_run` zmieniono cel przejścia po naciśnięciu FIRE z `STATE_TITLE` na `STATE_TOP_SCORES`. Cała reszta modułu (treści, kolory zwycięstwa/porażki, efekty) pozostała nienaruszona.
+  - [tests/test_top_scores.py](tests/test_top_scores.py):
+    - Dodano zestaw 11 testów emulacyjnych py65 weryfikujących: symbole, domyślne sortowanie tabeli, logikę kwalifikacji, wstawianie na 1., środkową i ostatnią pozycję, sterowanie joystickiem oraz pełny cykl przejść.
+  - [tests/test_scene_flow.py](tests/test_scene_flow.py):
+    - Zaktualizowano testy przejścia z `GAME OVER` do `STATE_TOP_SCORES` i dalej do `STATE_TITLE`.
+  - [README.md](README.md):
+    - Zaktualizowano maszynę stanów, diagram pętli, strukturę katalogów, mapę pamięci i liczbę testów (143 testy).
+  - Weryfikacja: `make all` zakończone sukcesem, walidacja pamięci w [docs/memory_map.txt](docs/memory_map.txt) bez kolizji (36.2% wolnej pamięci), 143/143 testy zaliczone pomyślnie.
+
 ## [2026-09-17] - Aktualizacja układu obiektów i ekranów w definicji świata gry
 - **Modyfikacje**:
   - [world/project.yaml](world/project.yaml): Zaktualizowano definicje obiektów na ekranach `CITY_01`–`CITY_08` poziomu 1 (`LEVEL_01 : Chmurny Gród`) za pomocą Labirynt Studio.

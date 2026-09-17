@@ -32,7 +32,9 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
   - `STATE_INTRO`: Scena narracyjna z poematem, polską czcionką i gradientami DLI (wyświetlana jednorazowo przy uruchomieniu gry, po czym następuje przejście do ekranu tytułowego).
   - `STATE_TITLE`: Główny ekran tytułowy w wysokiej rozdzielczości bitmapowej ze sprzętowym scroll-tickerem; naciśnięcie FIRE uruchamia bezpośrednio rozgrywkę.
   - `STATE_GAME`: Główny ekran rozgrywki z animowaną postacią smoka, zianiem ogniem, inercją i płynnym przewijaniem świata.
-  - `STATE_GAME_OVER`: Ekran zakończenia obsługujący porażkę (utrata żyć, wyczerpanie energii smoka) oraz stan **VICTORY** po ukończeniu wszystkich poziomów; naciśnięcie FIRE wraca bezpośrednio do `STATE_TITLE` (scena intro nie jest ponownie wyświetlana).
+  - `STATE_GAME_OVER`: Ekran zakończenia obsługujący porażkę (utrata żyć, wyczerpanie energii smoka) oraz stan **VICTORY** po ukończeniu wszystkich poziomów; naciśnięcie FIRE przechodzi do ekranu `STATE_TOP_SCORES`.
+  - `STATE_TOP_SCORES`: Tabela 10 najlepszych wyników wszech czasów (ranking, imię gracza, 4-cyfrowy wynik); naciśnięcie FIRE wraca bezpośrednio do `STATE_TITLE`.
+  - `STATE_ENTER_NAME`: Ekran wprowadzania 5-znakowego imienia gracza za pomocą joysticka w przypadku zakwalifikowania wyniku do Top 10.
 - **Zaawansowane wykorzystanie ANTIC & GTIA**:
   - **Tryb ANTIC F** (320×175, 1 bpp) na ekranie tytułowym z podziałem LMS (Load Memory Scan) omijającym granicę 4 KB bufora ekranu.
   - **Tryb ANTIC 2** (40×24 znakowy) w scenie Intro z przerwaniami **DLI (Display List Interrupt)** dynamicznie modyfikującymi rejestry koloru tekstu w locie linii rastra.
@@ -70,10 +72,12 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
     ┌───────┴───────┐
     │  State Engine │ (Pętla główna zsynchronizowana z VBLANK RTCLOK)
     └───────┬───────┘
-            ├── 1. STARTUP      --> scenes/intro.asm     (ANTIC Mode 2 + DLI, jednorazowo)
-            ├── 2. STATE_TITLE  --> scenes/title.asm     (ANTIC Mode F + Mode 2 scroll)
-            ├── 3. STATE_GAME   --> scenes/game.asm      (ANTIC 5 HSCROL + ANTIC 2 + PMG)
-            └── 4. GAME_OVER    --> scenes/gameover.asm  (Powrót do STATE_TITLE)
+            ├── 1. STARTUP        --> scenes/intro.asm       (ANTIC Mode 2 + DLI, jednorazowo)
+            ├── 2. STATE_TITLE    --> scenes/title.asm       (ANTIC Mode F + Mode 2 scroll)
+            ├── 3. STATE_GAME     --> scenes/game.asm        (ANTIC 5 HSCROL + ANTIC 2 + PMG)
+            ├── 4. GAME_OVER      --> scenes/gameover.asm    (Defeat / Victory)
+            ├── 5. TOP_SCORES     --> scenes/top_scores.asm  (Tabela 10 najlepszych wyników)
+            └── 6. ENTER_NAME     --> scenes/top_scores.asm  (Wprowadzanie 5-znakowego imienia)
 ```
 
 Główna pętla gry działa w sposób deterministyczny w oparciu o synchronizację pionową (`RTCLOK`):
@@ -105,6 +109,7 @@ jabberwocky/
 │   ├── intro.asm            # Wprowadzenie i wyświetlanie wiersza (DLI)
 │   ├── game.asm             # Logika gry, fizyka PMG, HSCROL, podwójne buforowanie i streaming
 │   ├── gameover.asm         # Ekran końca gry (Porażka / Sukces)
+│   ├── top_scores.asm       # Tabela 10 najlepszych wyników i edycja imienia joystickiem
 │   └── text_utils.asm       # Procedury wypisywania i konwersji znaków ATASCII/Internal
 │
 ├── world/                   # Źródłowe definicje świata gry (SSOT)
@@ -138,7 +143,7 @@ jabberwocky/
 ├── docs/                    # Dokumentacja i generowane raporty pamięci
 │   ├── memory_map.txt       # Czytelne podsumowanie mapy pamięci i wolnej przestrzeni
 │   └── memory_map.json      # Maszynowy model alokacji segmentów
-├── tests/                   # Zestaw 132 testów jednostkowych i emulacyjnych py65 (pytest)
+├── tests/                   # Zestaw 143 testów jednostkowych i emulacyjnych py65 (pytest)
 └── gen/                     # Pliki generowane automatycznie (nie edytować!)
 ```
 
@@ -280,10 +285,10 @@ Projekt zachowuje pełną izolację pamięci OS oraz precyzyjną alokację bufor
 | `$6300` – `$634F` | 80 B | Bufor paska statusu w grze (2 linie ANTIC 2) |
 | `$6350` – `$63F7` | 168 B | Bufor siatki kolizji blokujących `BLOCKING_VRAM` (21×8 bajtów) |
 | `$6400` – `$660F` | 528 B | Zapasowy bufor pola akcji VRAM B do podwójnego buforowania (Double Buffering) |
-| `$6610` – `$674B` | 316 B | Segment Display List dla wszystkich scen (wyrównany do granicy 1 KB) |
+| `$6610` – `$676E` | 351 B | Segment Display List dla wszystkich scen (wyrównany do granicy 1 KB) |
 | `$6800` – `$85C4` | ~7.6 KB | Czcionka gry (`game.fnt`), animowane kafle oraz dane świata (`gen/world_data.asm`) |
-| `$8800` – `$8BBF` | 960 B | Bufor tekstu dla trybów znakowych ANTIC 2 (Intro, Game Over) |
-| `$8BC0` – `$BFFF` | ~13.1 KB | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
+| `$8800` – `$90DF` | ~2.2 KB | Bufor tekstu VRAM oraz segment Top Scores / Name Entry (`scenes/top_scores.asm`) |
+| `$90E0` – `$BFFF` | ~11.8 KB | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
 | `$C000` – `$DFFF` | — | **Naruszenie zabronione** (OS ROM / Rejestry sprzętowe I/O) |
 
 Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w pliku [docs/memory_map.txt](docs/memory_map.txt).
@@ -292,7 +297,7 @@ Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w p
 
 ## Testy
 
-Projekt posiada **132 zautomatyzowane testy** weryfikujące poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
+Projekt posiada **145 zautomatyzowanych testów** weryfikujące poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
 - Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
 - Testy spójności modeli danych, kolorów, walidatorów `world/` oraz edytorów GUI (Studio).
 - Testy emulacyjne 6502 (py65) weryfikujące:
@@ -307,6 +312,7 @@ Projekt posiada **132 zautomatyzowane testy** weryfikujące poprawność narzęd
   - Rysowanie i dynamiczne odświeżanie dolnego paska stanu (`LEVEL:01 SCORE:0000 LIVES:03 SHOTS:01`) z kolorowaniem za pomocą sprajtów i missila PMG (x4 width).
   - Wyświetlanie nakładki nazwy poziomu (`level_name.asm`).
   - Przejście do stanu zakończenia gry z powodem VICTORY (`REASON_SUCCESS`) lub DEFEAT.
+  - Tabela 10 najlepszych wyników (`TOP SCORES`), sortowanie, przesuwanie w dół (shift-down) oraz wprowadzanie 5-znakowego imienia joystickiem (`ENTER NAME`).
 - Testy negatywne wykrywające próby kolizji i przekroczenia granic pamięci.
 
 Uruchomienie:

@@ -34,10 +34,12 @@ SPRITE_H        = 43                ; 43 lines high
 SPRITE_COL      = $C4               ; Green color (Hue $C, Lum 4)
 
 ; ---- Game States ----
-STATE_TITLE     = 0
-STATE_INTRO     = 1
-STATE_GAME      = 2
-STATE_GAME_OVER = 3
+STATE_TITLE      = 0
+STATE_INTRO      = 1
+STATE_GAME       = 2
+STATE_GAME_OVER  = 3
+STATE_TOP_SCORES = 4
+STATE_ENTER_NAME = 5
 
 ; ==============================================================================
 ; LOW CODE / AUXILIARY ENGINES (Low RAM $0800-$1FFF)
@@ -180,12 +182,16 @@ scene_init_tbl
     dta a(intro_init)
     dta a(game_init)
     dta a(gameover_init)
+    dta a(top_scores_init)
+    dta a(enter_name_init)
 
 scene_run_tbl
     dta a(title_run)
     dta a(intro_run)
     dta a(game_run)
     dta a(gameover_run)
+    dta a(top_scores_run)
+    dta a(enter_name_run)
 
 ; ---- Include Scene Modules ----
     icl 'scenes/title.asm'
@@ -238,6 +244,43 @@ dlist_stub
     :23 dta DL_MODE_2
 
     dta DL_JVB, a(dlist_stub)
+
+; Display list for Top Scores Screen (ANTIC Mode 2 with DL_BLANK4 spacing between scores)
+dlist_top_scores
+    :2 dta DL_BLANK8
+
+    dta DL_MODE_2 | DL_LMS, a(STUB_VRAM)  ; Row 0: "JABBERWOCKY"
+    dta DL_BLANK2
+    dta DL_MODE_2                         ; Row 1: "TOP SCORES"
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 2: "RANK  NAME   SCORE"
+    dta DL_BLANK4
+
+    ; 10 score rows with DL_BLANK4 between each pair
+    dta DL_MODE_2                         ; Row 3: Score 1
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 4: Score 2
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 5: Score 3
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 6: Score 4
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 7: Score 5
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 8: Score 6
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 9: Score 7
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 10: Score 8
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 11: Score 9
+    dta DL_BLANK4
+    dta DL_MODE_2                         ; Row 12: Score 10
+
+    dta DL_BLANK8
+    dta DL_MODE_2                         ; Row 13: ">> PRESS FIRE TO CONTINUE <<"
+    dta DL_JVB, a(dlist_top_scores)
+
 
 ; Display list for Intro Scene (ANTIC Mode 2, 40x24 with 4 DLIs before text lines)
 dlist_intro
@@ -327,6 +370,12 @@ screen_buf_b_blk    :440 dta 0
 ; ==============================================================================
     org STUB_VRAM
 stub_vram_buf       :960 dta 0
+
+; ==============================================================================
+; TOP SCORES & HIGH SCORE ENTRY (High RAM $8BC0+)
+; ==============================================================================
+    org STUB_VRAM + 960
+    icl 'scenes/top_scores.asm'
 
 ; ==============================================================================
 ; RUN ADDRESS VECTOR

@@ -149,7 +149,7 @@ gameover_run
     beq @+
     lda #0
     sta fire_pressed
-    lda #STATE_TITLE
+    lda #STATE_TOP_SCORES
     sta game_state
 @   rts
 
