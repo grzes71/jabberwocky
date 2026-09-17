@@ -2,6 +2,16 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Aktualizacja dokumentacji projektu (README.md)
+- **Zakres weryfikacji**: Przegląd pliku [README.md](README.md) pod kątem zgodności z aktualną architekturą silnika, potokiem budowania, alokacją pamięci oraz stanem testów.
+- **Wprowadzone aktualizacje**:
+  - **Cechy silnika i architektura**: Dodano opisy podwójnego buforowania VRAM (`GAME_ACTION_VRAM` / `GAME_ACTION_VRAM_B`), synchronizacji przełączania LMS w VBLANK, odroczonego wypiekania ekranu (`deferred screen baking`), szybkiej detekcji kolizji smoka ($O(1)$ w oparciu o siatkę `BLOCKING_VRAM`), niszczenia obiektów zianiem ognia (`check_flame_object_collision`), zbierania sekretów ze śledzeniem w maskach bitowych (`check_dragon_secret_collision`), animowanych zestawów znaków oraz podsystemu audio POKEY (`engine/sound.asm`).
+  - **Struktura projektu**: Dodano brakujące katalogi i moduły w drzewie plików: `engine/` (`flame_collision.asm`, `level_name.asm`, `charset_anim.asm`, `sound.asm`), `chars/` (`animated.json`, `rotated.json`), skrypty generatorów `gen_animated_charset.py` i `gen_rotated_charset.py` oraz zaktualizowano zakres strony zerowej (`$80`–`$89`).
+  - **Narzędzia wspomagające**: Rozszerzono opis `Labirynt Builder` o generowanie tablic kafli składowych `gen/world_obj_tiles.asm` oraz dodano sekcję generatorów animacji i obrotów znaków.
+  - **Mapa pamięci**: Zaktualizowano tabelę alokacji pamięci na podstawie aktualnego raportu [docs/memory_map.txt](docs/memory_map.txt) (w tym segment `ENGINE` `$080B`–`$1FA9`, bufor `BLOCKING_VRAM`, bufor VRAM B, segment czcionek i danych świata `$6800`–`$85C4`).
+  - **Zestaw testów**: Zaktualizowano liczbę testów z 52 do **127 zautomatyzowanych testów** py65/pytest oraz zaktualizowano listę weryfikowanych obszarów (w tym kolizje, wypiekanie buforów, odnawianie energii smoka).
+  - Weryfikacja: `make all` oraz pełny przebieg testów `pytest` (127 passed) bez błędów.
+
 ## [2026-09-17] - Naprawa natychmiastowej ponownej śmierci smoka po restarcie poziomu (Energy Respawn Race Condition)
 - **Problem**: Po wyczerpaniu energii smoka i zakończeniu procedury śmierci (fade + explosion), poziom restartował się od nowa, jednak natychmiast na starcie uruchamiała się kolejna procedura śmierci, powodując utratę kolejnego życia.
 - **Przyczyna**:
