@@ -2,6 +2,21 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Poprawka detekcji kolizji obiektów w trybie ogona poziomu (tail mode)
+- **Cel**: Rozwiązanie problemu braku zbierania obiektów i znajdziek (np. chłopa `code: 197` przy `packed_xy: 114` na ostatnim ekranie `FOREST_09`) znajdujących się w prawej części ekranu podczas przewijania końcowego ogona labiryntu.
+- **Przyczyna usterki**: Po zakończeniu strumieniowania 40 kolumn ostatniego ekranu labiryntu silnik przechodził w tryb ogona (`level_tail_cols = 48..1`), a zmienna `incoming_col_idx` pozostawała na stałe równa `0`. W procedurach `check_dragon_secret_collision` i `check_flame_object_collision` pozycję ekranu w VRAM obliczano jako `fc_vram_col0 = 8 - incoming_col_idx = 8`, przez co obiekty z $X \ge 2$ były traktowane jak leżące daleko poza ekranem z prawej strony ($X_{\text{vram}} \ge 10$) i pomijane.
+- **Wprowadzone modyfikacje**:
+  - [engine/flame_collision.asm](engine/flame_collision.asm):
+    - W `check_dragon_secret_collision`: dodano gałąź dla `level_tail_cols > 0` obliczającą rzeczywisty offset VRAM ekranu `fc_vram_col0 = level_tail_cols - 40` (oraz pomijanie ekranu po całkowitym opuszczeniu kolumny 8 smoka, gdy `level_tail_cols < 9`).
+    - W `check_flame_object_collision`: dodano analogiczne obliczenie `fc_vram_col0 = level_tail_cols - 40` dla ogona (pomijanie, gdy `level_tail_cols < 11`).
+  - [tests/test_secret_collision.py](tests/test_secret_collision.py):
+    - Dodano test integracyjny py65 `test_tail_mode_collects_interactive_object_197` weryfikujący poprawność zebrania obiektu 197 na `FOREST_09` podczas fazy ogona (`level_tail_cols = 12`), zaliczenie punktów (+5) oraz dodatkowego życia (+1).
+  - [docs/memory_map.txt](docs/memory_map.txt) i [docs/memory_map.json](docs/memory_map.json):
+    - Zaktualizowano raport pamięci (30475 bajtów, 35.2% wolnego RAM-u).
+- **Weryfikacja**:
+  - `make all`: bezbłędna kompilacja MADS.
+  - `make test`: wszystkie 146 testów zaliczone (`146 passed in 24.48s`).
+
 ## [2026-09-17] - Reorganizacja poziomów świata oraz dynamiczne indeksowanie labiryntów w testach
 - **Cel**: Dostosowanie kolejności poziomów gry (Poziom 1: Krzaki Wytępy, Poziom 2: Błonia Tolemu, Poziom 3: Chmurny Gród), dodanie nowych ekranów labiryntów oraz uelastycznienie testów kolizji.
 - **Wprowadzone modyfikacje**:

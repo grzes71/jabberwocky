@@ -776,4 +776,44 @@ def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu
     assert mpu.memory[blk_addr + offset] == 0x00, "Secret must be collected and cleared even when breathing fire"
 
 
+def test_tail_mode_collects_interactive_object_197(labels: Dict[str, int], clean_mpu: MPU):
+    """Verify that interactive object 197 on screen FOREST_09 is properly collected during tail mode."""
+    mpu = clean_mpu
+
+    # Level 0 (Forest: LEVEL_01, 9 screens: FOREST_01..FOREST_09)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
+    # Simulate entering tail mode after screen 8 (FOREST_09) finishes streaming
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 9  # lab_total_screens
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 0
+    # Object 197 is at x=36, y=6 on screen 8 (FOREST_09).
+    # When level_tail_cols = 12: vram_col0 = 12 - 40 = -28 ($E4).
+    # vram_x = -28 + 36 = 8 -> reaches dragon at cols 8..9!
+    mpu.memory[labels["LEVEL_TAIL_COLS"]] = 12
+    mpu.memory[labels["DRAGON_Y"]] = 130
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+    mpu.memory[labels["FIRE_STATE"]] = 0
+    mpu.memory[labels["LIVES"]] = 3
+    mpu.memory[labels["SCORE"] + 0] = 0
+    mpu.memory[labels["SCORE"] + 1] = 0
+    mpu.memory[labels["SCORE"] + 2] = 0
+    mpu.memory[labels["SCORE"] + 3] = 0
+
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    # Interactive flag ($02) for peasant at row 6
+    mpu.memory[labels["BLOCKING_COL8"] + 6] = 0x02
+
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+    run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
+
+    # Must detect collision!
+    assert (mpu.p & 0x01) == 0x01, "Peasant 197 in tail mode must be collected (Carry SET)"
+    assert mpu.memory[labels["LIVES"]] == 4, "Peasant collection must award +1 life"
+    assert mpu.memory[labels["SCORE"] + 3] == 5, "Peasant collection must award +5 score"
+
+
+
 

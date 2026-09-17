@@ -269,11 +269,31 @@ fc_energy_cnt           dta 0
     lda level_screen_pos
     beq @skip_left_screen
 
+    lda level_tail_cols
+    beq @normal_flame_left
+
+    ; Tail mode: screen level_screen_pos - 1 scrolls through tail (48..0)
+    ; Rightmost col 39 passes flame (col 10) when level_tail_cols < 11
+    cmp #11
+    bcc @skip_left_screen
+    sec
+    sbc #40
+    sta fc_vram_col0
+    jmp @flame_left_screen_ready
+
+@normal_flame_left
     ; If incoming_col_idx >= 38, left screen has scrolled completely past flame (col 9 < 10)
     lda incoming_col_idx
     cmp #38
     bcs @skip_left_screen
 
+    ; Left screen col 0 in VRAM: 8 - incoming_col_idx
+    lda #8
+    sec
+    sbc incoming_col_idx
+    sta fc_vram_col0
+
+@flame_left_screen_ready
     ; Left screen index = level_screen_pos - 1
     lda level_screen_pos
     sec
@@ -281,12 +301,6 @@ fc_energy_cnt           dta 0
     tay
     lda (PTR_SRC),y
     sta fc_screen_id
-
-    ; Left screen col 0 in VRAM: 8 - incoming_col_idx
-    lda #8
-    sec
-    sbc incoming_col_idx
-    sta fc_vram_col0
 
     jsr check_single_screen_flame
 
@@ -1067,22 +1081,36 @@ shift_blocking_vram_left    = shift_blocking_cols
     lda level_screen_pos
     beq @skip_left_screen
 
+    lda level_tail_cols
+    beq @normal_secret_left
+
+    ; Tail mode: screen level_screen_pos - 1 scrolls through tail (48..0)
+    ; Rightmost col 39 passes dragon (col 8) when level_tail_cols < 9
+    cmp #9
+    bcc @skip_left_screen
+    sec
+    sbc #40
+    sta fc_vram_col0
+    jmp @secret_left_screen_ready
+
+@normal_secret_left
     ; If incoming_col_idx >= 40, left screen has scrolled past column 8
     lda incoming_col_idx
     cmp #40
     bcs @skip_left_screen
 
+    lda #8
+    sec
+    sbc incoming_col_idx
+    sta fc_vram_col0
+
+@secret_left_screen_ready
     lda level_screen_pos
     sec
     sbc #1
     tay
     lda (PTR_SRC),y
     sta fc_screen_id
-
-    lda #8
-    sec
-    sbc incoming_col_idx
-    sta fc_vram_col0
 
     jsr check_single_screen_secret
 
