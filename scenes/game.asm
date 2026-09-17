@@ -292,6 +292,9 @@ game_run
     lda game_substate
     beq @run_level_name
 
+    ; Execute any deferred screen bake from previous screen transition
+    jsr execute_pending_bake
+
     ; 3. Check if dragon is in death sequence
     lda dragon_dying
     beq @dragon_controls_active
@@ -2258,6 +2261,7 @@ init_level_screens
     sta scroll_accum_hi
     sta active_vram_buf
     sta vram_swap_pending
+    sta bake_pending
     lda #>GAME_ACTION_VRAM
     sta dlist_game_action_lms + 2
     lda #3
@@ -2344,6 +2348,7 @@ init_level_screens
     ; Advance level_screen_pos to 1 for incoming stream
     inc level_screen_pos
     jsr setup_incoming_screen_ptr
+    jsr execute_pending_bake
 
     ; Prefill right margin (cols 44..47) with cols 0..3 of screen 1
     lda incoming_screen_ptr
@@ -2451,7 +2456,37 @@ setup_incoming_screen_ptr
     lda incoming_screen_blk_ptr+1
     sta PTR_BLK+1
 
+    ; Screen baking is deferred to next frame outside coarse scroll step
+    lda #1
+    sta bake_pending
+    rts
+
+; ==============================================================================
+; EXECUTE_PENDING_BAKE
+; If bake_pending == 1, dynamically renders the incoming screen into its
+; staging buffers during an idle frame (outside coarse scroll steps).
+; Clobbers: A, X, Y, ZP_TMP, PTR_DST, PTR_BLK, PTR_COLL
+; ==============================================================================
+execute_pending_bake
+    lda bake_pending
+    beq @epb_done
+    lda #0
+    sta bake_pending
+
+    lda incoming_screen_vram_ptr
+    sta PTR_DST
+    lda incoming_screen_vram_ptr+1
+    sta PTR_DST+1
+
+    lda incoming_screen_blk_ptr
+    sta PTR_BLK
+    lda incoming_screen_blk_ptr+1
+    sta PTR_BLK+1
+
+    ldx incoming_screen_id
     jsr bake_screen
+
+@epb_done
     rts
 
 update_world_scrolling
@@ -2919,6 +2954,7 @@ cur_left_screen_id       dta 0
 incoming_screen_vram_ptr dta a(0)
 incoming_screen_blk_ptr  dta a(0)
 incoming_screen_id       dta 0
+bake_pending             dta 0           ; 1 = deferred bake_screen pending
 
 ; Dynamic Screen Baking Workspace Variables
 bs_screen_id             dta 0

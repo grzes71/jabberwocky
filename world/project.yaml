@@ -1762,6 +1762,17 @@ screens:
   - code: 29
     packed_xy: 1
 labyrinths:
+- id: LEVEL_01
+  name: 'POZIOM 1 : Chmurny Gród'
+  screens:
+  - CITY_01
+  - CITY_02
+  - CITY_03
+  - CITY_04
+  - CITY_05
+  - CITY_06
+  - CITY_07
+  - CITY_08
 - id: LEVEL_02
   name: 'POZIOM 2 : Krzaki Wytępy'
   screens:
@@ -1774,17 +1785,6 @@ labyrinths:
   - FOREST_07
   - FOREST_08
   - FOREST_09
-- id: LEVEL_01
-  name: 'POZIOM 1 : Chmurny Gród'
-  screens:
-  - CITY_01
-  - CITY_02
-  - CITY_03
-  - CITY_04
-  - CITY_05
-  - CITY_06
-  - CITY_07
-  - CITY_08
 - id: LEVEL_03
   name: 'POZIOM 3 : Błonia Tolemu'
   screens:

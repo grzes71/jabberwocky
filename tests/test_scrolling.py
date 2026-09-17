@@ -94,6 +94,8 @@ def test_scrolling_symbols_exist(labels: Dict[str, int]):
         "VRAM_SWAP_PENDING",
         "VBLANK_GAME",
         "DLIST_GAME_ACTION_LMS",
+        "BAKE_PENDING",
+        "EXECUTE_PENDING_BAKE",
     ]
     for sym in expected_symbols:
         assert sym in labels, f"Expected symbol {sym} not found in label table"
@@ -435,6 +437,41 @@ def test_clear_action_pmg_clears_ghost_dragon_across_whole_buffer(project_root: 
                 assert mpu.memory[base + i] == 0xFF, f"Line {i} in {addr_lbl} must be 0xFF (status overlay)"
             else:
                 assert mpu.memory[base + i] == 0x00, f"Line {i} in {addr_lbl} must be 0x00 (cleared)"
+
+
+def test_screen_transition_defers_bake_and_executes_in_idle_frame(project_root: Path, labels: Dict[str, int]):
+    """Test that when a screen finishes streaming, bake_screen is deferred via bake_pending=1
+    and only executed when execute_pending_bake is called.
+    """
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
+    # At level start, Screen 0 is left, Screen 1 is incoming. bake_pending should be 0.
+    assert mpu.memory[labels["BAKE_PENDING"]] == 0
+
+    # Advance to last column of Screen 1
+    mpu.memory[labels["INCOMING_COL_IDX"]] = 39
+
+    # Running coarse scroll step completes column 39 and triggers screen transition
+    run_subroutine(mpu, labels["SCROLL_PLAYFIELD_STEP"])
+
+    # Verify that screen transition happened
+    assert mpu.memory[labels["INCOMING_COL_IDX"]] == 0
+    assert mpu.memory[labels["LEVEL_SCREEN_POS"]] == 2
+
+    # Verify that bake_pending is set to 1 (deferred bake request)
+    assert mpu.memory[labels["BAKE_PENDING"]] == 1
+
+    # Now simulate the idle frame executing the pending bake
+    run_subroutine(mpu, labels["EXECUTE_PENDING_BAKE"])
+
+    # Verify that bake_pending is cleared to 0
+    assert mpu.memory[labels["BAKE_PENDING"]] == 0
+
 
 
 

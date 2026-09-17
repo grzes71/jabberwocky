@@ -2,6 +2,20 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Eliminacja szarpnięcia przy przejściu między ekranami poprzez odroczone pieczenie bufora (Deferred Bake)
+- **Problem**: Podczas lotu smoka w prawo, dokładnie w momencie przejścia między kolejnymi ekranami labiryntu (co 40 kroków koarsowych po zapełnieniu bufora strumieniowania), pojawiało się widoczne szarpnięcie / chwilowe przycięcie animacji (stutter).
+- **Przyczyna**:
+  - W momencie zakończenia strumieniowania kolumn 0..39 (`incoming_col_idx == 40`), procedura `scroll_playfield_step` wywoływała bezpośrednio `setup_incoming_screen_ptr`, która natychmiast synchronicznie uruchamiała `bake_screen` (~3000–6000 cykli CPU: czyszczenie 880 bajtów VRAM i BLK oraz renderowanie obiektów).
+  - Ponieważ w tej samej klatce wykonywała się już procedura `shift_vram_left` (~4900 cykli CPU), łączny czas pracy CPU w klatce przejścia ekranów sięgał 9000–12000 cykli (80–105 linii rastra). Powodowało to przekroczenie budżetu klatki, kolizję z przerwaniem DLI oraz opóźnienie obsługi VBLANK (`vram_swap_pending`), co skutkowało pominięciem lub przesunięciem klatki i widocznym szarpnięciem.
+- **Rozwiązanie ([scenes/game.asm](scenes/game.asm), [tests/test_scrolling.py](tests/test_scrolling.py))**:
+  - Wprowadzono mechanizm odroczonego wypiekania nowego ekranu z flagą `bake_pending` (1 = oczekuje na wypiek).
+  - W procedurze `setup_incoming_screen_ptr` usunięto bezpośrednie wywołanie `bake_screen`, zastępując je ustawieniem flagi `bake_pending = 1`.
+  - Wprowadzono nową procedurę `execute_pending_bake` wywoływaną na początku pętli głównej `game_run`.
+  - Wypiek nowego ekranu (`bake_screen`) następuje w klatce K+1 (zaraz po przejściu), w której akumulator przewijania (`scroll_accum`) nie osiąga progu koarsowego ($0400), dzięki czemu kosztowne operacje `shift_vram_left` i `bake_screen` nigdy nie wykonują się w tej samej klatce.
+  - W procedurze `init_level_screens` dodano synchroniczne wywołanie `execute_pending_bake`, zapewniając natychmiastowe wypieczenie ekranu 1 podczas startu/respawnu przed prefillem kolumn 44..47.
+  - Dodano testy w [tests/test_scrolling.py](tests/test_scrolling.py) weryfikujące obecność symboli `BAKE_PENDING` i `EXECUTE_PENDING_BAKE` oraz poprawne odroczenie wypieku i wykonanie w wolnej klatce.
+  - Wszystkie 126 testów py65 zakończone sukcesem (`126 passed`), mapa pamięci w pełni zweryfikowana.
+
 ## [2026-09-16] - Likwidacja szarpania obrazu (Jitter) poprzez synchronizację fazową HSCROL i LMS w VBLANK
 - **Problem**: Po wdrożeniu podwójnego buforowania VRAM pojawiło się gwałtowne migotanie i szarpanie obrazu (skoki o 3-4 zegary koloru w tył i w przód co kilka klatek na granicach kolumn) oraz niestabilność wynikająca z mid-frame zapisu do rejestru sprzętowego `HSCROL`.
 - **Przyczyna**: 
