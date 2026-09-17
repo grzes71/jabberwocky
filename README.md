@@ -29,10 +29,10 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
 
 - **Klasyczny target 6502**: Kod zoptymalizowany pod architekturę Atari XL/XE z zachowaniem oficjalnego zestawu instrukcji MOS 6502 oraz ścisłych reguł taktowania cykli i stron pamięci.
 - **Wielostanowa maszyna stanów**:
-  - `STATE_TITLE`: Ekran tytułowy w wysokiej rozdzielczości bitmapowej ze sprzętowym scroll-tickerem.
-  - `STATE_INTRO`: Scena narracyjna z poematem, polską czcionką i gradientami DLI.
+  - `STATE_INTRO`: Scena narracyjna z poematem, polską czcionką i gradientami DLI (wyświetlana jednorazowo przy uruchomieniu gry, po czym następuje przejście do ekranu tytułowego).
+  - `STATE_TITLE`: Główny ekran tytułowy w wysokiej rozdzielczości bitmapowej ze sprzętowym scroll-tickerem; naciśnięcie FIRE uruchamia bezpośrednio rozgrywkę.
   - `STATE_GAME`: Główny ekran rozgrywki z animowaną postacią smoka, zianiem ogniem, inercją i płynnym przewijaniem świata.
-  - `STATE_GAME_OVER`: Ekran zakończenia obsługujący porażkę (utrata żyć, wyczerpanie energii smoka) oraz stan **VICTORY** po ukończeniu wszystkich poziomów labiryntu.
+  - `STATE_GAME_OVER`: Ekran zakończenia obsługujący porażkę (utrata żyć, wyczerpanie energii smoka) oraz stan **VICTORY** po ukończeniu wszystkich poziomów; naciśnięcie FIRE wraca bezpośrednio do `STATE_TITLE` (scena intro nie jest ponownie wyświetlana).
 - **Zaawansowane wykorzystanie ANTIC & GTIA**:
   - **Tryb ANTIC F** (320×175, 1 bpp) na ekranie tytułowym z podziałem LMS (Load Memory Scan) omijającym granicę 4 KB bufora ekranu.
   - **Tryb ANTIC 2** (40×24 znakowy) w scenie Intro z przerwaniami **DLI (Display List Interrupt)** dynamicznie modyfikującymi rejestry koloru tekstu w locie linii rastra.
@@ -63,17 +63,17 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
 ---
 
 ## Architektura silnika
-
+ 
 ```
        [ main.asm ]
             │
     ┌───────┴───────┐
     │  State Engine │ (Pętla główna zsynchronizowana z VBLANK RTCLOK)
     └───────┬───────┘
-            ├── STATE_TITLE     --> scenes/title.asm     (ANTIC Mode F + Mode 2 scroll)
-            ├── STATE_INTRO     --> scenes/intro.asm     (ANTIC Mode 2 + DLI)
-            ├── STATE_GAME      --> scenes/game.asm      (ANTIC 5 HSCROL + ANTIC 2 + PMG)
-            └── STATE_GAME_OVER --> scenes/gameover.asm  (ANTIC Mode 2 / Defeat & Victory)
+            ├── 1. STARTUP      --> scenes/intro.asm     (ANTIC Mode 2 + DLI, jednorazowo)
+            ├── 2. STATE_TITLE  --> scenes/title.asm     (ANTIC Mode F + Mode 2 scroll)
+            ├── 3. STATE_GAME   --> scenes/game.asm      (ANTIC 5 HSCROL + ANTIC 2 + PMG)
+            └── 4. GAME_OVER    --> scenes/gameover.asm  (Powrót do STATE_TITLE)
 ```
 
 Główna pętla gry działa w sposób deterministyczny w oparciu o synchronizację pionową (`RTCLOK`):
@@ -138,7 +138,7 @@ jabberwocky/
 ├── docs/                    # Dokumentacja i generowane raporty pamięci
 │   ├── memory_map.txt       # Czytelne podsumowanie mapy pamięci i wolnej przestrzeni
 │   └── memory_map.json      # Maszynowy model alokacji segmentów
-├── tests/                   # Zestaw 127 testów jednostkowych i emulacyjnych py65 (pytest)
+├── tests/                   # Zestaw 132 testów jednostkowych i emulacyjnych py65 (pytest)
 └── gen/                     # Pliki generowane automatycznie (nie edytować!)
 ```
 
@@ -292,7 +292,7 @@ Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w p
 
 ## Testy
 
-Projekt posiada **127 zautomatyzowanych testów** weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
+Projekt posiada **132 zautomatyzowane testy** weryfikujące poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
 - Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
 - Testy spójności modeli danych, kolorów, walidatorów `world/` oraz edytorów GUI (Studio).
 - Testy emulacyjne 6502 (py65) weryfikujące:

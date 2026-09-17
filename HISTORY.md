@@ -2,6 +2,24 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Zmiana kolejności scen: Jednorazowe Intro na starcie gry i bezpośredni Title Screen po Game Over
+- **Cel**: Po uruchomieniu gry użytkownik najpierw widzi scenę wprowadzającą z wierszem (Intro), która wyświetla się jednorazowo. Po jej zakończeniu następuje przejście do ekranu tytułowego (Title Screen), skąd przycisk FIRE uruchamia bezpośrednio grę. Po stanie GAME OVER powrót następuje bezpośrednio do ekranu tytułowego (Intro nie jest już pokazywane).
+- **Wprowadzone modyfikacje**:
+  - [main.asm](main.asm):
+    - W procedurze inicjalizacji maszyny stanów zmieniono stan początkowy z `STATE_TITLE` na `STATE_INTRO` (`lda #STATE_INTRO; sta game_state`).
+    - Zaktualizowano domyślną wartość zmiennej `game_state dta STATE_INTRO`.
+  - [scenes/intro.asm](scenes/intro.asm):
+    - W procedurze `intro_run` po zakończeniu wygaszania tekstu (`intro_fade_mode == FADE_MODE_DONE`) w podprocedurze `@transition_title` zmieniono stan docelowy z `STATE_GAME` na `STATE_TITLE` (`lda #STATE_TITLE; sta game_state`).
+  - [scenes/title.asm](scenes/title.asm):
+    - W procedurze `title_run` po naciśnięciu przycisku FIRE zmieniono stan docelowy z `STATE_INTRO` na `STATE_GAME` (`lda #STATE_GAME; sta game_state`).
+  - [scenes/gameover.asm](scenes/gameover.asm):
+    - Zweryfikowano procedurę `gameover_run` — po naciśnięciu FIRE poprawnie przełącza stan na `STATE_TITLE` (`lda #STATE_TITLE; sta game_state`), co w połączeniu ze zmianą w `title_run` całkowicie omija Intro przy powrocie z końca gry.
+  - [tests/test_scene_flow.py](tests/test_scene_flow.py):
+    - Dodano dedykowany zestaw 5 testów py65 weryfikujących: stan początkowy `STATE_INTRO`, przejście z Intro do Title, przejście z Title do Game, powrót z Game Over do Title oraz pełną pętlę potwierdzającą brak ponownego wejścia do Intro.
+  - [README.md](README.md):
+    - Zaktualizowano opis i diagram maszyny stanów oraz liczbę testów (132 testy).
+  - Weryfikacja: `make all` oraz pełen zestaw 132 testów (`pytest tests`) zakończone sukcesem.
+
 ## [2026-09-17] - Aktualizacja dokumentacji projektu (README.md)
 - **Zakres weryfikacji**: Przegląd pliku [README.md](README.md) pod kątem zgodności z aktualną architekturą silnika, potokiem budowania, alokacją pamięci oraz stanem testów.
 - **Wprowadzone aktualizacje**:

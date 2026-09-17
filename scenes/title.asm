@@ -145,7 +145,7 @@ title_run
     lda #$40                    ; VBLANK only, DLI disabled
     sta NMIEN
 
-    lda #STATE_INTRO
+    lda #STATE_GAME
     sta game_state
 @   rts
 

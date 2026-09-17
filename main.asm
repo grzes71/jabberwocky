@@ -86,7 +86,7 @@ start
     sta CHBAS
 
     ; Initialize state machine
-    lda #STATE_TITLE
+    lda #STATE_INTRO
     sta game_state
     lda #$FF
     sta prev_state
@@ -169,7 +169,7 @@ call_target
     jmp (jmp_target)
 
 ; ---- State Machine Variables & Jump Tables ----
-game_state      dta STATE_TITLE
+game_state      dta STATE_INTRO
 prev_state      dta $FF
 fire_pressed    dta 0
 prev_trig       dta 0

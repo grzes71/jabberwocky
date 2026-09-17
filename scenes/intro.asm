@@ -113,10 +113,10 @@ intro_init
     rts
 
 intro_run
-    ; Check if fade out is complete -> transition to game
+    ; Check if fade out is complete -> transition to title screen
     lda intro_fade_mode
     cmp #FADE_MODE_DONE
-    beq @transition_game
+    beq @transition_title
 
     ; Check if player pressed FIRE button
     lda fire_pressed
@@ -141,7 +141,7 @@ intro_run
     sta intro_fade_timer
     rts
 
-@transition_game
+@transition_title
     ; Disable DLI before leaving scene
     lda #$40                    ; VBLANK only, DLI disabled
     sta NMIEN
@@ -154,7 +154,7 @@ intro_run
 
     lda #0
     sta fire_pressed
-    lda #STATE_GAME
+    lda #STATE_TITLE
     sta game_state
 
 @run_done
