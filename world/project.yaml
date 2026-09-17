@@ -1189,6 +1189,14 @@ screens:
     packed_xy: 115
   - code: 118
     packed_xy: 68
+  - code: 95
+    packed_xy: 139
+  - code: 53
+    packed_xy: 174
+  - code: 53
+    packed_xy: 175
+  - code: 53
+    packed_xy: 6
 - id: CITY_02
   objects:
   - code: 55
@@ -1231,8 +1239,6 @@ screens:
     packed_xy: 66
   - code: 9
     packed_xy: 0
-  - code: 9
-    packed_xy: 73
   - code: 7
     packed_xy: 82
   - code: 62
@@ -1249,18 +1255,8 @@ screens:
     packed_xy: 46
   - code: 32
     packed_xy: 14
-  - code: 54
-    packed_xy: 72
-  - code: 54
-    packed_xy: 71
-  - code: 54
-    packed_xy: 70
   - code: 127
     packed_xy: 17
-  - code: 104
-    packed_xy: 164
-  - code: 82
-    packed_xy: 2
   - code: 197
     packed_xy: 133
   - code: 52
@@ -1274,35 +1270,39 @@ screens:
   - code: 164
     packed_xy: 6
   - code: 125
-    packed_xy: 75
-  - code: 125
     packed_xy: 76
   - code: 118
     packed_xy: 81
+  - code: 40
+    packed_xy: 71
+  - code: 40
+    packed_xy: 72
+  - code: 40
+    packed_xy: 73
+  - code: 40
+    packed_xy: 70
+  - code: 82
+    packed_xy: 74
+  - code: 182
+    packed_xy: 164
 - id: CITY_03
   objects:
   - code: 110
-    packed_xy: 74
+    packed_xy: 73
   - code: 147
     packed_xy: 132
   - code: 149
-    packed_xy: 14
+    packed_xy: 0
   - code: 186
-    packed_xy: 143
+    packed_xy: 141
   - code: 184
     packed_xy: 4
   - code: 72
-    packed_xy: 0
-  - code: 74
-    packed_xy: 67
+    packed_xy: 18
   - code: 7
     packed_xy: 9
   - code: 51
-    packed_xy: 142
-  - code: 51
     packed_xy: 135
-  - code: 95
-    packed_xy: 136
   - code: 95
     packed_xy: 17
   - code: 95
@@ -1310,61 +1310,51 @@ screens:
   - code: 178
     packed_xy: 129
   - code: 95
-    packed_xy: 13
+    packed_xy: 145
   - code: 48
     packed_xy: 11
   - code: 48
     packed_xy: 171
   - code: 48
-    packed_xy: 179
+    packed_xy: 178
   - code: 48
-    packed_xy: 19
+    packed_xy: 162
   - code: 48
     packed_xy: 163
   - code: 48
-    packed_xy: 2
-  - code: 48
-    packed_xy: 104
+    packed_xy: 172
   - code: 182
     packed_xy: 96
-  - code: 182
-    packed_xy: 105
-  - code: 182
-    packed_xy: 173
   - code: 182
     packed_xy: 169
   - code: 182
     packed_xy: 12
   - code: 11
     packed_xy: 10
-  - code: 40
-    packed_xy: 100
-  - code: 40
-    packed_xy: 99
-  - code: 40
-    packed_xy: 101
-  - code: 40
-    packed_xy: 108
-  - code: 40
-    packed_xy: 110
-  - code: 40
-    packed_xy: 111
-  - code: 40
-    packed_xy: 112
-  - code: 40
-    packed_xy: 113
-  - code: 40
-    packed_xy: 109
-  - code: 128
-    packed_xy: 114
   - code: 202
-    packed_xy: 83
+    packed_xy: 14
   - code: 53
     packed_xy: 170
-  - code: 128
-    packed_xy: 102
-  - code: 82
-    packed_xy: 98
+  - code: 129
+    packed_xy: 67
+  - code: 129
+    packed_xy: 71
+  - code: 54
+    packed_xy: 68
+  - code: 54
+    packed_xy: 69
+  - code: 54
+    packed_xy: 70
+  - code: 126
+    packed_xy: 76
+  - code: 126
+    packed_xy: 80
+  - code: 54
+    packed_xy: 77
+  - code: 54
+    packed_xy: 78
+  - code: 54
+    packed_xy: 79
 - id: CITY_04
   objects:
   - code: 132
@@ -1431,6 +1421,8 @@ screens:
     packed_xy: 96
   - code: 182
     packed_xy: 97
+  - code: 53
+    packed_xy: 82
 - id: CITY_05
   objects:
   - code: 134
@@ -1450,7 +1442,7 @@ screens:
   - code: 167
     packed_xy: 0
   - code: 99
-    packed_xy: 11
+    packed_xy: 42
   - code: 51
     packed_xy: 130
   - code: 51
@@ -1468,7 +1460,7 @@ screens:
   - code: 7
     packed_xy: 78
   - code: 7
-    packed_xy: 69
+    packed_xy: 101
   - code: 65
     packed_xy: 129
   - code: 201
@@ -1565,6 +1557,8 @@ screens:
     packed_xy: 18
   - code: 182
     packed_xy: 16
+  - code: 53
+    packed_xy: 76
 - id: CITY_07
   objects:
   - code: 87
@@ -1655,6 +1649,14 @@ screens:
     packed_xy: 11
   - code: 48
     packed_xy: 171
+  - code: 53
+    packed_xy: 79
+  - code: 118
+    packed_xy: 14
+  - code: 118
+    packed_xy: 140
+  - code: 118
+    packed_xy: 0
 - id: CITY_08
   objects:
   - code: 5
@@ -1691,18 +1693,6 @@ screens:
     packed_xy: 128
   - code: 194
     packed_xy: 144
-  - code: 180
-    packed_xy: 100
-  - code: 180
-    packed_xy: 68
-  - code: 180
-    packed_xy: 36
-  - code: 180
-    packed_xy: 41
-  - code: 180
-    packed_xy: 73
-  - code: 180
-    packed_xy: 105
   - code: 29
     packed_xy: 65
   - code: 29
@@ -1757,6 +1747,18 @@ screens:
     packed_xy: 0
   - code: 29
     packed_xy: 1
+  - code: 138
+    packed_xy: 36
+  - code: 138
+    packed_xy: 68
+  - code: 138
+    packed_xy: 100
+  - code: 205
+    packed_xy: 41
+  - code: 205
+    packed_xy: 73
+  - code: 205
+    packed_xy: 105
 labyrinths:
 - id: LEVEL_01
   name: 'POZIOM 1 : Chmurny Gród'

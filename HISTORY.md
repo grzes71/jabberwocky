@@ -2,6 +2,12 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Aktualizacja układu obiektów i ekranów w definicji świata gry
+- **Modyfikacje**:
+  - [world/project.yaml](world/project.yaml): Zaktualizowano definicje obiektów na ekranach `CITY_01`–`CITY_08` poziomu 1 (`LEVEL_01 : Chmurny Gród`) za pomocą Labirynt Studio.
+  - Rekompilacja struktur SoA danych świata (`gen/world_data.asm` oraz `gen/world_obj_tiles.asm`) przez [scripts/labirynt_builder.py](scripts/labirynt_builder.py).
+  - Weryfikacja: pomyślna asemblacja (`make all`), brak kolizji pamięci w [docs/memory_map.txt](docs/memory_map.txt) oraz 132 testy zaliczone pomyślnie (`132 passed`).
+
 ## [2026-09-17] - Zmiana kolejności scen: Jednorazowe Intro na starcie gry i bezpośredni Title Screen po Game Over
 - **Cel**: Po uruchomieniu gry użytkownik najpierw widzi scenę wprowadzającą z wierszem (Intro), która wyświetla się jednorazowo. Po jej zakończeniu następuje przejście do ekranu tytułowego (Title Screen), skąd przycisk FIRE uruchamia bezpośrednio grę. Po stanie GAME OVER powrót następuje bezpośrednio do ekranu tytułowego (Intro nie jest już pokazywane).
 - **Wprowadzone modyfikacje**:
