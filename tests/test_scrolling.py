@@ -87,33 +87,57 @@ def test_scrolling_symbols_exist(labels: Dict[str, int]):
         "SCROLL_ACCUM_LO",
         "SCROLL_ACCUM_HI",
         "HSCROL_FINE",
+        "HSCROL_NEXT",
         "INCOMING_SCREEN_PTR",
+        "GAME_ACTION_VRAM_B",
+        "ACTIVE_VRAM_BUF",
+        "VRAM_SWAP_PENDING",
+        "VBLANK_GAME",
+        "DLIST_GAME_ACTION_LMS",
     ]
     for sym in expected_symbols:
         assert sym in labels, f"Expected symbol {sym} not found in label table"
 
 
 def test_shift_vram_left_emulation(project_root: Path, labels: Dict[str, int]):
-    """Test that shift_vram_left shifts all 11 rows of 48 bytes left by 1 column."""
+    """Test that shift_vram_left shifts all 11 rows of 48 bytes left by 1 column into back buffer."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    vram_addr = labels["GAME_ACTION_VRAM"]
+    vram_a = labels["GAME_ACTION_VRAM"]
+    vram_b = labels["GAME_ACTION_VRAM_B"]
 
-    # Fill 11 rows (528 bytes, 48 bytes per row) with distinct recognizable byte pattern
+    # 1. Test Buffer A -> Buffer B shift (ACTIVE_VRAM_BUF = 0)
+    mpu.memory[labels["ACTIVE_VRAM_BUF"]] = 0
     for r in range(11):
         for c in range(48):
-            mpu.memory[vram_addr + r * 48 + c] = (r * 48 + c + 1) & 0xFF
+            mpu.memory[vram_a + r * 48 + c] = (r * 48 + c + 1) & 0xFF
+            mpu.memory[vram_b + r * 48 + c] = 0x00
 
     run_subroutine(mpu, labels["SHIFT_VRAM_LEFT"])
 
-    # Verify that columns 0..46 shifted left by 1 column
+    # Verify that Buffer A was untouched (no tearing!) and Buffer B contains shifted bytes
     for r in range(11):
         for c in range(47):
             expected = (r * 48 + (c + 1) + 1) & 0xFF
-            actual = mpu.memory[vram_addr + r * 48 + c]
-            assert actual == expected, f"Row {r} col {c}: expected {expected}, got {actual}"
+            actual = mpu.memory[vram_b + r * 48 + c]
+            assert actual == expected, f"A->B: Row {r} col {c}: expected {expected}, got {actual}"
+
+    # 2. Test Buffer B -> Buffer A shift (ACTIVE_VRAM_BUF = 1)
+    mpu.memory[labels["ACTIVE_VRAM_BUF"]] = 1
+    for r in range(11):
+        for c in range(48):
+            mpu.memory[vram_b + r * 48 + c] = (r * 48 + c + 5) & 0xFF
+            mpu.memory[vram_a + r * 48 + c] = 0x00
+
+    run_subroutine(mpu, labels["SHIFT_VRAM_LEFT"])
+
+    for r in range(11):
+        for c in range(47):
+            expected = (r * 48 + (c + 1) + 5) & 0xFF
+            actual = mpu.memory[vram_a + r * 48 + c]
+            assert actual == expected, f"B->A: Row {r} col {c}: expected {expected}, got {actual}"
 
 
 def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]):
@@ -173,14 +197,17 @@ def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[s
 
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 5
 
-    # Check that column 47 in each row equals column 4 from screen 1 (Buffer B)
+    # Check that column 47 in each row equals column 4 from screen 1
     screen0_blk = labels["SCREEN_BUF_A_BLK"]
     screen1_vram = labels["SCREEN_BUF_B_VRAM"]
-    action_vram = labels["GAME_ACTION_VRAM"]
+    # With double buffering, SCROLL_PLAYFIELD_STEP writes to the back buffer (Buffer B when active is 0)
+    dst_vram = labels["GAME_ACTION_VRAM_B"] if mpu.memory[labels["ACTIVE_VRAM_BUF"]] == 0 else labels["GAME_ACTION_VRAM"]
     for r in range(11):
         expected_char = mpu.memory[screen1_vram + r * 40 + 4]  # col 4 of row r
-        actual_char = mpu.memory[action_vram + r * 48 + 47]  # col 47 of row r
+        actual_char = mpu.memory[dst_vram + r * 48 + 47]  # col 47 of row r
         assert actual_char == expected_char, f"Row {r} col 47: expected {expected_char}, got {actual_char}"
+
+    assert mpu.memory[labels["VRAM_SWAP_PENDING"]] == 1
 
     # Check that dragon blocking columns shifted: col 8 gets col 5, col 9 gets col 6 of Screen 0
     col8_base = labels["BLOCKING_COL8"]
@@ -205,20 +232,49 @@ def test_update_world_scrolling_fine_scroll(project_root: Path, labels: Dict[str
 
     # Frame 1: accum = $0100, fine scroll = 3 - 1 = 2
     run_subroutine(mpu, labels["UPDATE_WORLD_SCROLLING"])
-    assert mpu.memory[labels["HSCROL_FINE"]] == 2
+    assert mpu.memory[labels["HSCROL_NEXT"]] == 2
 
     # Frame 2: accum = $0200, fine scroll = 3 - 2 = 1
     run_subroutine(mpu, labels["UPDATE_WORLD_SCROLLING"])
-    assert mpu.memory[labels["HSCROL_FINE"]] == 1
+    assert mpu.memory[labels["HSCROL_NEXT"]] == 1
 
     # Frame 3: accum = $0300, fine scroll = 3 - 3 = 0
     run_subroutine(mpu, labels["UPDATE_WORLD_SCROLLING"])
-    assert mpu.memory[labels["HSCROL_FINE"]] == 0
+    assert mpu.memory[labels["HSCROL_NEXT"]] == 0
 
     # Frame 4: accum reaches $0400 (threshold) -> coarse shift, fine scroll wraps to 3
     run_subroutine(mpu, labels["UPDATE_WORLD_SCROLLING"])
-    assert mpu.memory[labels["HSCROL_FINE"]] == 3
+    assert mpu.memory[labels["HSCROL_NEXT"]] == 3
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 5  # Coarse step advanced col idx from 4 to 5
+    assert mpu.memory[labels["VRAM_SWAP_PENDING"]] == 1
+
+
+def test_vblank_game_commits_hscrol_and_lms_swap(project_root: Path, labels: Dict[str, int]):
+    """Test that vblank_game atomically commits hscrol_fine = hscrol_next and swaps LMS pointer."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+
+    # Mock XITVBV with RTS so vblank_game returns to py65 harness
+    xitvbv_addr = labels.get("XITVBV", 0xE462)
+    mpu.memory[xitvbv_addr] = 0x60
+
+    # Set up pending swap and next HSCROL
+    mpu.memory[labels["HSCROL_FINE"]] = 0
+    mpu.memory[labels["HSCROL_NEXT"]] = 3
+    mpu.memory[labels["VRAM_SWAP_PENDING"]] = 1
+    mpu.memory[labels["ACTIVE_VRAM_BUF"]] = 0
+
+    run_subroutine(mpu, labels["VBLANK_GAME"])
+
+    assert mpu.memory[labels["HSCROL_FINE"]] == 3
+    assert mpu.memory[labels["ACTIVE_VRAM_BUF"]] == 1
+    lms_addr = labels["DLIST_GAME_ACTION_LMS"]
+    assert mpu.memory[lms_addr + 2] == (labels["GAME_ACTION_VRAM_B"] >> 8)
+    assert mpu.memory[labels["VRAM_SWAP_PENDING"]] == 0
 
 
 def test_level_completion_and_victory_transition(project_root: Path, labels: Dict[str, int]):

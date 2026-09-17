@@ -2,6 +2,37 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-16] - Likwidacja szarpania obrazu (Jitter) poprzez synchronizację fazową HSCROL i LMS w VBLANK
+- **Problem**: Po wdrożeniu podwójnego buforowania VRAM pojawiło się gwałtowne migotanie i szarpanie obrazu (skoki o 3-4 zegary koloru w tył i w przód co kilka klatek na granicach kolumn) oraz niestabilność wynikająca z mid-frame zapisu do rejestru sprzętowego `HSCROL`.
+- **Przyczyna**: 
+  1. Desynchronizacja fazowa (1-klatkowa rozbieżność): procedura `update_world_scrolling` w pętli głównej natychmiast nadpisywała zmienną `hscrol_fine = 3` dla bieżącej klatki, podczas gdy zamiana wskaźnika LMS w Display List (`dlist_game_action_lms + 2`) następowała dopiero w kolejnym przerwaniu VBLANK (`vblank_game`). W efekcie przez całą jedną klatkę ANTIC wyświetlał stary bufor VRAM z nową wartością `HSCROL = 3`, powodując gwałtowny skok obrazu o 6-8 pikseli w tył, a w kolejnej klatce (po zamianie LMS) skok do przodu.
+  2. Zapis sprzętowego rejestru `HSCROL` ($D404) odbywał się w przerwaniach DLI w trakcie aktywnego rastra (`dli_game_action` na linii 32 oraz wielokrotne zerowanie w `dli_game_top` i `dli_game_bottom`), co powodowało niepotrzebne przełączanie stanu rejestru w trakcie generowania obrazu i mikro-drgania cykli.
+- **Rozwiązanie ([scenes/game.asm](scenes/game.asm), [tests/test_scrolling.py](tests/test_scrolling.py))**:
+  - Wprowadzono zmienną buforującą `hscrol_next` w [scenes/game.asm](scenes/game.asm).
+  - W procedurze `update_world_scrolling` obliczona wartość przewijania zapisywana jest do `hscrol_next` zamiast bezpośrednio do rejestru roboczego `hscrol_fine`.
+  - W przerwaniu VBLANK `vblank_game` sprzężono atomowo: przepisanie `hscrol_fine = hscrol_next`, **bezpośredni zapis do rejestru sprzętowego `sta HSCROL` ($D404)** oraz przełączenie wskaźnika LMS Display List (`dlist_game_action_lms + 2`). Wartości sprzętowe wpisywane są w wygaszaniu pionowym, gdy ANTIC nie pobiera linii obrazu.
+  - Usunięto zbędne i szkodliwe zapisy `sta HSCROL` z przerwań linii `dli_game_top`, `dli_game_action` oraz `dli_game_bottom` (linie pasków statusu nie mają ustawionego bitu `DL_HSCROL`, więc ANTIC ich nie przesuwa niezależnie od wartości w rejestrze).
+  - Zaktualizowano procedury `game_init` oraz `init_level_screens`, inicjalizując `hscrol_next = 3` i `HSCROL = 3`.
+  - W [tests/test_scrolling.py](tests/test_scrolling.py) dodano test jednostkowy `test_vblank_game_commits_hscrol_and_lms_swap` oraz zaktualizowano asercje na `HSCROL_NEXT`.
+  - Wszystkie 125 testów py65 zakończone sukcesem (`125 passed`), walidacja mapy pamięci w `make all` potwierdzona.
+
+
+## [2026-09-16] - Eliminacja rwania obrazu (Screen Tearing) poprzez sprzętowe podwójne buforowanie VRAM (Double Buffering)
+- **Problem**: Podczas przewijania poziomu na ekranie widoczne było szarpanie i poziome rozrywanie obrazu (screen tearing) występujące regularnie co ~5 klatek przy przesunięciu o kolejną kolumnę.
+- **Przyczyna**: Pętla `shift_vram_left` w [scenes/game.asm](scenes/game.asm) (~5000 cykli CPU, ~70 linii rastra) modyfikowała bezpośrednio bufor `GAME_ACTION_VRAM` w trakcie aktywnej generacji obrazu ANTIC, powodując wyświetlanie połówkowo przesuniętych danych przez wiązkę elektronów.
+- **Rozwiązanie ([main.asm](main.asm), [scenes/game.asm](scenes/game.asm), [engine/flame_collision.asm](engine/flame_collision.asm), [tests/test_scrolling.py](tests/test_scrolling.py))**:
+  - Zaalokowano drugi bufor pola gry `GAME_ACTION_VRAM_B = $6400` ($6400–$660F, 528 B) w obszarze dawnego bufora `BLOCKING_VRAM`.
+  - Wprowadzono zmienne kontrolne `active_vram_buf` (0/1), `vram_swap_pending` oraz tablicę starszych bajtów buforów `vram_hi_tbl` ($60, $64).
+  - Nadano etykietę `dlist_game_action_lms` dla instrukcji LMS pola akcji w Display List [main.asm](main.asm).
+  - Przebudowano procedurę `shift_vram_left` na dwa dedykowane, zoptymalizowane warianty: `shift_vram_a_to_b` oraz `shift_vram_b_to_a` (odliczanie w dół `DEX/BPL`), czytające z bufora wyświetlanego (`VRAM_FRONT`) i zapisujące do bufora tylnego (`VRAM_BACK`), eliminując zakłócenia aktywnego rastra.
+  - Zaktualizowano procedurę strumieniowania `@stream_screen_col` oraz czyszczenia ogona `level_tail_cols` w [scenes/game.asm](scenes/game.asm), aby kierowały zapis kolumny 47 do bufora tylnego oraz ustawiały flagę `vram_swap_pending = 1`.
+  - W przerwaniu VBLANK `vblank_game` w [scenes/game.asm](scenes/game.asm) dodano atomowe przełączanie wskaźnika LMS w Display List (`sta dlist_game_action_lms + 2`) oraz negację flagi `active_vram_buf` (zajmujące ~20 cykli CPU).
+  - W procedurze `erase_cur_object` w [engine/flame_collision.asm](engine/flame_collision.asm) zapewniono jednoczesne wymazywanie niszczonych przeszkód i zbieranych sekretów z obu buforów VRAM (`$6000` i `$6400`), zapobiegając desynchronizacji obiektów między buforami.
+  - W procedurze `init_level_screens` w [scenes/game.asm](scenes/game.asm) dodano czyszczenie i synchronizację obu buforów A i B przy starcie poziomu.
+  - Przeniesiono moduł `scenes/gameover.asm` do segmentu `LOW_CODE_ADDR` ($080B–$1FA9), zwalniając 530 bajtów w segmencie `CODE_ADDR` ($2800–$3E32) i zapewniając 461 bajtów wolnego marginesu przed adresem `$4000`.
+  - Zaktualizowano testy [tests/test_scrolling.py](tests/test_scrolling.py), weryfikując poprawne działanie obu kierunków przesunięcia oraz strumieniowania do bufora docelowego.
+  - Wszystkie 124 testy py65 zaliczone (`124 passed in 18.40s`), pełna weryfikacja mapy pamięci w `make all`.
+
 ## [2026-09-16] - Naprawa odnawiania się zebranych obiektów secret po śmierci smoka (Respawn Persistence)
 - **Problem**: Gdy smok zebrał obiekty typu `secret`, a następnie zginął i poziom rozpoczynał się od nowa, zebrane wcześniej sekrety pojawiały się ponownie na planszy (umożliwiając wielokrotne zbieranie tych samych bonusów).
 - **Przyczyna**: Procedura `respawn_dragon` w [scenes/game.asm](scenes/game.asm) wywoływała procedurę `init_flame_collision`, która zerowała całą 256-bajtową tablicę bitmasek `screen_obj_destroyed`. Gdy po zresetowaniu parametrów smoka wywoływana była procedura `init_level_screens` -> `bake_screen`, z powodu wyczyszczonej maski `screen_obj_destroyed` silnik traktował wszystkie obiekty jako niezebrane/żywe i wypiekał je na nowo do bufora VRAM i kolizji.

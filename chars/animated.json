@@ -140,13 +140,13 @@
                     "repeat": 0,
                     "frames": [
                         {
-                            "duration": 40,
+                            "duration": 100,
                             "data": "00 00 00 00 00 00 00 00"
                         }
                     ]
                 },
                 {
-                    "repeat": 10,
+                    "repeat": 2,
                     "frames": [
                         {
                             "duration": 5,

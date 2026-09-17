@@ -103,8 +103,6 @@ screens:
     packed_xy: 165
   - code: 92
     packed_xy: 173
-  - code: 92
-    packed_xy: 19
   - code: 117
     packed_xy: 7
   - code: 117
@@ -125,6 +123,8 @@ screens:
     packed_xy: 168
   - code: 22
     packed_xy: 129
+  - code: 127
+    packed_xy: 19
 - id: FOREST_03
   objects:
   - code: 11
@@ -177,6 +177,8 @@ screens:
     packed_xy: 83
   - code: 118
     packed_xy: 71
+  - code: 127
+    packed_xy: 19
 - id: FOREST_04
   objects:
   - code: 51
@@ -235,6 +237,8 @@ screens:
     packed_xy: 138
   - code: 51
     packed_xy: 128
+  - code: 127
+    packed_xy: 19
 - id: FOREST_05
   objects:
   - code: 115
@@ -307,6 +311,8 @@ screens:
     packed_xy: 47
   - code: 118
     packed_xy: 13
+  - code: 127
+    packed_xy: 147
 - id: FOREST_06
   objects:
   - code: 194
@@ -373,6 +379,8 @@ screens:
     packed_xy: 108
   - code: 51
     packed_xy: 42
+  - code: 127
+    packed_xy: 51
 - id: FOREST_07
   objects:
   - code: 56
@@ -433,6 +441,8 @@ screens:
     packed_xy: 65
   - code: 118
     packed_xy: 5
+  - code: 127
+    packed_xy: 51
 - id: FOREST_08
   objects:
   - code: 62
@@ -1752,17 +1762,6 @@ screens:
   - code: 29
     packed_xy: 1
 labyrinths:
-- id: LEVEL_01
-  name: 'POZIOM 1 : Chmurny Gród'
-  screens:
-  - CITY_01
-  - CITY_02
-  - CITY_03
-  - CITY_04
-  - CITY_05
-  - CITY_06
-  - CITY_07
-  - CITY_08
 - id: LEVEL_02
   name: 'POZIOM 2 : Krzaki Wytępy'
   screens:
@@ -1775,6 +1774,17 @@ labyrinths:
   - FOREST_07
   - FOREST_08
   - FOREST_09
+- id: LEVEL_01
+  name: 'POZIOM 1 : Chmurny Gród'
+  screens:
+  - CITY_01
+  - CITY_02
+  - CITY_03
+  - CITY_04
+  - CITY_05
+  - CITY_06
+  - CITY_07
+  - CITY_08
 - id: LEVEL_03
   name: 'POZIOM 3 : Błonia Tolemu'
   screens:

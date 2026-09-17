@@ -12,12 +12,13 @@ CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
 DLIST_ADDR      = $6610             ; Display lists (316 B, $6610-$674B, after BLOCKING_VRAM)
 VRAM_ADDR       = $4000
 STUB_VRAM       = $8800             ; Dedicated 960-byte text buffer ($8800-$8BBF) for Intro, Level Name, Game Over
-GAME_ACTION_VRAM = $6000            ; 528-byte action playfield ($6000-$620F, 11 lines Antic 5 with HSCROL)
-GAME_STATUS_VRAM = $6300            ; 80-byte status bar ($6300-$634F, 2 lines Antic 2)
-BLOCKING_VRAM    = $6400            ; 528-byte spatial blocking grid ($6400-$660F, 11 lines Antic 5)
-FONT_ADDR       = $5C00             ; 1024-byte font ($5C00-$5FFF, 1KB aligned)
-GAME_FONT_ADDR  = $6800             ; 1024-byte action playfield font ($6800-$6BFF, 1KB aligned)
-WORLD_DATA_ADDR = $6C00             ; World data (screens, labyrinths, objects, starts at $6C00)
+GAME_ACTION_VRAM   = $6000            ; 528-byte action playfield Buffer A ($6000-$620F, 11 lines Antic 5 with HSCROL)
+GAME_ACTION_VRAM_B = $6400            ; 528-byte action playfield Buffer B ($6400-$660F, 11 lines Antic 5 with HSCROL)
+GAME_STATUS_VRAM   = $6300            ; 80-byte status bar ($6300-$634F, 2 lines Antic 2)
+BLOCKING_VRAM      = $6400            ; Deprecated alias for Buffer B / legacy blocking grid equate
+FONT_ADDR          = $5C00             ; 1024-byte font ($5C00-$5FFF, 1KB aligned)
+GAME_FONT_ADDR     = $6800             ; 1024-byte action playfield font ($6800-$6BFF, 1KB aligned)
+WORLD_DATA_ADDR    = $6C00             ; World data (screens, labyrinths, objects, starts at $6C00)
 
 PM_ADDR         = $2000             ; 2KB aligned PMG buffer ($2000-$27FF)
 M_ADDR          = PM_ADDR + $0300   ; Missiles buffer ($2300-$23FF, 256 bytes)
@@ -67,6 +68,7 @@ engine
     icl 'gen/dragon_sprite.asm'
     icl 'scenes/text_utils.asm'
     icl 'scenes/intro.asm'
+    icl 'scenes/gameover.asm'
 
 ; ==============================================================================
 ; CODE SEGMENT
@@ -188,7 +190,6 @@ scene_run_tbl
 ; ---- Include Scene Modules ----
     icl 'scenes/title.asm'
     icl 'scenes/game.asm'
-    icl 'scenes/gameover.asm'
 
 ; ==============================================================================
 ; SCREEN MEMORY (VRAM)
@@ -276,6 +277,7 @@ dlist_game
     dta DL_BLANK2 ; 2 empty line
 
     ; Action playfield: 11 lines of ANTIC Mode 5 (48x11 with DL_HSCROL, 16 scanlines each)
+dlist_game_action_lms
     dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM)
     :10 dta DL_MODE_5 | DL_HSCROL
 

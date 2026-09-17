@@ -117,6 +117,7 @@ game_init
     sta SCROLL_SPEED+1
     lda #3
     sta hscrol_fine
+    sta hscrol_next
     sta HSCROL
 
     ; Calculate initial ANIM_SPEED = BASE_HOVER_SPEED + (0 / 4)
@@ -1100,9 +1101,6 @@ dli_game_top
     txa                         ; [2] (5)
     pha                         ; [3] (8) Save X register
 
-    lda #0                      ; Reset HSCROL for top status bar
-    sta HSCROL
-
     lda #>FONT_ADDR             ; [2] (10) Text font for status bar
     sta CHBASE                  ; [4] (14)
     lda pal_top_bk              ; [4] (18) Top status background: blue
@@ -1132,9 +1130,6 @@ dli_game_action
 
     lda #>GAME_FONT_ADDR        ; [2] (9) Action playfield character set
     sta CHBASE                  ; [4] (13)
-
-    lda hscrol_fine             ; Fine horizontal scroll for action playfield
-    sta HSCROL
 
     ; Restore Player 0 hardware registers for dragon & disable P1/P2/P3 in action area
     lda dragon_x                ; [4] (17) Player 0 position
@@ -1200,9 +1195,6 @@ dli_game_bottom
     ora M3PF
     sta flame_m_pf
     sta HITCLR                  ; Clear collision latches before bottom status bar begins
-
-    lda #0                      ; Reset HSCROL for bottom status bar
-    sta HSCROL
 
     lda #>FONT_ADDR             ; [2] (10) Restore text font for bottom status
     sta CHBASE                  ; [4] (14)
@@ -1277,6 +1269,24 @@ vblank_game
     sta VDSLST
     lda #>dli_game_top
     sta VDSLST+1
+
+    ; Synchronize action playfield HSCROL and VRAM double buffer swap atomically in VBLANK
+    lda hscrol_next
+    sta hscrol_fine
+    sta HSCROL                  ; Write directly to hardware HSCROL register during vertical blank!
+
+    ; Double buffering: swap action VRAM buffer if coarse scroll occurred
+    lda vram_swap_pending
+    beq @no_vram_swap
+    lda active_vram_buf
+    eor #$01
+    sta active_vram_buf
+    tax
+    lda vram_hi_tbl,x
+    sta dlist_game_action_lms + 2
+    lda #0
+    sta vram_swap_pending
+@no_vram_swap
 
     ; Restore Player registers at start of frame
     lda dragon_x
@@ -2246,8 +2256,14 @@ init_level_screens
     sta level_tail_cols
     sta scroll_accum_lo
     sta scroll_accum_hi
+    sta active_vram_buf
+    sta vram_swap_pending
+    lda #>GAME_ACTION_VRAM
+    sta dlist_game_action_lms + 2
     lda #3
     sta hscrol_fine
+    sta hscrol_next
+    sta HSCROL
 
     ; Reset staging buffer pointers to initial configuration
     lda #<screen_buf_a_vram
@@ -2275,17 +2291,20 @@ init_level_screens
     lda labyrinths_screen_count,x
     sta lab_total_screens
 
-    ; Clear entire 528 bytes of GAME_ACTION_VRAM ($6000..$620F)
+    ; Clear entire 528 bytes of Buffer A ($6000..$620F) and Buffer B ($6400..$660F)
     ldx #0
     lda #0
 @clr_vram_loop
     sta GAME_ACTION_VRAM,x
     sta GAME_ACTION_VRAM + 256,x
+    sta GAME_ACTION_VRAM_B,x
+    sta GAME_ACTION_VRAM_B + 256,x
     inx
     bne @clr_vram_loop
     ldx #15
 @clr_vram_tail
     sta GAME_ACTION_VRAM + 512,x
+    sta GAME_ACTION_VRAM_B + 512,x
     dex
     bpl @clr_vram_tail
 
@@ -2381,7 +2400,7 @@ init_level_screens
     ; Next incoming column to stream is col 4
     lda #4
     sta incoming_col_idx
-    rts
+    jmp @sync_vram_b
 
 @init_single_screen
     ; Only 1 screen: enter tail mode immediately
@@ -2389,6 +2408,23 @@ init_level_screens
     sta level_tail_cols
     lda #0
     sta incoming_col_idx
+
+@sync_vram_b
+    ; Copy initial Buffer A ($6000..$620F) to Buffer B ($6400..$660F)
+    ldx #0
+@sync_vram_b_loop
+    lda GAME_ACTION_VRAM,x
+    sta GAME_ACTION_VRAM_B,x
+    lda GAME_ACTION_VRAM + 256,x
+    sta GAME_ACTION_VRAM_B + 256,x
+    inx
+    bne @sync_vram_b_loop
+    ldx #15
+@sync_vram_b_tail
+    lda GAME_ACTION_VRAM + 512,x
+    sta GAME_ACTION_VRAM_B + 512,x
+    dex
+    bpl @sync_vram_b_tail
     rts
 
 setup_incoming_screen_ptr
@@ -2453,44 +2489,76 @@ update_world_scrolling
     ; Compute fine scroll value for HSCROL:
     ; In ANTIC Mode 5, fine scroll is 0..3 color clocks.
     ; Moving left means HSCROL steps 3 -> 2 -> 1 -> 0
-    ; hscrol_fine = 3 - (scroll_accum_hi & 3)
+    ; hscrol_next = 3 - (scroll_accum_hi & 3)
     lda scroll_accum_hi
     and #$03
     sta ZP_TMP
     lda #3
     sec
     sbc ZP_TMP
-    sta hscrol_fine
+    sta hscrol_next
     rts
 
 shift_vram_left
-    ldx #0
-@shift_vram_loop
+    lda active_vram_buf
+    bne shift_vram_b_to_a
+
+shift_vram_a_to_b
+    ldx #46
+@shift_loop_ab
     lda GAME_ACTION_VRAM + 1,x
-    sta GAME_ACTION_VRAM,x
+    sta GAME_ACTION_VRAM_B,x
     lda GAME_ACTION_VRAM + 49,x
-    sta GAME_ACTION_VRAM + 48,x
+    sta GAME_ACTION_VRAM_B + 48,x
     lda GAME_ACTION_VRAM + 97,x
-    sta GAME_ACTION_VRAM + 96,x
+    sta GAME_ACTION_VRAM_B + 96,x
     lda GAME_ACTION_VRAM + 145,x
-    sta GAME_ACTION_VRAM + 144,x
+    sta GAME_ACTION_VRAM_B + 144,x
     lda GAME_ACTION_VRAM + 193,x
-    sta GAME_ACTION_VRAM + 192,x
+    sta GAME_ACTION_VRAM_B + 192,x
     lda GAME_ACTION_VRAM + 241,x
-    sta GAME_ACTION_VRAM + 240,x
+    sta GAME_ACTION_VRAM_B + 240,x
     lda GAME_ACTION_VRAM + 289,x
-    sta GAME_ACTION_VRAM + 288,x
+    sta GAME_ACTION_VRAM_B + 288,x
     lda GAME_ACTION_VRAM + 337,x
-    sta GAME_ACTION_VRAM + 336,x
+    sta GAME_ACTION_VRAM_B + 336,x
     lda GAME_ACTION_VRAM + 385,x
-    sta GAME_ACTION_VRAM + 384,x
+    sta GAME_ACTION_VRAM_B + 384,x
     lda GAME_ACTION_VRAM + 433,x
-    sta GAME_ACTION_VRAM + 432,x
+    sta GAME_ACTION_VRAM_B + 432,x
     lda GAME_ACTION_VRAM + 481,x
+    sta GAME_ACTION_VRAM_B + 480,x
+    dex
+    bpl @shift_loop_ab
+    rts
+
+shift_vram_b_to_a
+    ldx #46
+@shift_loop_ba
+    lda GAME_ACTION_VRAM_B + 1,x
+    sta GAME_ACTION_VRAM,x
+    lda GAME_ACTION_VRAM_B + 49,x
+    sta GAME_ACTION_VRAM + 48,x
+    lda GAME_ACTION_VRAM_B + 97,x
+    sta GAME_ACTION_VRAM + 96,x
+    lda GAME_ACTION_VRAM_B + 145,x
+    sta GAME_ACTION_VRAM + 144,x
+    lda GAME_ACTION_VRAM_B + 193,x
+    sta GAME_ACTION_VRAM + 192,x
+    lda GAME_ACTION_VRAM_B + 241,x
+    sta GAME_ACTION_VRAM + 240,x
+    lda GAME_ACTION_VRAM_B + 289,x
+    sta GAME_ACTION_VRAM + 288,x
+    lda GAME_ACTION_VRAM_B + 337,x
+    sta GAME_ACTION_VRAM + 336,x
+    lda GAME_ACTION_VRAM_B + 385,x
+    sta GAME_ACTION_VRAM + 384,x
+    lda GAME_ACTION_VRAM_B + 433,x
+    sta GAME_ACTION_VRAM + 432,x
+    lda GAME_ACTION_VRAM_B + 481,x
     sta GAME_ACTION_VRAM + 480,x
-    inx
-    cpx #47
-    bne @shift_vram_loop
+    dex
+    bpl @shift_loop_ba
     rts
 
 scroll_playfield_step
@@ -2500,7 +2568,24 @@ scroll_playfield_step
     lda level_tail_cols
     beq @stream_screen_col
 
-    ; Tail mode: blank rightmost column ($00)
+    ; Tail mode: blank rightmost column ($00) into back buffer
+    lda active_vram_buf
+    bne @blank_buf_a
+@blank_buf_b
+    lda #0
+    sta GAME_ACTION_VRAM_B + 47
+    sta GAME_ACTION_VRAM_B + 95
+    sta GAME_ACTION_VRAM_B + 143
+    sta GAME_ACTION_VRAM_B + 191
+    sta GAME_ACTION_VRAM_B + 239
+    sta GAME_ACTION_VRAM_B + 287
+    sta GAME_ACTION_VRAM_B + 335
+    sta GAME_ACTION_VRAM_B + 383
+    sta GAME_ACTION_VRAM_B + 431
+    sta GAME_ACTION_VRAM_B + 479
+    sta GAME_ACTION_VRAM_B + 527
+    jmp @tail_blank_done
+@blank_buf_a
     lda #0
     sta GAME_ACTION_VRAM + 47
     sta GAME_ACTION_VRAM + 95
@@ -2513,6 +2598,9 @@ scroll_playfield_step
     sta GAME_ACTION_VRAM + 431
     sta GAME_ACTION_VRAM + 479
     sta GAME_ACTION_VRAM + 527
+@tail_blank_done
+    lda #1
+    sta vram_swap_pending
 
     dec level_tail_cols
     bne @tail_not_done
@@ -2523,12 +2611,104 @@ scroll_playfield_step
     rts
 
 @stream_screen_col
+    lda active_vram_buf
+    beq @stream_buf_b
+    jmp @stream_buf_a
+
+@stream_buf_b
     lda incoming_screen_ptr
     sta PTR_SRC
     lda incoming_screen_ptr+1
     sta PTR_SRC+1
 
-    ; Rows 0..5 (offsets 0..239 in source screen buffer)
+    ; Rows 0..5 (offsets 0..239 in source screen buffer) -> Buffer B col 47
+    ldy incoming_col_idx
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 47
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 95
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 143
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 191
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 239
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 287
+
+    ; Rows 6..10 (advance PTR_SRC by 240) -> Buffer B col 47
+    lda PTR_SRC
+    clc
+    adc #240
+    sta PTR_SRC
+    bcc @ptr_no_c_b
+    inc PTR_SRC+1
+@ptr_no_c_b
+    ldy incoming_col_idx
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 335
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 383
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 431
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 479
+
+    tya
+    clc
+    adc #40
+    tay
+    lda (PTR_SRC),y
+    sta GAME_ACTION_VRAM_B + 527
+    jmp @stream_col_done
+
+@stream_buf_a
+    lda incoming_screen_ptr
+    sta PTR_SRC
+    lda incoming_screen_ptr+1
+    sta PTR_SRC+1
+
+    ; Rows 0..5 (offsets 0..239 in source screen buffer) -> Buffer A col 47
     ldy incoming_col_idx
     lda (PTR_SRC),y
     sta GAME_ACTION_VRAM + 47
@@ -2568,14 +2748,14 @@ scroll_playfield_step
     lda (PTR_SRC),y
     sta GAME_ACTION_VRAM + 287
 
-    ; Rows 6..10 (advance PTR_SRC by 240)
+    ; Rows 6..10 (advance PTR_SRC by 240) -> Buffer A col 47
     lda PTR_SRC
     clc
     adc #240
     sta PTR_SRC
-    bcc @ptr_no_c
+    bcc @ptr_no_c_a
     inc PTR_SRC+1
-@ptr_no_c
+@ptr_no_c_a
     ldy incoming_col_idx
     lda (PTR_SRC),y
     sta GAME_ACTION_VRAM + 335
@@ -2607,6 +2787,10 @@ scroll_playfield_step
     tay
     lda (PTR_SRC),y
     sta GAME_ACTION_VRAM + 527
+
+@stream_col_done
+    lda #1
+    sta vram_swap_pending
 
     ; Advance incoming_col_idx
     inc incoming_col_idx
@@ -2722,7 +2906,11 @@ level_tail_cols     dta 0           ; Countdown of tail empty columns (48..0) af
 scroll_accum_lo     dta 0           ; 16-bit scroll sub-pixel accumulator (low byte)
 scroll_accum_hi     dta 0           ; 16-bit scroll sub-pixel accumulator (high byte)
 hscrol_fine         dta 3           ; Fine horizontal scroll value (0..3 color clocks) for HSCROL ($D404)
+hscrol_next         dta 3           ; Next frame staged fine scroll value (committed at VBLANK)
 incoming_screen_ptr dta a(0)        ; 16-bit pointer to currently streaming screen's VRAM buffer
+active_vram_buf     dta 0           ; Currently displayed action VRAM buffer (0 = Buffer A $6000, 1 = Buffer B $6400)
+vram_swap_pending   dta 0           ; Flag set by coarse scroll to request buffer swap at next VBLANK
+vram_hi_tbl         dta >GAME_ACTION_VRAM, >GAME_ACTION_VRAM_B
 
 ; Ping-Pong Staging Buffer Pointers & Screen IDs
 cur_left_vram_ptr        dta a(0)

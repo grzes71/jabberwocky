@@ -305,13 +305,13 @@ objects:
   id: CHAIN_3_2
   code: 38
   size:
-    width: 1
+    width: 2
     height: 2
   flags:
     blocking: true
     interactive: false
     secret: false
-  tiles: [113, 113]
+  tiles: [113, 113, 113, 113]
   tags: [animacja]
 - object: CLAW_2
   id: CLAW_2
@@ -1239,13 +1239,13 @@ objects:
   id: CHAIN_2
   code: 137
   size:
-    width: 1
-    height: 1
+    width: 2
+    height: 2
   flags:
     blocking: true
     interactive: false
     secret: false
-  tiles: [241]
+  tiles: [241, 0, 0, 241]
   tags: [animacja]
 - object: CHAIN_2_2
   id: CHAIN_2_2
@@ -1264,12 +1264,12 @@ objects:
   code: 139
   size:
     width: 1
-    height: 1
+    height: 2
   flags:
     blocking: true
     interactive: false
     secret: false
-  tiles: [113]
+  tiles: [113, 113]
   tags: [animacja]
 - object: CLAW
   id: CLAW
@@ -1971,3 +1971,15 @@ objects:
   tiles: [0, 13, 230, 230, 15, 0, 13, 14, 153, 153, 121, 15, 208, 243, 153, 153, 243,
     210]
   tags: [woda, skała]
+- object: CHAIN_3_2_R
+  id: CHAIN_3_2_R
+  code: 205
+  size:
+    width: 2
+    height: 2
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [0, 113, 0, 113]
+  tags: [animacja]

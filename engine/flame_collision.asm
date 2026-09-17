@@ -674,7 +674,16 @@ fc_energy_cnt           dta 0
     bcs @skip_cell              ; >= 48
     tay
     lda #0
-    sta (PTR_DST),y             ; Clear cell in GAME_ACTION_VRAM to background $00
+    sta (PTR_DST),y             ; Clear cell in GAME_ACTION_VRAM (Buffer A) to background $00
+    lda PTR_DST+1
+    ora #$04
+    sta PTR_DST+1
+    lda #0
+    sta (PTR_DST),y             ; Clear cell in GAME_ACTION_VRAM_B (Buffer B) to background $00
+    lda PTR_DST+1
+    and #$FB
+    sta PTR_DST+1
+    lda #0
 
     cpy #8
     bne @chk_col9
@@ -696,7 +705,8 @@ fc_energy_cnt           dta 0
     inc fc_erase_r
     lda fc_erase_r
     cmp fc_cur_obj_h
-    bcc @row_loop
+    bcs @erase_done
+    jmp @row_loop
 
 @erase_done
     rts
