@@ -79,7 +79,17 @@ def run_subroutine(mpu: MPU, target_addr: int, max_steps: int = 100000) -> None:
     assert mpu.pc == 0x0100, f"Routine at {hex(target_addr)} did not return within {max_steps} steps (PC={hex(mpu.pc)})"
 
 
-def test_secret_metadata_and_bitmask(labels: Dict[str, int], clean_mpu: MPU):
+def get_forest_level_idx(project_root: Path) -> int:
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    for idx, lab in enumerate(proj.get("labyrinths", [])):
+        if "FOREST_01" in lab.get("screens", []):
+            return idx
+    return 0
+
+
+def test_secret_metadata_and_bitmask(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that secret objects have bit 2 ($04) set in obj_type_flags and baked screens_blocking."""
     mpu = clean_mpu
 
@@ -88,7 +98,7 @@ def test_secret_metadata_and_bitmask(labels: Dict[str, int], clean_mpu: MPU):
     assert mpu.memory[flags_addr + 118] & 0x04 == 0x04
 
     # Screen 0 (FOREST_01) has object 118 at packed_xy=145 -> (x=17*2=34, y=(145>>4)&0x0E = 8)
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1  # LEVEL_02 containing FOREST_01
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     blk_addr = labels["SCREEN_BUF_A_BLK"]
     # Row 8, col 34 in 40-col matrix: 8 * 40 + 34 = 354
@@ -148,7 +158,7 @@ def test_secret_does_not_trigger_blocking_crash(labels: Dict[str, int], clean_mp
     assert (mpu.p & 0x01) == 0, "Secret object must NOT trigger blocking wall crash!"
 
 
-def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
+def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Test full collection of secret object:
     - Collision detected
     - Object erased from VRAM & blocking_col
@@ -160,7 +170,7 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     # Screen 0 in left position, scrolled so col 34 aligns with col 8
     # Left screen col0 = 8 - incoming_col_idx -> col 34 at col 8 means 34 + (8 - incoming_col_idx) = 8
     # -> incoming_col_idx = 34
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -208,12 +218,12 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     assert mpu.memory[labels["BLOCKING_COL8"] + 8] == 0x00
 
 
-def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU):
+def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that collected secret stays erased across respawns, but restores on game_init."""
     mpu = clean_mpu
 
     # Initialize level screens to bake Screen 0 into Buffer A
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Check initial tile and blocking mask for Screen 0 at row 8, col 34
@@ -226,7 +236,7 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     assert orig_tile != 0
 
     # Collect secret via collision routine
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -252,8 +262,8 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
     run_subroutine(mpu, labels["GAME_INIT"])
 
-    # Load level 1 screens to bake Level 1 Screen 0 into staging buffer A
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    # Load level screens to bake Screen 0 into staging buffer A
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Secret must now be RESTORED to original tile and mask in staging buffers...
@@ -380,7 +390,7 @@ def test_interactive_does_not_trigger_blocking_crash(labels: Dict[str, int], cle
     assert (mpu.p & 0x01) == 0, "Secret+Interactive flag ($06) must NOT trigger blocking wall crash!"
 
 
-def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
+def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Test collection of object with interactive flag ($02):
     - SCORE + 5
     - Energy + 100 units
@@ -393,7 +403,7 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     flags_addr = labels["OBJ_TYPE_FLAGS"]
     mpu.memory[flags_addr + 118] = 0x02
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -442,7 +452,7 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
     assert mpu.memory[labels["BLOCKING_COL8"] + 8] == 0x00
 
 
-def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU):
+def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Test collection of object with BOTH secret and interactive flags ($06):
     - SCORE + 10
     - SHOTS + 1
@@ -455,7 +465,7 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     flags_addr = labels["OBJ_TYPE_FLAGS"]
     mpu.memory[flags_addr + 118] = 0x06
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 34
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
@@ -547,7 +557,7 @@ def test_obj_type_flags_has_empty_bit(labels: Dict[str, int], clean_mpu: MPU):
     assert (mpu.memory[flags_base + 118] & 0x80) == 0x00
 
 
-def test_secret_empty_glyph_ignored_by_collision(labels: Dict[str, int], clean_mpu: MPU):
+def test_secret_empty_glyph_ignored_by_collision(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that collision with empty/transparent glyphs (tile == 0) inside object bounding box
     is ignored, while collision with solid glyphs (tile != 0) is collected.
     """
@@ -567,7 +577,7 @@ def test_secret_empty_glyph_ignored_by_collision(labels: Dict[str, int], clean_m
     # Object at x=8 aligns with VRAM col 0 + 8 = 8!
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 8
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
 
     # Clear destroyed bitmask
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])

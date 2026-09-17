@@ -857,8 +857,8 @@ objects:
     blocking: true
     interactive: false
     secret: false
-  tiles: [0, 46, 47, 0, 0, 103, 106, 0, 0, 185, 56, 0, 0, 61, 189, 0, 16, 33, 33,
-    18, 33, 163, 164, 33, 33, 27, 28, 33]
+  tiles: [0, 46, 47, 0, 0, 103, 106, 0, 0, 185, 56, 0, 0, 61, 189, 0, 1, 33, 33, 4,
+    33, 163, 164, 33, 33, 27, 28, 33]
   tags: [dom]
 - object: CHURCH_SMALL
   id: CHURCH_SMALL
@@ -1983,3 +1983,51 @@ objects:
     secret: false
   tiles: [0, 113, 0, 113]
   tags: [animacja]
+- object: RIVER_VERTICAL_3
+  id: RIVER_VERTICAL_3
+  code: 206
+  size:
+    width: 4
+    height: 3
+  flags:
+    blocking: false
+    interactive: false
+    secret: false
+  tiles: [208, 153, 153, 210, 208, 153, 153, 210, 208, 153, 153, 210]
+  tags: [woda]
+- object: BRICKS_1
+  id: BRICKS_1
+  code: 207
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [95, 95]
+  tags: [infrastruktura]
+- object: BRICK_WALL_1
+  id: BRICK_WALL_1
+  code: 208
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [29, 29]
+  tags: [infrastruktura]
+- object: BRICKS_2_33
+  id: BRICKS_2_33
+  code: 209
+  size:
+    width: 2
+    height: 3
+  flags:
+    blocking: true
+    interactive: false
+    secret: false
+  tiles: [95, 95, 95, 95, 95, 95]
+  tags: [infrastruktura]

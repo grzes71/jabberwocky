@@ -2,6 +2,25 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-17] - Reorganizacja poziomów świata oraz dynamiczne indeksowanie labiryntów w testach
+- **Cel**: Dostosowanie kolejności poziomów gry (Poziom 1: Krzaki Wytępy, Poziom 2: Błonia Tolemu, Poziom 3: Chmurny Gród), dodanie nowych ekranów labiryntów oraz uelastycznienie testów kolizji.
+- **Wprowadzone modyfikacje**:
+  - [world/project.yaml](world/project.yaml):
+    - Zmieniono kolejność poziomów: `LEVEL_01` (Krzaki Wytępy, ekrany `FOREST_01`–`09`), `LEVEL_02` (Błonia Tolemu, ekrany `TOLEM_01`–`08`), `LEVEL_03` (Chmurny Gród, ekrany `CITY_01`–`08`).
+    - Dodano ekrany `TOLEM_08` i `TOLEM_09` oraz zaktualizowano obiekty na ekranach `CITY_02`, `CITY_03`, `CITY_05`, `TOLEM_03`.
+  - [world/objects.yaml](world/objects.yaml):
+    - Zaktualizowano definicje właściwości obiektów.
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Dodano funkcję `get_forest_level_idx(project_root)` do dynamicznego odpytywania numeru poziomu zawierającego `FOREST_01`.
+    - Zaktualizowano sprawdzany indeks zniszczonego obiektu na ekranie `FOREST_01` na indeks 21 (maska `0x20`).
+  - [tests/test_secret_collision.py](tests/test_secret_collision.py):
+    - Dodano funkcję `get_forest_level_idx(project_root)` do dynamicznego pobierania indeksu poziomu zawierającego `FOREST_01`.
+  - [docs/memory_map.txt](docs/memory_map.txt) i [docs/memory_map.json](docs/memory_map.json):
+    - Zaktualizowano raport pamięci po rekompilacji (30439 bajtów kodu/danych, 35.3% wolnej pamięci RAM).
+- **Weryfikacja**:
+  - `make all`: bezbłędna asemblacja MADS i walidacja pamięci.
+  - `make test`: wszystkie 145 testów py65/pytest zaliczone pomyślnie (`145 passed in 8.95s`).
+
 ## [2026-09-17] - Rozszerzenie odstępów w liście TOP SCORES (DL_BLANK4) oraz ujednolicenie koloru tła i ramki
 - **Cel**: Dalsze zwiększenie czytelności tabeli `TOP SCORES` poprzez zwiększenie odstępów między wierszami wyników do 4 pustych linii rastra ANTIC (`DL_BLANK4`) oraz ujednolicenie koloru tła (`COLOR2`/`COLPF2`) z kolorem ramki (`COLOR4`/`COLBK` = `$70`).
 - **Wprowadzone modyfikacje**:

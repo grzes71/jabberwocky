@@ -40,13 +40,13 @@ $5C00 - $5FFF       1024   FONT                 data
 [ FREE SPACE: $6000 - $660F (1552 bytes) ]
 $6610 - $676D        350   DLIST                display_list
 [ FREE SPACE: $676E - $67FF (146 bytes) ]
-$6800 - $85C6       7623   FONT                 data
-[ FREE SPACE: $85C7 - $87FF (569 bytes) ]
+$6800 - $86D2       7891   FONT                 data
+[ FREE SPACE: $86D3 - $87FF (301 bytes) ]
 $8800 - $90EF       2288   VRAM                 data
 [ FREE SPACE: $90F0 - $BFFF (12048 bytes) ]
 ================================================================================
-Total RAM Used:   30125 bytes
-Total Free RAM:   16979 bytes (36.0% free headroom)
+Total RAM Used:   30393 bytes
+Total Free RAM:   16711 bytes (35.5% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

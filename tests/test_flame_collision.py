@@ -133,13 +133,13 @@ def test_flame_no_hardware_hit_early_exit(clean_mpu: MPU, labels: Dict[str, int]
     assert mpu.memory[vram_base + 50] == 0x42
 
 
-def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int]):
+def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify an object in the line of fire is destroyed and erased from VRAM."""
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
-    # 1. Initialize level 1 (FOREST) screens (screen 0 loaded into cols 4..43)
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    # 1. Initialize level (FOREST) screens (screen 0 loaded into cols 4..43)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -163,9 +163,9 @@ def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int]):
     mpu.memory[labels["FIRE_FRAME"]] = 7     # Full reach (cols 10..18)
     mpu.memory[labels["FLAME_M_PF"]] = 0x01   # Hardware collision with PF0
 
-    # Bit 23 of screen 0: index 23 // 8 = byte 2, bit 23 % 8 = 7 (mask 0x80)
+    # Bit 21 of screen 0: index 21 // 8 = byte 2, bit 21 % 8 = 5 (mask 0x20)
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
-    assert (mpu.memory[destroyed_base + 2] & 0x80) == 0, "Object 23 should not be destroyed yet"
+    assert (mpu.memory[destroyed_base + 2] & 0x20) == 0, "Object 21 should not be destroyed yet"
 
     # 3. Trigger collision check
     run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
@@ -175,18 +175,18 @@ def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int]):
     assert mpu.memory[cell_r8_c15] == 0, "Cell (r8, c15) must be cleared"
 
     # 5. Verify destroyed bitmask is set
-    assert (mpu.memory[destroyed_base + 2] & 0x80) != 0, "Bit for object 23 must be set"
+    assert (mpu.memory[destroyed_base + 2] & 0x20) != 0, "Bit for object 21 must be set"
 
     # 6. Verify hardware latch was cleared
     assert mpu.memory[labels["FLAME_M_PF"]] == 0
 
 
-def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dict[str, int]):
+def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify an object on a different row than the flame is NOT destroyed."""
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -207,21 +207,25 @@ def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dic
     assert mpu.memory[cell_r8_c14] == initial_tile
 
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
-    assert (mpu.memory[destroyed_base + 2] & 0x80) == 0, "Object 23 bit must not be set"
+    assert (mpu.memory[destroyed_base + 2] & 0x20) == 0, "Object 21 bit must not be set"
 
 
-def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str, int]):
+def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify an object marked as destroyed is skipped on subsequent collision checks."""
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
-    # Pre-mark object 23 as destroyed (byte 2, bit 7 of screen 0)
+    # Pre-mark object 21 as destroyed (byte 2, bit 5 of screen 0)
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
-    mpu.memory[destroyed_base + 2] |= 0x80
+    mpu.memory[destroyed_base + 2] |= 0x20
+
+    # Ensure object 48 is marked as blocking=true (bit 0 = 1)
+    flags_base = labels["OBJ_TYPE_FLAGS"]
+    mpu.memory[flags_base + 48] = 0x01
 
     # Write a test value into the object's cell
     cell_r8_c14 = vram_base + 8 * 48 + 14
@@ -239,12 +243,12 @@ def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str
     assert mpu.memory[cell_r8_c14] == 0xAA
 
 
-def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[str, int]):
+def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify that objects with blocking=False (bit 0 == 0) are NOT destroyed by flame."""
     mpu = clean_mpu
     vram_base = labels["GAME_ACTION_VRAM"]
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
@@ -269,7 +273,17 @@ def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[st
     assert mpu.memory[cell_r8_c14] == initial_tile, "Non-blocking object must not be erased from VRAM"
 
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
-    assert (mpu.memory[destroyed_base + 2] & 0x80) == 0, "Non-blocking object bit must not be set"
+    assert (mpu.memory[destroyed_base + 2] & 0x20) == 0, "Non-blocking object bit must not be set"
+
+
+def get_forest_level_idx(project_root: Path) -> int:
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    for idx, lab in enumerate(proj.get("labyrinths", [])):
+        if "FOREST_01" in lab.get("screens", []):
+            return idx
+    return 0
 
 
 def get_tolem_level_idx(project_root: Path) -> int:
@@ -360,7 +374,7 @@ def test_dragon_no_crash_on_destroyed_blocking_object(clean_mpu: MPU, labels: Di
     assert mpu.memory[labels["DRAGON_DYING"]] == 0
 
 
-def test_flame_empty_glyph_ignored_by_collision(clean_mpu: MPU, labels: Dict[str, int]):
+def test_flame_empty_glyph_ignored_by_collision(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
     """Verify that flame hitting an empty glyph (tile == 0) inside a blocking object's
     bounding box does NOT destroy it, while hitting a solid glyph (tile != 0) DOES destroy it.
     """
@@ -379,7 +393,7 @@ def test_flame_empty_glyph_ignored_by_collision(clean_mpu: MPU, labels: Dict[str
     # In VRAM: cur_vram_x = -1 + 12 = 11!
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
     mpu.memory[labels["INCOMING_COL_IDX"]] = 9
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
 
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
