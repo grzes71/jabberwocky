@@ -2,6 +2,71 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Zwiększenie odstępów w dlist_top_scores po JABBERWOCKY i TOP SCORES
+- **Cel**: Zwiększenie światła pionowego na ekranie TOP SCORES poprzez dodanie 8 pustych linii rastra ANTIC (`DL_BLANK8`) po tytule gry oraz po podtytule (wysokość całego ekranu wynosi teraz dokładnie standardowe 192 linie).
+- **Wprowadzone modyfikacje**:
+  - [main.asm](main.asm):
+    - W `dlist_top_scores`: zamieniono `DL_BLANK2` po wierszu 0 ("JABBERWOCKY") na `DL_BLANK8`.
+    - W `dlist_top_scores`: zamieniono `DL_BLANK4` po wierszu 1 ("TOP SCORES") na `DL_BLANK8`.
+  - [tests/test_top_scores.py](tests/test_top_scores.py):
+    - Zaktualizowano asercje w `test_top_scores_display_list_structure` do sprawdzania bajtów `$70` (`DL_BLANK8`) po wierszu 0 i wierszu 1.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja MADS i generacja mapy pamięci.
+  - `pytest tests/test_top_scores.py -v`: wszystkie 13 testów zaliczonych.
+
+## [2026-09-18] - Wydzielenie tekstów GAME OVER (przegrana i wygrana) do folderu texts/
+- **Cel**: Umożliwienie prostej edycji tekstów przegranej i wygranej poprzez wydzielenie ich do osobnych plików tekstowych w folderze `texts/` oraz automatyczne kompilowanie do asemblera z automatycznym centrowaniem linii.
+- **Wprowadzone modyfikacje**:
+  - [texts/game_over_fail.txt](texts/game_over_fail.txt):
+    - Utworzono plik źródłowy z tekstem dla przegranej (4 wersy).
+  - [texts/game_over_success.txt](texts/game_over_success.txt):
+    - Utworzono plik źródłowy z tekstem dla wygranej (4 wersy).
+  - [scripts/compile_texts.py](scripts/compile_texts.py):
+    - Dodano ogólną funkcję `compile_lines_text` kompilującą plik tekstowy do etykiet `{prefix}_line1..N` (z dopełnieniem pustych linii do minimum 4).
+    - Skompilowano `game_over_fail.txt` do `gen/game_over_fail_text.asm` (etykiety `gover_txt_line*`).
+    - Skompilowano `game_over_success.txt` do `gen/game_over_success_text.asm` (etykiety `win_txt_line*`).
+  - [Makefile](Makefile):
+    - Zaktualizowano cel `TEXT_GEN_ASM` o nowe pliki `$(GEN_DIR)/game_over_fail_text.asm` i `$(GEN_DIR)/game_over_success_text.asm`.
+  - [scenes/gameover.asm](scenes/gameover.asm):
+    - Dodano procedurę `print_centered_line`, która automatycznie wylicza kolumnę centrowania `Y = (40 - len) / 2` dla dowolnej długości tekstu.
+    - Zastąpiono wpisany na sztywno tekst dyrektywami `icl 'gen/game_over_fail_text.asm'` i `icl 'gen/game_over_success_text.asm'`.
+  - [tests/test_compile_texts.py](tests/test_compile_texts.py):
+    - Dodano test jednostkowy `test_compile_lines_text_game_over`.
+- **Weryfikacja**:
+  - `make all`: bezbłędna kompilacja MADS (30537 bajtów XEX) i generacja mapy pamięci.
+  - `pytest tests/test_compile_texts.py -v`: 7 testów kompilatora tekstu zaliczonych.
+  - `pytest tests/test_scene_flow.py tests/test_top_scores.py -v`: 18 testów emulacyjnych py65 zaliczonych.
+
+## [2026-09-18] - Aktualizacja tekstu wygranej (VICTORY) na wiersz Jabberwocky
+- **Cel**: Zmiana tekstu wyświetlanego po ukończeniu gry (wygrana) na ekranie GAME OVER na 4-wersowy utwór poetycki.
+- **Wprowadzone modyfikacje**:
+  - [scenes/gameover.asm](scenes/gameover.asm):
+    - Zaktualizowano ciągi tekstowe `win_txt_line1`–`win_txt_line4`:
+      - Linia 1: `The vorpal blade shatters,` (długość 26, wiersz X=8, kolumna Y=7)
+      - Linia 2: `The frabjous sun sets red,` (długość 26, wiersz X=10, kolumna Y=7)
+      - Linia 3: `The foe lies in tatters,` (długość 24, wiersz X=12, kolumna Y=7)
+      - Linia 4: `The Jabberwock is spread!` (długość 25, wiersz X=14, kolumna Y=7)
+    - Zaktualizowano procedurę wypisywania tekstu wygranej do 4 wywołań `print_at` z wyrównaniem do lewego marginesu strofy (kolumna 7) i wycentrowaniem pionowym (wiersze 8, 10, 12, 14).
+- **Weryfikacja**:
+  - `make all`: bezbłędna asemblacja MADS (30534 bajty XEX) i pomyślna generacja mapy pamięci.
+  - `pytest tests/test_scene_flow.py -v`: testy przejścia stanów zaliczone.
+  - `pytest tests/test_top_scores.py -v`: testy tabeli wyników zaliczone.
+
+## [2026-09-18] - Aktualizacja tekstu przegranej (GAME OVER) na wiersz Jabberwocky
+- **Cel**: Zmiana tekstu wyświetlanego po przegranej walce na ekranie GAME OVER na 4-wersowy utwór poetycki.
+- **Wprowadzone modyfikacje**:
+  - [scenes/gameover.asm](scenes/gameover.asm):
+    - Zaktualizowano ciągi tekstowe `gover_txt_line1`–`gover_txt_line4`:
+      - Linia 1: `Twas brillig, the beast fell,` (długość 29, wiersz X=8, kolumna Y=5)
+      - Linia 2: `The vorpal blade bit deep,` (długość 26, wiersz X=10, kolumna Y=7)
+      - Linia 3: `No more the flames swell,` (długość 25, wiersz X=12, kolumna Y=7)
+      - Linia 4: `The Jabberwock shall sleep.` (długość 27, wiersz X=14, kolumna Y=6)
+    - Zaktualizowano procedurę wypisywania tekstu, rozszerzając ją do 4 wywołań `print_at` z zachowaniem centrowania pionowego i poziomego.
+- **Weryfikacja**:
+  - `make all`: bezbłędna asemblacja MADS (30516 bajtów XEX) i pomyślna generacja mapy pamięci.
+  - `pytest tests/test_scene_flow.py -v`: wszystkie testy przejścia stanów zaliczone.
+  - `pytest tests/test_top_scores.py -v`: wszystkie testy zaliczone.
+
 ## [2026-09-18] - Automatyczna aktualizacja wersji w texts/scroll.txt podczas wydania
 - **Cel**: Automatyczne podbijanie numeru wersji w pasku przewijanym ekranu tytułowego ([texts/scroll.txt](texts/scroll.txt)) podczas tworzenia wydania i commitowanie zmiany do gałęzi `main`.
 - **Wprowadzone modyfikacje**:

@@ -2029,7 +2029,7 @@ screens:
     packed_xy: 47
 labyrinths:
 - id: LEVEL_01
-  name: 'POZIOM 1 : Krzaki Wytępy'
+  name: 'LEVEL 1 : Brillig Glade'
   screens:
   - FOREST_01
   - FOREST_02
@@ -2041,7 +2041,7 @@ labyrinths:
   - FOREST_08
   - FOREST_09
 - id: LEVEL_02
-  name: 'POZIOM 2 : Błonia Tolemu'
+  name: 'LEVEL 2 : Slithy Toves Marsh'
   screens:
   - TOLEM_01
   - TOLEM_02
@@ -2052,7 +2052,7 @@ labyrinths:
   - TOLEM_07
   - TOLEM_08
 - id: LEVEL_03
-  name: 'POZIOM 3 : Chmurny Gród'
+  name: 'LEVEL 3 : The Wabe'
   screens:
   - CITY_01
   - CITY_02

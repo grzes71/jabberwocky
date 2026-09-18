@@ -23,29 +23,29 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$1FCD",
-    "size": 6083,
+    "end_address": "$1FF5",
+    "size": 6123,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1FCE",
+    "start_address": "$1FF6",
     "end_address": "$27FF",
-    "size": 2098,
+    "size": 2058,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3E85",
-    "size": 5766,
+    "end_address": "$3E7F",
+    "size": 5760,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3E86",
+    "start_address": "$3E80",
     "end_address": "$3FFF",
-    "size": 378,
+    "size": 384,
     "type": "free"
   },
   {
@@ -93,15 +93,15 @@
   {
     "name": "FONT",
     "start_address": "$6800",
-    "end_address": "$86F0",
-    "size": 7921,
+    "end_address": "$86EE",
+    "size": 7919,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$86F1",
+    "start_address": "$86EF",
     "end_address": "$87FF",
-    "size": 271,
+    "size": 273,
     "type": "free"
   },
   {

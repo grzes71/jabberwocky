@@ -304,16 +304,16 @@ def test_top_scores_display_list_structure(clean_mpu: MPU, labels: Dict[str, int
     assert stub_vram_addr == labels["STUB_VRAM"]
     addr += 3
 
-    # DL_BLANK2 ($10)
-    assert mpu.memory[addr] == 0x10
+    # DL_BLANK8 ($70) after "JABBERWOCKY"
+    assert mpu.memory[addr] == 0x70
     addr += 1
 
     # Row 1: DL_MODE_2 ($02)
     assert mpu.memory[addr] == 0x02
     addr += 1
 
-    # DL_BLANK4 ($30)
-    assert mpu.memory[addr] == 0x30
+    # DL_BLANK8 ($70) after "TOP SCORES"
+    assert mpu.memory[addr] == 0x70
     addr += 1
 
     # Row 2: DL_MODE_2 ($02)
