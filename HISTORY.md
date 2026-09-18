@@ -2,6 +2,52 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Automatyczna aktualizacja wersji w texts/scroll.txt podczas wydania
+- **Cel**: Automatyczne podbijanie numeru wersji w pasku przewijanym ekranu tytułowego ([texts/scroll.txt](texts/scroll.txt)) podczas tworzenia wydania i commitowanie zmiany do gałęzi `main`.
+- **Wprowadzone modyfikacje**:
+  - [scripts/release_helper.py](scripts/release_helper.py):
+    - Dodano funkcję `update_scroll_version` wyszukującą i podmieniającą wzorzec `version X.Y.Z` w [texts/scroll.txt](texts/scroll.txt) z zachowaniem formatu tekstu i dopełniających spacji.
+    - Dodano flagi CLI `--update-scroll`, `--scroll-file` oraz opcję `--version` do wywołania w trybie standalone.
+  - [.github/workflows/release.yml](.github/workflows/release.yml):
+    - Do kroku `Analyze Conventional Commits & Determine Version` dodano flagę `--update-scroll`.
+    - Dodano krok `Commit & Push updated scroll.txt to main` (`git push origin HEAD:main`), który po pomyślnym przejściu testów i budowaniu XEX commituje zaktualizowany plik z flagą `[skip ci]`.
+    - W logach decyzji o wydaniu dodano podgląd zaktualizowanego [texts/scroll.txt](texts/scroll.txt).
+  - [tests/test_release_helper.py](tests/test_release_helper.py):
+    - Dodano testy jednostkowe `test_update_scroll_version`, `test_update_scroll_version_no_pattern` oraz `test_update_scroll_version_nonexistent`.
+- **Weryfikacja**:
+  - `pytest tests/test_release_helper.py -v`: 13 testów zaliczonych pomyślnie.
+  - Test działania CLI w trybie standalone na [texts/scroll.txt](texts/scroll.txt).
+
+## [2026-09-18] - Dostosowanie workflow wydawania (Release on PR Merge) i skryptu release_helper
+- **Cel**: Przygotowanie i poprawienie automatycznego procesu wydań GitHub Actions (Conventional Commits, semver, tworzenie GitHub Release z plikiem `jabberwocky.xex`).
+- **Wprowadzone modyfikacje**:
+  - [.github/workflows/release.yml](.github/workflows/release.yml):
+    - Usunięto flagę `--update-title` przy wywołaniu `scripts/release_helper.py`.
+    - Usunięto zbędny i szkodliwy krok commitowania `texts/title.txt` do `main`.
+    - Usunięto zbędny krok instalacji narzędzi ASAP i rmt2atasm.
+    - Dodano krok `make test` przed `make all` w procedurze budowania wydania.
+  - [scripts/release_helper.py](scripts/release_helper.py):
+    - Ustawiono poprawny szablon tytułu wydania na `Jabberwocky {new_tag}`.
+    - Usunięto nieużywaną funkcję `update_title_version` i powiązane argumenty CLI.
+  - [tests/test_release_helper.py](tests/test_release_helper.py):
+    - Usunięto test dla `update_title_version`.
+    - Dodano asercję weryfikującą poprawny tytuł wydania `Jabberwocky vX.Y.Z`.
+- **Weryfikacja**:
+  - `pytest tests/test_release_helper.py -v`: wszystkie 10 testów helpera zaliczone pomyślnie.
+  - Walidacja składni YAML pliku `.github/workflows/release.yml`.
+
+## [2026-09-18] - Aktualizacja domyślnych wyników na liście TOP SCORES (150..10)
+- **Cel**: Dostosowanie domyślnej tabeli najlepszych wyników do skali punktacji w grze (najwyższy wynik: 150, najniższy wynik: 10).
+- **Wprowadzone modyfikacje**:
+  - [scenes/top_scores.asm](scenes/top_scores.asm):
+    - Zaktualizowano 10 wpisów w tabeli `hs_scores` do wartości dziesiętnych: 150, 130, 110, 100, 80, 60, 50, 30, 20, 10 (odpowiednio `0150`..`0010`).
+  - [tests/test_top_scores.py](tests/test_top_scores.py):
+    - Dostosowano asercje sortowania, progów kwalifikacji oraz przesunięć wyników do nowego zakresu (150 na pozycji #1, 10 na pozycji #10).
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja MADS i weryfikacja mapy pamięci.
+  - `pytest tests/test_top_scores.py`: wszystkie 13 testów py65 zaliczone pomyślnie.
+
+
 ## [2026-09-17] - Poprawka detekcji kolizji obiektów w trybie ogona poziomu (tail mode)
 - **Cel**: Rozwiązanie problemu braku zbierania obiektów i znajdziek (np. chłopa `code: 197` przy `packed_xy: 114` na ostatnim ekranie `FOREST_09`) znajdujących się w prawej części ekranu podczas przewijania końcowego ogona labiryntu.
 - **Przyczyna usterki**: Po zakończeniu strumieniowania 40 kolumn ostatniego ekranu labiryntu silnik przechodził w tryb ogona (`level_tail_cols = 48..1`), a zmienna `incoming_col_idx` pozostawała na stałe równa `0`. W procedurach `check_dragon_secret_collision` i `check_flame_object_collision` pozycję ekranu w VRAM obliczano jako `fc_vram_col0 = 8 - incoming_col_idx = 8`, przez co obiekty z $X \ge 2$ były traktowane jak leżące daleko poza ekranem z prawej strony ($X_{\text{vram}} \ge 10$) i pomijane.

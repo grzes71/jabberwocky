@@ -653,16 +653,16 @@ name_charset
 
 ; Default Top 10 High Scores (10 entries x 4 decimal digits = 40 bytes)
 hs_scores
-    dta 0, 5, 0, 0              ; 1. 0500
-    dta 0, 4, 0, 0              ; 2. 0400
-    dta 0, 3, 5, 0              ; 3. 0350
-    dta 0, 3, 0, 0              ; 4. 0300
-    dta 0, 2, 5, 0              ; 5. 0250
-    dta 0, 2, 0, 0              ; 6. 0200
-    dta 0, 1, 5, 0              ; 7. 0150
-    dta 0, 1, 0, 0              ; 8. 0100
-    dta 0, 0, 5, 0              ; 9. 0050
-    dta 0, 0, 2, 0              ; 10. 0020
+    dta 0, 1, 5, 0              ; 1. 0150
+    dta 0, 1, 3, 0              ; 2. 0130
+    dta 0, 1, 1, 0              ; 3. 0110
+    dta 0, 1, 0, 0              ; 4. 0100
+    dta 0, 0, 8, 0              ; 5. 0080
+    dta 0, 0, 6, 0              ; 6. 0060
+    dta 0, 0, 5, 0              ; 7. 0050
+    dta 0, 0, 3, 0              ; 8. 0030
+    dta 0, 0, 2, 0              ; 9. 0020
+    dta 0, 0, 1, 0              ; 10. 0010
 
 ; Default Top 10 Names (10 entries x 5 characters = 50 bytes)
 hs_names

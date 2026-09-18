@@ -85,8 +85,8 @@ def test_default_high_scores_sorted(clean_mpu: MPU, labels: Dict[str, int]):
             f"Table must be strictly descending: scores[{i}]={scores[i]} <= scores[{i+1}]={scores[i+1]}"
         )
     # Check bounds
-    assert scores[0] == 500
-    assert scores[9] == 20
+    assert scores[0] == 150
+    assert scores[9] == 10
 
 
 def test_check_score_qualified(clean_mpu: MPU, labels: Dict[str, int]):
@@ -98,20 +98,20 @@ def test_check_score_qualified(clean_mpu: MPU, labels: Dict[str, int]):
     run_subroutine(mpu, labels["CHECK_SCORE_QUALIFIED"])
     assert (mpu.p & 0x01) == 0, "Score 0 must not qualify"
 
-    # Case 2: score = 20 (equal to 10th score 20) -> Not qualified (strict >)
-    set_player_score(mpu, labels, 20)
+    # Case 2: score = 10 (equal to 10th score 10) -> Not qualified (strict >)
+    set_player_score(mpu, labels, 10)
     run_subroutine(mpu, labels["CHECK_SCORE_QUALIFIED"])
     assert (mpu.p & 0x01) == 0, "Score equal to 10th must not qualify (strict >)"
 
-    # Case 3: score = 21 -> Qualifies (Carry = 1)
-    set_player_score(mpu, labels, 21)
+    # Case 3: score = 11 -> Qualifies (Carry = 1)
+    set_player_score(mpu, labels, 11)
     run_subroutine(mpu, labels["CHECK_SCORE_QUALIFIED"])
-    assert (mpu.p & 0x01) == 1, "Score 21 must qualify against 10th entry (20)"
+    assert (mpu.p & 0x01) == 1, "Score 11 must qualify against 10th entry (10)"
 
-    # Case 4: score = 320 -> Qualifies (Carry = 1)
-    set_player_score(mpu, labels, 320)
+    # Case 4: score = 90 -> Qualifies (Carry = 1)
+    set_player_score(mpu, labels, 90)
     run_subroutine(mpu, labels["CHECK_SCORE_QUALIFIED"])
-    assert (mpu.p & 0x01) == 1, "Score 320 must qualify"
+    assert (mpu.p & 0x01) == 1, "Score 90 must qualify"
 
 
 def test_insert_high_score_rank_1(clean_mpu: MPU, labels: Dict[str, int]):
@@ -128,36 +128,36 @@ def test_insert_high_score_rank_1(clean_mpu: MPU, labels: Dict[str, int]):
 
     new_scores = get_table_scores(mpu, labels)
     assert new_scores[0] == 999
-    # Previous #1 (500) shifted to #2
+    # Previous #1 (150) shifted to #2
     assert new_scores[1] == initial_scores[0]
-    # Previous #9 (50) shifted to #10
+    # Previous #9 (20) shifted to #10
     assert new_scores[9] == initial_scores[8]
-    # Old 10th score (20) discarded
-    assert 20 not in new_scores
+    # Old 10th score (10) discarded
+    assert 10 not in new_scores
 
 
 def test_insert_high_score_middle(clean_mpu: MPU, labels: Dict[str, int]):
-    """Verify inserting a middle-tier score (e.g. 260) inserts at rank 5 (between 300 and 250)."""
+    """Verify inserting a middle-tier score (e.g. 90) inserts at rank 5 (between 100 and 80)."""
     mpu = clean_mpu
-    # Table has: 500, 400, 350, 300, 250, 200, 150, 100, 50, 20
-    set_player_score(mpu, labels, 260)
+    # Table has: 150, 130, 110, 100, 80, 60, 50, 30, 20, 10
+    set_player_score(mpu, labels, 90)
     run_subroutine(mpu, labels["INSERT_HIGH_SCORE"])
 
     new_scores = get_table_scores(mpu, labels)
-    assert new_scores[4] == 260
-    assert new_scores[3] == 300
-    assert new_scores[5] == 250
+    assert new_scores[4] == 90
+    assert new_scores[3] == 100
+    assert new_scores[5] == 80
 
 
 def test_insert_high_score_last_slot(clean_mpu: MPU, labels: Dict[str, int]):
-    """Verify inserting score 25 replaces rank 10 directly without crashing or corrupting."""
+    """Verify inserting score 15 replaces rank 10 directly without crashing or corrupting."""
     mpu = clean_mpu
-    set_player_score(mpu, labels, 25)
+    set_player_score(mpu, labels, 15)
     run_subroutine(mpu, labels["INSERT_HIGH_SCORE"])
 
     new_scores = get_table_scores(mpu, labels)
-    assert new_scores[8] == 50
-    assert new_scores[9] == 25
+    assert new_scores[8] == 20
+    assert new_scores[9] == 15
 
 
 def test_joystick_name_entry_controls(clean_mpu: MPU, labels: Dict[str, int]):
@@ -222,7 +222,7 @@ def test_gameover_transitions_to_top_scores(clean_mpu: MPU, labels: Dict[str, in
 def test_top_scores_init_branches_to_enter_name_when_qualified(clean_mpu: MPU, labels: Dict[str, int]):
     """Verify top_scores_init immediately routes qualifying scores to STATE_ENTER_NAME."""
     mpu = clean_mpu
-    set_player_score(mpu, labels, 550)  # > 500 (new #1)
+    set_player_score(mpu, labels, 180)  # > 150 (new #1)
     mpu.memory[labels["SCORE_PROCESSED"]] = 0
     mpu.memory[labels["GAME_STATE"]] = labels["STATE_TOP_SCORES"]
 
@@ -235,7 +235,7 @@ def test_top_scores_init_branches_to_enter_name_when_qualified(clean_mpu: MPU, l
 def test_top_scores_init_stays_on_top_scores_when_not_qualified(clean_mpu: MPU, labels: Dict[str, int]):
     """Verify top_scores_init stays on STATE_TOP_SCORES for non-qualifying scores."""
     mpu = clean_mpu
-    set_player_score(mpu, labels, 10)  # < 20 (does not qualify)
+    set_player_score(mpu, labels, 5)  # < 10 (does not qualify)
     mpu.memory[labels["SCORE_PROCESSED"]] = 0
     mpu.memory[labels["GAME_STATE"]] = labels["STATE_TOP_SCORES"]
 
@@ -252,8 +252,8 @@ def test_full_flow_gameover_to_name_entry_to_top_scores_to_title(clean_mpu: MPU,
     """
     mpu = clean_mpu
 
-    # 1. In GAME OVER with score 450 (qualifies for #2)
-    set_player_score(mpu, labels, 450)
+    # 1. In GAME OVER with score 140 (qualifies for #2)
+    set_player_score(mpu, labels, 140)
     mpu.memory[labels["SCORE_PROCESSED"]] = 0
     mpu.memory[labels["GAME_STATE"]] = labels["STATE_GAME_OVER"]
     mpu.memory[labels["FIRE_PRESSED"]] = 1
@@ -274,8 +274,8 @@ def test_full_flow_gameover_to_name_entry_to_top_scores_to_title(clean_mpu: MPU,
     run_subroutine(mpu, labels["ENTER_NAME_RUN"])
     assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_TOP_SCORES"]
 
-    # Table now has 450 at rank 2
-    assert get_table_scores(mpu, labels)[1] == 450
+    # Table now has 140 at rank 2
+    assert get_table_scores(mpu, labels)[1] == 140
 
     # 6. Re-enter TOP SCORES (score_processed is 1, so it displays table, no re-entry to ENTER NAME)
     run_subroutine(mpu, labels["TOP_SCORES_INIT"])
