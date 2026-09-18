@@ -325,8 +325,6 @@ screens:
     packed_xy: 106
   - code: 65
     packed_xy: 47
-  - code: 127
-    packed_xy: 147
   - code: 203
     packed_xy: 139
   - code: 200
@@ -1940,21 +1938,17 @@ screens:
 - id: TOLEM_09
   objects:
   - code: 126
+    packed_xy: 33
+  - code: 126
     packed_xy: 0
   - code: 126
-    packed_xy: 32
-  - code: 126
-    packed_xy: 64
-  - code: 126
-    packed_xy: 96
+    packed_xy: 1
   - code: 126
     packed_xy: 2
   - code: 126
-    packed_xy: 33
+    packed_xy: 65
   - code: 126
-    packed_xy: 66
-  - code: 126
-    packed_xy: 98
+    packed_xy: 97
   - code: 126
     packed_xy: 4
   - code: 126
@@ -1964,17 +1958,13 @@ screens:
   - code: 126
     packed_xy: 100
   - code: 126
-    packed_xy: 101
-  - code: 126
-    packed_xy: 102
-  - code: 126
-    packed_xy: 70
+    packed_xy: 6
   - code: 126
     packed_xy: 38
   - code: 126
-    packed_xy: 6
+    packed_xy: 70
   - code: 126
-    packed_xy: 5
+    packed_xy: 102
   - code: 126
     packed_xy: 8
   - code: 126
@@ -1984,23 +1974,15 @@ screens:
   - code: 126
     packed_xy: 104
   - code: 126
-    packed_xy: 106
+    packed_xy: 105
   - code: 126
-    packed_xy: 74
-  - code: 126
-    packed_xy: 42
+    packed_xy: 9
   - code: 126
     packed_xy: 10
   - code: 126
+    packed_xy: 106
+  - code: 127
     packed_xy: 41
-  - code: 126
-    packed_xy: 12
-  - code: 126
-    packed_xy: 44
-  - code: 126
-    packed_xy: 76
-  - code: 126
-    packed_xy: 108
   - code: 126
     packed_xy: 14
   - code: 126
@@ -2010,26 +1992,86 @@ screens:
   - code: 126
     packed_xy: 110
   - code: 126
+    packed_xy: 112
+  - code: 126
     packed_xy: 111
   - code: 126
     packed_xy: 15
   - code: 126
-    packed_xy: 17
+    packed_xy: 16
   - code: 126
-    packed_xy: 49
+    packed_xy: 18
   - code: 126
-    packed_xy: 81
+    packed_xy: 50
   - code: 126
-    packed_xy: 113
+    packed_xy: 82
   - code: 126
     packed_xy: 114
   - code: 126
-    packed_xy: 18
+    packed_xy: 19
   - code: 127
     packed_xy: 47
+  - code: 104
+    packed_xy: 160
+  - code: 104
+    packed_xy: 162
+  - code: 104
+    packed_xy: 164
+  - code: 104
+    packed_xy: 166
+  - code: 104
+    packed_xy: 168
+  - code: 104
+    packed_xy: 170
+  - code: 104
+    packed_xy: 172
+  - code: 104
+    packed_xy: 174
+  - code: 104
+    packed_xy: 176
+  - code: 104
+    packed_xy: 178
+  - code: 127
+    packed_xy: 37
+  - code: 208
+    packed_xy: 69
+  - code: 208
+    packed_xy: 73
+  - code: 208
+    packed_xy: 79
+- id: TOLEM_10
+  objects:
+  - code: 126
+    packed_xy: 32
+  - code: 126
+    packed_xy: 64
+  - code: 126
+    packed_xy: 96
+  - code: 126
+    packed_xy: 2
+  - code: 126
+    packed_xy: 34
+  - code: 126
+    packed_xy: 66
+  - code: 126
+    packed_xy: 98
+  - code: 126
+    packed_xy: 99
+  - code: 126
+    packed_xy: 3
+  - code: 126
+    packed_xy: 36
+  - code: 126
+    packed_xy: 68
+  - code: 104
+    packed_xy: 160
+  - code: 104
+    packed_xy: 162
+  - code: 104
+    packed_xy: 164
 labyrinths:
 - id: LEVEL_01
-  name: 'LEVEL 1 : Brillig Glade'
+  name: 'LEVEL 1 : Tulgey Wood'
   screens:
   - FOREST_01
   - FOREST_02
