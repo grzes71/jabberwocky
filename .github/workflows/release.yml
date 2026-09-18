@@ -75,8 +75,8 @@ jobs:
       - name: Run Tests & Build Atari XEX
         if: steps.semver.outputs.should_release == 'true'
         run: |
-          make test
           make all
+          make test
           if (!(Test-Path "jabberwocky.xex")) {
             Write-Error "Build failed: jabberwocky.xex was not generated!"
             exit 1
