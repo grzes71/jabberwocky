@@ -2,6 +2,17 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Dopracowanie sekwencji Game Over i układu ekranu TOLEM_09
+- **Cel**: Dostosowanie rozmieszczenia obiektów na ekranie TOLEM_09 w definicji projektu świata oraz aktualizacja powiązanej mapy pamięci.
+- **Wprowadzone modyfikacje**:
+  - [world/project.yaml](world/project.yaml):
+    - Usunięto obiekty kodu 208 na ekranie TOLEM_09.
+  - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json):
+    - Przebudowano i zaktualizowano mapę pamięci po kompilacji.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja i walidacja mapy pamięci.
+  - `make test`: 165 testów zakończonych wynikiem pozytywnym.
+
 ## [2026-09-18] - Uodpornienie testów kolizji płomienia i sekretów na zmiany w definicjach poziomów
 - **Cel**: Wyeliminowanie sztywnych założeń w testach jednostkowych (`test_flame_collision.py`, `test_secret_collision.py`) dotyczących indeksów i współrzędnych obiektów na ekranie `FOREST_01`, aby zmiany dokonywane w edytorze poziomów (`world/project.yaml`) nie powodowały fałszywych błędów w testach.
 - **Wprowadzone modyfikacje**:
