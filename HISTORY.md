@@ -2,6 +2,21 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Uodpornienie testów kolizji płomienia i sekretów na zmiany w definicjach poziomów
+- **Cel**: Wyeliminowanie sztywnych założeń w testach jednostkowych (`test_flame_collision.py`, `test_secret_collision.py`) dotyczących indeksów i współrzędnych obiektów na ekranie `FOREST_01`, aby zmiany dokonywane w edytorze poziomów (`world/project.yaml`) nie powodowały fałszywych błędów w testach.
+- **Wprowadzone modyfikacje**:
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Dodano funkcję `find_object_idx_on_screen0` dynamicznie wyszukującą indeks obiektu w pamięci MPU na podstawie jego kodu i współrzędnych ekranowych, zamiast zahardkodowanego indeksu 21.
+    - Zaktualizowano obliczanie przesunięcia bajtu i maski bitowej w `screen_obj_destroyed` na podstawie odnalezionego indeksu obiektu.
+  - [tests/test_secret_collision.py](tests/test_secret_collision.py):
+    - Zaimplementowano funkcję `find_secret_on_screen0` dynamicznie lokalizującą pierwszy dostępny obiekt typu `secret` na ekranie startowym dowolnego labiryntu z `project.yaml` oraz wyznaczającą współrzędne jego niepustego kafla.
+    - Zaktualizowano testy `test_secret_metadata_and_bitmask`, `test_secret_collection_flow`, `test_secret_run_persistence_and_game_init_restoration`, `test_interactive_collection_flow` oraz `test_secret_and_interactive_collection_flow` do użycia dynamicznie wyznaczonego poziomu, ekranu i współrzędnych.
+  - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json):
+    - Zaktualizowano mapę pamięci po kompilacji.
+- **Weryfikacja**:
+  - `make test`: wszystkie 165 testów zakończyło się wynikiem pozytywnym (`165 passed in 7.32s`).
+  - Pliki w katalogu `world/` pozostały nienaruszone.
+
 ## [2026-09-18] - Dodanie cudzysłowów w poleceniach echo w Makefile
 - **Cel**: Wyeliminowanie błędów składni powłoki Bash (`syntax error near unexpected token '('`) podczas wykonywania reguł `make` w runnerach GitHub Actions (gdzie komunikaty z nawiasami były parsowane jako składnia powłoki).
 - **Wprowadzone modyfikacje**:

@@ -89,6 +89,40 @@ def get_forest_level_idx(project_root: Path) -> int:
     return 0
 
 
+def find_secret_on_screen0(project_root: Path):
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    with open(project_root / "world" / "objects.yaml", "r", encoding="utf-8") as f:
+        objs_data = yaml.safe_load(f)
+    objs_list = objs_data.get("objects", []) if isinstance(objs_data, dict) else objs_data
+    secret_codes = {
+        o["code"] for o in objs_list
+        if isinstance(o, dict) and o.get("flags", {}).get("secret", False)
+    }
+    screen_map = {s["id"]: s for s in proj.get("screens", [])}
+    for level_idx, lab in enumerate(proj.get("labyrinths", [])):
+        screens = lab.get("screens", [])
+        if not screens:
+            continue
+        s0_id = screens[0]
+        s0 = screen_map.get(s0_id, {})
+        for obj in s0.get("objects", []):
+            if obj.get("code") in secret_codes:
+                obj_def = next(d for d in objs_list if d.get("code") == obj.get("code"))
+                tiles = obj_def.get("tiles", [])
+                w = obj_def.get("size", {}).get("width", 1)
+                for idx_tile, t in enumerate(tiles):
+                    if t != 0:
+                        dx = idx_tile % w
+                        dy = idx_tile // w
+                        pxy = obj.get("packed_xy", 0)
+                        x = (pxy & 0x0F) * 2 + dx
+                        y = ((pxy >> 4) & 0x0E) + dy
+                        return level_idx, obj.get("code"), x, y
+    raise RuntimeError("No secret object found on screen 0 of any labyrinth in project.yaml")
+
+
 def test_secret_metadata_and_bitmask(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that secret objects have bit 2 ($04) set in obj_type_flags and baked screens_blocking."""
     mpu = clean_mpu
@@ -97,12 +131,12 @@ def test_secret_metadata_and_bitmask(labels: Dict[str, int], clean_mpu: MPU, pro
     flags_addr = labels["OBJ_TYPE_FLAGS"]
     assert mpu.memory[flags_addr + 118] & 0x04 == 0x04
 
-    # Screen 0 (FOREST_01) has object 118 at packed_xy=145 -> (x=17*2=34, y=(145>>4)&0x0E = 8)
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     blk_addr = labels["SCREEN_BUF_A_BLK"]
-    # Row 8, col 34 in 40-col matrix: 8 * 40 + 34 = 354
-    assert mpu.memory[blk_addr + 354] & 0x04 == 0x04
+    offset = y * 40 + x
+    assert mpu.memory[blk_addr + offset] & 0x04 == 0x04
 
 
 def test_add_score_1_bcd_increment(labels: Dict[str, int], clean_mpu: MPU):
@@ -167,17 +201,15 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_
     """
     mpu = clean_mpu
 
-    # Screen 0 in left position, scrolled so col 34 aligns with col 8
-    # Left screen col0 = 8 - incoming_col_idx -> col 34 at col 8 means 34 + (8 - incoming_col_idx) = 8
-    # -> incoming_col_idx = 34
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
-    mpu.memory[labels["INCOMING_COL_IDX"]] = 34
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
 
-    # Dragon at row 8: scanline 34 + 8*16 = 162
-    mpu.memory[labels["DRAGON_Y"]] = 162
-    mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x04
+    # Dragon at row y: scanline 34 + y * 16
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x04
 
     # Initial score
     score_addr = labels["SCORE"]
@@ -191,9 +223,9 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_
     mpu.memory[labels["DRAGON_DYING"]] = 0
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
-    # Pre-render a non-zero tile in GAME_ACTION_VRAM at row 8, col 8
+    # Pre-render a non-zero tile in GAME_ACTION_VRAM at row y, col 8
     action_vram = labels["GAME_ACTION_VRAM"]
-    mpu.memory[action_vram + 8 * 48 + 8] = 0x49
+    mpu.memory[action_vram + y * 48 + 8] = 0x49
 
     # Run check_dragon_secret_collision
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
@@ -212,36 +244,37 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
 
     # Tile in GAME_ACTION_VRAM should be erased to 0
-    assert mpu.memory[action_vram + 8 * 48 + 8] == 0x00
+    assert mpu.memory[action_vram + y * 48 + 8] == 0x00
 
     # Collision in blocking_col8 should be cleared
-    assert mpu.memory[labels["BLOCKING_COL8"] + 8] == 0x00
+    assert mpu.memory[labels["BLOCKING_COL8"] + y] == 0x00
 
 
 def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that collected secret stays erased across respawns, but restores on game_init."""
     mpu = clean_mpu
 
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
     # Initialize level screens to bake Screen 0 into Buffer A
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
-    # Check initial tile and blocking mask for Screen 0 at row 8, col 34
+    # Check initial tile and blocking mask for Screen 0 at row y, col x
     blk_addr = labels["SCREEN_BUF_A_BLK"]
     vram_addr = labels["SCREEN_BUF_A_VRAM"]
-    offset = 8 * 40 + 34
+    offset = y * 40 + x
     orig_blk = mpu.memory[blk_addr + offset]
     orig_tile = mpu.memory[vram_addr + offset]
     assert orig_blk & 0x04 == 0x04
     assert orig_tile != 0
 
     # Collect secret via collision routine
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
-    mpu.memory[labels["INCOMING_COL_IDX"]] = 34
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
-    mpu.memory[labels["DRAGON_Y"]] = 162
-    mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x04
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x04
 
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
 
@@ -256,23 +289,24 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     assert mpu.memory[blk_addr + offset] == 0x00
     assert mpu.memory[vram_addr + offset] == 0x00
     action_vram = labels["GAME_ACTION_VRAM"]
-    assert mpu.memory[action_vram + 8 * 48 + 38] == 0x00
+    vram_col = 4 + x
+    assert mpu.memory[action_vram + y * 48 + vram_col] == 0x00
 
     # Now simulate brand new game: call game_init (stubbing show_level_name_screen with RTS)
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
     run_subroutine(mpu, labels["GAME_INIT"])
 
     # Load level screens to bake Screen 0 into staging buffer A
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
     # Secret must now be RESTORED to original tile and mask in staging buffers...
     assert mpu.memory[blk_addr + offset] == orig_blk
     assert mpu.memory[vram_addr + offset] == orig_tile
 
-    # ...AND loaded into active GAME_ACTION_VRAM when level 1 screens are loaded (col 4 + 34 = 38)!
+    # ...AND loaded into active GAME_ACTION_VRAM when level screens are loaded (col 4 + x)!
     action_vram = labels["GAME_ACTION_VRAM"]
-    assert mpu.memory[action_vram + 8 * 48 + 38] == orig_tile
+    assert mpu.memory[action_vram + y * 48 + vram_col] == orig_tile
 
 
 def test_add_score_5_bcd_increment(labels: Dict[str, int], clean_mpu: MPU):
@@ -399,17 +433,18 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, pro
     """
     mpu = clean_mpu
 
-    # Configure object 118 with ONLY interactive flag ($02)
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    # Configure object with ONLY interactive flag ($02)
     flags_addr = labels["OBJ_TYPE_FLAGS"]
-    mpu.memory[flags_addr + 118] = 0x02
+    mpu.memory[flags_addr + code] = 0x02
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
-    mpu.memory[labels["INCOMING_COL_IDX"]] = 34
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
 
-    mpu.memory[labels["DRAGON_Y"]] = 162
-    mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x02
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x02
 
     # Set initial score to 0000, initial lives to 3
     score_addr = labels["SCORE"]
@@ -427,7 +462,7 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, pro
 
     # Action VRAM non-zero tile
     action_vram = labels["GAME_ACTION_VRAM"]
-    mpu.memory[action_vram + 8 * 48 + 8] = 0x49
+    mpu.memory[action_vram + y * 48 + 8] = 0x49
 
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
 
@@ -448,8 +483,8 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, pro
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
 
     # Erased from VRAM & blocking_col
-    assert mpu.memory[action_vram + 8 * 48 + 8] == 0x00
-    assert mpu.memory[labels["BLOCKING_COL8"] + 8] == 0x00
+    assert mpu.memory[action_vram + y * 48 + 8] == 0x00
+    assert mpu.memory[labels["BLOCKING_COL8"] + y] == 0x00
 
 
 def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
@@ -461,17 +496,18 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     """
     mpu = clean_mpu
 
-    # Configure object 118 with BOTH flags ($06)
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    # Configure object with BOTH flags ($06)
     flags_addr = labels["OBJ_TYPE_FLAGS"]
-    mpu.memory[flags_addr + 118] = 0x06
+    mpu.memory[flags_addr + code] = 0x06
 
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_forest_level_idx(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
-    mpu.memory[labels["INCOMING_COL_IDX"]] = 34
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
 
-    mpu.memory[labels["DRAGON_Y"]] = 162
-    mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x06
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x06
 
     # Set initial score to 0000, initial shots to 1
     score_addr = labels["SCORE"]
@@ -489,7 +525,7 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
 
     # Action VRAM non-zero tile
     action_vram = labels["GAME_ACTION_VRAM"]
-    mpu.memory[action_vram + 8 * 48 + 8] = 0x49
+    mpu.memory[action_vram + y * 48 + 8] = 0x49
 
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
 
@@ -510,8 +546,8 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
 
     # Erased from VRAM & blocking_col
-    assert mpu.memory[action_vram + 8 * 48 + 8] == 0x00
-    assert mpu.memory[labels["BLOCKING_COL8"] + 8] == 0x00
+    assert mpu.memory[action_vram + y * 48 + 8] == 0x00
+    assert mpu.memory[labels["BLOCKING_COL8"] + y] == 0x00
 
 
 def test_dragon_frame_dependent_collision_bounds(labels: Dict[str, int], clean_mpu: MPU):
