@@ -2001,12 +2001,6 @@ screens:
     packed_xy: 176
   - code: 104
     packed_xy: 178
-  - code: 208
-    packed_xy: 69
-  - code: 208
-    packed_xy: 73
-  - code: 208
-    packed_xy: 79
   - code: 129
     packed_xy: 0
   - code: 129
