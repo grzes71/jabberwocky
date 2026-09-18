@@ -2,6 +2,14 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Dodanie cudzysłowów w poleceniach echo w Makefile
+- **Cel**: Wyeliminowanie błędów składni powłoki Bash (`syntax error near unexpected token '('`) podczas wykonywania reguł `make` w runnerach GitHub Actions (gdzie komunikaty z nawiasami były parsowane jako składnia powłoki).
+- **Wprowadzone modyfikacje**:
+  - [Makefile](Makefile):
+    - Ujęto wszystkie komunikaty `@echo` w cudzysłowy podwójne (`@echo "=== ... ==="`).
+- **Weryfikacja**:
+  - Weryfikacja wykonania poleceń `make` w środowisku Windows/Bash.
+
 ## [2026-09-18] - Naprawa kolejności budowania w release.yml oraz zależności celu test w Makefile
 - **Cel**: Wyeliminowanie błędów w GitHub Actions wynikających z uruchamiania testów jednostkowych przed wygenerowaniem artefaktów (`jabberwocky.xex` oraz `gen/jabberwocky.lab`).
 - **Wprowadzone modyfikacje**:

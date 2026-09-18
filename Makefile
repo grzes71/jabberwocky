@@ -58,15 +58,15 @@ TEXT_SCRIPT    := scripts/compile_texts.py
 TEXT_GEN_ASM   := $(GEN_DIR)/intro_text.asm $(GEN_DIR)/title_scroll_text.asm $(GEN_DIR)/game_over_fail_text.asm $(GEN_DIR)/game_over_success_text.asm
 
 $(TEXT_GEN_ASM): $(TEXT_SRC) $(TEXT_SCRIPT)
-	@echo === Kompilacja tekstów $(TEXT_DIR)/ do $(GEN_DIR)/ (scripts/compile_texts.py) ===
+	@echo "=== Kompilacja tekstów $(TEXT_DIR)/ do $(GEN_DIR)/ (scripts/compile_texts.py) ==="
 	$(PYTHON) $(TEXT_SCRIPT) --texts-dir $(TEXT_DIR) --gen-dir $(GEN_DIR)
 
 $(TITLE_BIN): $(IMG_TITLE) $(CONVERT_SCRIPT)
-	@echo === Konwersja $(IMG_TITLE) do $(TITLE_BIN) (atari-image-converter, ANTIC F 320x175) ===
+	@echo "=== Konwersja $(IMG_TITLE) do $(TITLE_BIN) (atari-image-converter, ANTIC F 320x175) ==="
 	$(PYTHON) $(CONVERT_SCRIPT) -i $(IMG_TITLE) -o $(TITLE_BIN) --width 320 --height 175 --mode F
 
 $(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
-	@echo === Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ===
+	@echo "=== Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ==="
 	$(PYTHON) $(SPRITE_SCRIPT) -i $(SPRITE_JSON) -o $(DRAGON_ASM)
 
 PROJECT_YAML    := world/project.yaml
@@ -88,37 +88,37 @@ ANIM_CHARS_ASM      := $(GEN_DIR)/animated_chars.asm
 ASM_ENGINE          := $(wildcard engine/*.asm)
 
 $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM): $(ROT_CHARS_JSON) $(ROT_SCRIPT)
-	@echo === Generowanie tablic obrotu znakow $(ROT_CHARS_JSON) do $(GEN_DIR)/ ===
+	@echo "=== Generowanie tablic obrotu znakow $(ROT_CHARS_JSON) do $(GEN_DIR)/ ==="
 	$(PYTHON) $(ROT_SCRIPT) -i $(ROT_CHARS_JSON) -g $(ROT_CHARS_GLOBAL_ASM) -p $(ROT_CHARS_PROC_ASM)
 
 $(ANIM_CHARS_ASM): $(ANIM_CHARS_JSON) $(ANIM_SCRIPT)
-	@echo === Generowanie tablic animacji znakow $(ANIM_CHARS_JSON) do $(ANIM_CHARS_ASM) ===
+	@echo "=== Generowanie tablic animacji znakow $(ANIM_CHARS_JSON) do $(ANIM_CHARS_ASM) ==="
 	$(PYTHON) $(ANIM_SCRIPT) -i $(ANIM_CHARS_JSON) -o $(ANIM_CHARS_ASM) --charset-base 0x6800
 
 data: $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
 
 $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(COLORS_YAML) $(WORLD_SCRIPT)
-	@echo === Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ===
+	@echo "=== Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ==="
 	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --colors $(COLORS_YAML) --output $(WORLD_GEN_ASM) --tiles-output $(OBJ_TILES_GEN_ASM)
 
 $(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
-	@echo === Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ===
+	@echo "=== Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ==="
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 
 check_memory: $(XEX_OUT) $(MAP_SCRIPT)
-	@echo === Weryfikacja i generowanie mapy pamieci ===
+	@echo "=== Weryfikacja i generowanie mapy pamieci ==="
 	$(PYTHON) $(MAP_SCRIPT) --input $(GEN_DIR)/jabberwocky.lab --out-text $(MAP_TXT) --out-json $(MAP_JSON)
 
 test: $(XEX_OUT)
-	@echo === Uruchamianie testow pytest ===
+	@echo "=== Uruchamianie testow pytest ==="
 	$(PYTHON) -m pytest tests -v
 
 run: $(XEX_OUT)
-	@echo === Uruchamianie w emulatorze Altirra ===
+	@echo "=== Uruchamianie w emulatorze Altirra ==="
 	$(ALTIRRA) $(XEX_OUT)
 
 clean:
-	@echo === Sprzątanie plików wygenerowanych ===
+	@echo "=== Sprzątanie plików wygenerowanych ==="
 ifeq ($(OS),Windows_NT)
 	-@cmd /c if exist $(XEX_OUT) del /q /f $(XEX_OUT)
 	-@cmd /c if exist $(GEN_DIR) rmdir /s /q $(GEN_DIR)
@@ -128,10 +128,10 @@ else
 endif
 
 help:
-	@echo Dostępne cele:
-	@echo   make              - buduje $(XEX_OUT) oraz weryfikuje mape pamieci
-	@echo   make check_memory - generuje i weryfikuje docs/memory_map.txt i json
-	@echo   make test         - uruchamia testy jednostkowe (pytest)
-	@echo   make clean        - usuwa wygenerowane pliki ($(XEX_OUT), $(GEN_DIR)/)
-	@echo   make run          - uruchamia $(XEX_OUT) w Altirra
-	@echo   make help         - ta pomoc
+	@echo "Dostępne cele:"
+	@echo "  make              - buduje $(XEX_OUT) oraz weryfikuje mape pamieci"
+	@echo "  make check_memory - generuje i weryfikuje docs/memory_map.txt i json"
+	@echo "  make test         - uruchamia testy jednostkowe (pytest)"
+	@echo "  make clean        - usuwa wygenerowane pliki ($(XEX_OUT), $(GEN_DIR)/)"
+	@echo "  make run          - uruchamia $(XEX_OUT) w Altirra"
+	@echo "  make help         - ta pomoc"
