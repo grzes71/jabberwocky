@@ -117,3 +117,27 @@ def test_full_loop_intro_never_revisited(clean_mpu: MPU, labels: Dict[str, int])
     mpu.memory[labels["FIRE_PRESSED"]] = 1
     run_subroutine(mpu, labels["TITLE_RUN"])
     assert mpu.memory[labels["GAME_STATE"]] == labels["STATE_GAME"]
+
+
+def test_gameover_init_border_matches_background_defeat(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify gameover_init sets border (COLOR4) equal to background (COLOR2) on defeat ($32)."""
+    mpu = clean_mpu
+    mpu.memory[labels["GAME_OVER_REASON"]] = 1  # Not REASON_SUCCESS (0)
+
+    run_subroutine(mpu, labels["GAMEOVER_INIT"])
+
+    assert mpu.memory[labels["COLOR2"]] == 0x32
+    assert mpu.memory[labels["COLOR4"]] == 0x32
+    assert mpu.memory[labels["COLOR4"]] == mpu.memory[labels["COLOR2"]]
+
+
+def test_gameover_init_border_matches_background_victory(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify gameover_init sets border (COLOR4) equal to background (COLOR2) on victory ($C4)."""
+    mpu = clean_mpu
+    mpu.memory[labels["GAME_OVER_REASON"]] = labels["REASON_SUCCESS"]
+
+    run_subroutine(mpu, labels["GAMEOVER_INIT"])
+
+    assert mpu.memory[labels["COLOR2"]] == 0xC4
+    assert mpu.memory[labels["COLOR4"]] == 0xC4
+    assert mpu.memory[labels["COLOR4"]] == mpu.memory[labels["COLOR2"]]
