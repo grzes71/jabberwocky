@@ -23,15 +23,15 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$1FF1",
-    "size": 6119,
+    "end_address": "$2009",
+    "size": 6143,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1FF2",
+    "start_address": "$200A",
     "end_address": "$27FF",
-    "size": 2062,
+    "size": 2038,
     "type": "free"
   },
   {

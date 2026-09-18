@@ -7,6 +7,7 @@
 
 FADE_IN_DELAY   = 6         ; Frame delay between luminance increments (fade in)
 FADE_OUT_DELAY  = 4         ; Frame delay between luminance decrements (fade out)
+INTRO_WAIT_DELAY = 100      ; 2 seconds wait at 50 Hz (PAL) before auto fade-out
 
 FADE_MODE_IN    = 0
 FADE_MODE_WAIT  = 1
@@ -51,6 +52,7 @@ intro_init
     sta intro_line_col3
     sta intro_fade_line
     sta intro_fade_mode         ; FADE_MODE_IN = 0
+    sta intro_wait_timer
     lda #FADE_IN_DELAY
     sta intro_fade_timer
 
@@ -120,7 +122,7 @@ intro_run
 
     ; Check if player pressed FIRE button
     lda fire_pressed
-    beq @run_done
+    beq @check_timeout
 
     lda #0
     sta fire_pressed
@@ -133,6 +135,7 @@ intro_run
     beq @run_done
 
     ; Initiate fade-out from bottom line (3) to top line (0)
+@trigger_fade_out
     lda #FADE_MODE_OUT
     sta intro_fade_mode
     lda #3
@@ -140,6 +143,19 @@ intro_run
     lda #FADE_OUT_DELAY
     sta intro_fade_timer
     rts
+
+@check_timeout
+    ; If not in wait mode (e.g. still fading in), nothing to do
+    lda intro_fade_mode
+    cmp #FADE_MODE_WAIT
+    bne @run_done
+
+    ; Decrement 2-second wait timer (100 frames at 50Hz)
+    dec intro_wait_timer
+    bne @run_done
+
+    ; 2 seconds elapsed: trigger fade-out automatically (as if player pressed FIRE)
+    jmp @trigger_fade_out
 
 @transition_title
     ; Disable DLI before leaving scene
@@ -256,9 +272,11 @@ update_intro_fade
     cmp #4
     bcc @fade_ret
 
-    ; All 4 lines reached $0E -> wait for fire button
+    ; All 4 lines reached $0E -> wait for fire button or 2s timeout
     lda #FADE_MODE_WAIT
     sta intro_fade_mode
+    lda #INTRO_WAIT_DELAY
+    sta intro_wait_timer
 @fade_ret
     rts
 
@@ -307,6 +325,7 @@ intro_line_col3     dta 0
 intro_fade_line     dta 0
 intro_fade_timer    dta FADE_IN_DELAY
 intro_fade_mode     dta FADE_MODE_IN
+intro_wait_timer    dta 0
 
 ; --- Text Data (Included from generated text compiler) ---
     icl 'gen/intro_text.asm'
