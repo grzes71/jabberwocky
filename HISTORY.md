@@ -2,6 +2,14 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Aktualizacja wersji Pythona do 3.14 w release.yml
+- **Cel**: Dostosowanie wersji środowiska Python w pipeline wydań GitHub Actions do lokalnej wersji projektu (Python 3.14).
+- **Wprowadzone modyfikacje**:
+  - [.github/workflows/release.yml](.github/workflows/release.yml):
+    - Zmieniono `python-version: '3.12'` na `python-version: '3.14'`.
+- **Weryfikacja**:
+  - Walidacja składni pliku YAML workflow.
+
 ## [2026-09-18] - Wymuszenie konwencji Conventional Commits w workflow git-push
 - **Cel**: Ścisłe egzekwowanie formatu Conventional Commits (`type(scope): description`) dla wszystkich commitów tworzonych przez workflow `/git-push`.
 - **Wprowadzone modyfikacje**:
