@@ -55,7 +55,7 @@ MAP_JSON       := $(DOCS_DIR)/memory_map.json
 TEXT_DIR       := texts
 TEXT_SRC       := $(wildcard $(TEXT_DIR)/*.txt)
 TEXT_SCRIPT    := scripts/compile_texts.py
-TEXT_GEN_ASM   := $(GEN_DIR)/intro_text.asm $(GEN_DIR)/title_scroll_text.asm
+TEXT_GEN_ASM   := $(GEN_DIR)/intro_text.asm $(GEN_DIR)/title_scroll_text.asm $(GEN_DIR)/game_over_fail_text.asm $(GEN_DIR)/game_over_success_text.asm
 
 $(TEXT_GEN_ASM): $(TEXT_SRC) $(TEXT_SCRIPT)
 	@echo === Kompilacja tekstów $(TEXT_DIR)/ do $(GEN_DIR)/ (scripts/compile_texts.py) ===

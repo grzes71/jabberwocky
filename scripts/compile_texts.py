@@ -57,8 +57,8 @@ def text_to_mads_dta(text: str, invert: bool = False, length_prefix: bool = Fals
     return lines
 
 
-def compile_title_text(src_path: Path) -> str:
-    """Compile texts/title.txt into intro poem line structures."""
+def compile_lines_text(src_path: Path, label_prefix: str, min_lines: int = 4) -> str:
+    """Compile a multiline text file into numbered line structures with length prefix."""
     if not src_path.exists():
         raise FileNotFoundError(f"Source file not found: {src_path}")
 
@@ -73,12 +73,22 @@ def compile_title_text(src_path: Path) -> str:
         "",
     ]
 
-    for idx, line in enumerate(raw_lines, start=1):
-        out.append(f"intro_txt_line{idx}")
-        out.extend(text_to_mads_dta(line, invert=False, length_prefix=True))
+    total_lines = max(len(raw_lines), min_lines)
+    for idx in range(1, total_lines + 1):
+        out.append(f"{label_prefix}_line{idx}")
+        if idx <= len(raw_lines):
+            line = raw_lines[idx - 1]
+            out.extend(text_to_mads_dta(line, invert=False, length_prefix=True))
+        else:
+            out.append("    dta 0")
         out.append("")
 
     return "\n".join(out)
+
+
+def compile_title_text(src_path: Path) -> str:
+    """Compile texts/title.txt into intro poem line structures."""
+    return compile_lines_text(src_path, label_prefix="intro_txt", min_lines=4)
 
 
 def compile_scroll_text(src_path: Path) -> str:
@@ -127,6 +137,18 @@ def main() -> None:
         scroll_asm = gen_dir / "title_scroll_text.asm"
         scroll_asm.write_text(compile_scroll_text(scroll_src), encoding="utf-8")
         print(f"Generated {scroll_asm} from {scroll_src}")
+
+    fail_src = texts_dir / "game_over_fail.txt"
+    if fail_src.exists():
+        fail_asm = gen_dir / "game_over_fail_text.asm"
+        fail_asm.write_text(compile_lines_text(fail_src, label_prefix="gover_txt", min_lines=4), encoding="utf-8")
+        print(f"Generated {fail_asm} from {fail_src}")
+
+    success_src = texts_dir / "game_over_success.txt"
+    if success_src.exists():
+        success_asm = gen_dir / "game_over_success_text.asm"
+        success_asm.write_text(compile_lines_text(success_src, label_prefix="win_txt", min_lines=4), encoding="utf-8")
+        print(f"Generated {success_asm} from {success_src}")
 
 
 if __name__ == "__main__":

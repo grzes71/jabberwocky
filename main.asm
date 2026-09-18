@@ -250,9 +250,9 @@ dlist_top_scores
     :2 dta DL_BLANK8
 
     dta DL_MODE_2 | DL_LMS, a(STUB_VRAM)  ; Row 0: "JABBERWOCKY"
-    dta DL_BLANK2
+    dta DL_BLANK8
     dta DL_MODE_2                         ; Row 1: "TOP SCORES"
-    dta DL_BLANK4
+    dta DL_BLANK8
     dta DL_MODE_2                         ; Row 2: "RANK  NAME   SCORE"
     dta DL_BLANK4
 

@@ -59,24 +59,28 @@ gameover_init
     lda #>gover_txt_line1
     sta PTR_SRC+1
     ldx #8
-    ldy #3
-    jsr print_at
+    jsr print_centered_line
 
     lda #<gover_txt_line2
     sta PTR_SRC
     lda #>gover_txt_line2
     sta PTR_SRC+1
     ldx #10
-    ldy #2
-    jsr print_at
+    jsr print_centered_line
 
     lda #<gover_txt_line3
     sta PTR_SRC
     lda #>gover_txt_line3
     sta PTR_SRC+1
-    ldx #13
-    ldy #2
-    jsr print_at
+    ldx #12
+    jsr print_centered_line
+
+    lda #<gover_txt_line4
+    sta PTR_SRC
+    lda #>gover_txt_line4
+    sta PTR_SRC+1
+    ldx #14
+    jsr print_centered_line
     jmp @gover_common_prompt
 
 @init_victory
@@ -110,24 +114,28 @@ gameover_init
     lda #>win_txt_line1
     sta PTR_SRC+1
     ldx #8
-    ldy #3
-    jsr print_at
+    jsr print_centered_line
 
     lda #<win_txt_line2
     sta PTR_SRC
     lda #>win_txt_line2
     sta PTR_SRC+1
     ldx #10
-    ldy #4
-    jsr print_at
+    jsr print_centered_line
 
     lda #<win_txt_line3
     sta PTR_SRC
     lda #>win_txt_line3
     sta PTR_SRC+1
-    ldx #13
-    ldy #4
-    jsr print_at
+    ldx #12
+    jsr print_centered_line
+
+    lda #<win_txt_line4
+    sta PTR_SRC
+    lda #>win_txt_line4
+    sta PTR_SRC+1
+    ldx #14
+    jsr print_centered_line
 
 @gover_common_prompt
     lda #<gover_txt_prompt
@@ -144,6 +152,20 @@ gameover_init
     sta DMACTL
     rts
 
+; Print string pointed by PTR_SRC horizontally centered at row X
+print_centered_line
+    ldy #0
+    lda (PTR_SRC),y
+    beq @+                      ; If length == 0, skip
+    sec
+    lda #40
+    ldy #0
+    sbc (PTR_SRC),y
+    lsr
+    tay                         ; Y = (40 - len) / 2
+    jsr print_at
+@   rts
+
 gameover_run
     lda fire_pressed
     beq @+
@@ -156,21 +178,13 @@ gameover_run
 ; --- Text Data ---
 gover_txt_title
     dta 17, d'=== GAME OVER ==='
-gover_txt_line1
-    dta 33, d'ONE, TWO! AND THROUGH AND THROUGH'
-gover_txt_line2
-    dta 36, d'THE VORPAL BLADE WENT SNICKER-SNACK!'
-gover_txt_line3
-    dta 36, d'THE JABBERWOCK HAS CLAIMED YOUR SOUL'
 
 win_txt_title
     dta 15, d'=== VICTORY ==='
-win_txt_line1
-    dta 34, d'AND HAST THOU SLAIN THE JABBERWOCK?'
-win_txt_line2
-    dta 32, d'COME TO MY ARMS, MY BEAMISH BOY!'
-win_txt_line3
-    dta 32, d'O FRABJOUS DAY! CALLOOH! CALLAY!'
 
 gover_txt_prompt
     dta 26, d'>> PRESS FIRE TO RESTART <<'*
+
+; --- Auto-generated Game Over texts from texts/ ---
+    icl 'gen/game_over_fail_text.asm'
+    icl 'gen/game_over_success_text.asm'

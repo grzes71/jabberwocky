@@ -3,6 +3,7 @@
 from pathlib import Path
 from scripts.compile_texts import (
     POLISH_CHAR_MAP,
+    compile_lines_text,
     compile_scroll_text,
     compile_title_text,
     text_to_mads_dta,
@@ -70,3 +71,17 @@ def test_compile_scroll_text(tmp_path: Path):
     assert "TITLE_SCROLL_TEXT_LEN = 13" in out
     assert "title_scroll_text" in out
     assert "d'TEKST TESTOWY'*" in out
+
+
+def test_compile_lines_text_game_over(tmp_path: Path):
+    """Verify compile_lines_text creates expected label prefix and min lines."""
+    fail_file = tmp_path / "game_over_fail.txt"
+    fail_file.write_text("Line one\nLine two\n", encoding="utf-8")
+
+    out = compile_lines_text(fail_file, label_prefix="gover_txt", min_lines=4)
+    assert "gover_txt_line1" in out
+    assert "gover_txt_line2" in out
+    assert "gover_txt_line3" in out
+    assert "gover_txt_line4" in out
+    assert "dta 8" in out  # len("Line one")
+    assert "dta 0" in out  # empty padded line 3 and 4
