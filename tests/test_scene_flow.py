@@ -55,6 +55,66 @@ def test_intro_run_transitions_to_title(clean_mpu: MPU, labels: Dict[str, int]):
     )
 
 
+def test_intro_run_fire_triggers_immediate_fade_out(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that pressing FIRE while waiting triggers immediate fade-out."""
+    mpu = clean_mpu
+    mpu.memory[labels["GAME_STATE"]] = labels["STATE_INTRO"]
+    mpu.memory[labels["INTRO_FADE_MODE"]] = labels["FADE_MODE_WAIT"]
+    mpu.memory[labels["INTRO_WAIT_TIMER"]] = labels["INTRO_WAIT_DELAY"]
+    mpu.memory[labels["FIRE_PRESSED"]] = 1
+
+    run_subroutine(mpu, labels["INTRO_RUN"])
+
+    assert mpu.memory[labels["FIRE_PRESSED"]] == 0, "FIRE flag must be consumed"
+    assert mpu.memory[labels["INTRO_FADE_MODE"]] == labels["FADE_MODE_OUT"], "Should transition to FADE_MODE_OUT"
+    assert mpu.memory[labels["INTRO_FADE_LINE"]] == 3, "Fade out starts from bottom line (3)"
+    assert mpu.memory[labels["INTRO_FADE_TIMER"]] == labels["FADE_OUT_DELAY"]
+
+
+def test_intro_run_wait_timeout_triggers_fade_out(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that if FIRE is not pressed, intro screen waits 2 seconds (100 frames) then fades out."""
+    mpu = clean_mpu
+    mpu.memory[labels["GAME_STATE"]] = labels["STATE_INTRO"]
+    mpu.memory[labels["INTRO_FADE_MODE"]] = labels["FADE_MODE_WAIT"]
+    mpu.memory[labels["INTRO_WAIT_TIMER"]] = labels["INTRO_WAIT_DELAY"]
+    mpu.memory[labels["FIRE_PRESSED"]] = 0
+
+    assert labels["INTRO_WAIT_DELAY"] == 100, "INTRO_WAIT_DELAY must be 100 frames (2 seconds at 50Hz)"
+
+    # Run for 99 frames - should stay in FADE_MODE_WAIT
+    for remaining in range(100, 1, -1):
+        assert mpu.memory[labels["INTRO_WAIT_TIMER"]] == remaining
+        run_subroutine(mpu, labels["INTRO_RUN"])
+        assert mpu.memory[labels["INTRO_FADE_MODE"]] == labels["FADE_MODE_WAIT"]
+
+    # Frame 100: timer reaches 0, triggers FADE_MODE_OUT
+    assert mpu.memory[labels["INTRO_WAIT_TIMER"]] == 1
+    run_subroutine(mpu, labels["INTRO_RUN"])
+
+    assert mpu.memory[labels["INTRO_WAIT_TIMER"]] == 0
+    assert mpu.memory[labels["INTRO_FADE_MODE"]] == labels["FADE_MODE_OUT"], (
+        "After 2 seconds without FIRE, should automatically transition to FADE_MODE_OUT"
+    )
+    assert mpu.memory[labels["INTRO_FADE_LINE"]] == 3
+    assert mpu.memory[labels["INTRO_FADE_TIMER"]] == labels["FADE_OUT_DELAY"]
+
+
+def test_intro_fade_in_completion_initializes_wait_timer(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that completing fade-in of line 3 sets FADE_MODE_WAIT and INTRO_WAIT_DELAY."""
+    mpu = clean_mpu
+    mpu.memory[labels["INTRO_FADE_MODE"]] = labels["FADE_MODE_IN"]
+    mpu.memory[labels["INTRO_FADE_LINE"]] = 3
+    mpu.memory[labels["INTRO_FADE_TIMER"]] = 1
+    # Line 3 color is at $0C, next increment will reach $0E (max)
+    mpu.memory[labels["INTRO_LINE_COL3"]] = 0x0C
+
+    run_subroutine(mpu, labels["UPDATE_INTRO_FADE"])
+
+    assert mpu.memory[labels["INTRO_LINE_COL3"]] == 0x0E
+    assert mpu.memory[labels["INTRO_FADE_MODE"]] == labels["FADE_MODE_WAIT"]
+    assert mpu.memory[labels["INTRO_WAIT_TIMER"]] == labels["INTRO_WAIT_DELAY"]
+
+
 def test_title_run_transitions_to_game(clean_mpu: MPU, labels: Dict[str, int]):
     """Verify that pressing FIRE on the title screen transitions to STATE_GAME."""
     mpu = clean_mpu

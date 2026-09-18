@@ -2,6 +2,22 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Dodanie 2-sekundowego limitu czasu na ekranie Intro przed auto fade-out
+- **Cel**: Umożliwienie automatycznego przejścia do fade-out na ekranie Intro po 2 sekundach od wyświetlenia wszystkich 4 linii wiersza, jeśli gracz nie naciśnie przycisku FIRE.
+- **Wprowadzone modyfikacje**:
+  - [scenes/intro.asm](scenes/intro.asm):
+    - Zdefiniowano stałą `INTRO_WAIT_DELAY = 100` (2 sekundy przy 50 Hz PAL).
+    - Dodano zmienną stanu `intro_wait_timer` inicjalizowaną w `intro_init` oraz ładowaną w `update_intro_fade` po osiągnięciu maksymalnej luminancji przez linię 4 (`FADE_MODE_WAIT`).
+    - W `intro_run` dodano procedurę `@check_timeout` dekrementującą `intro_wait_timer` co klatkę w trybie `FADE_MODE_WAIT` i uruchamiającą płynne wygaszanie tekstu (`@trigger_fade_out`) po upływie 100 klatek.
+    - Zachowano natychmiastowe wygaszanie przy naciśnięciu przycisku FIRE w dowolnym momencie.
+  - [tests/test_scene_flow.py](tests/test_scene_flow.py):
+    - Dodano test `test_intro_run_fire_triggers_immediate_fade_out` weryfikujący natychmiastowy fade-out po FIRE.
+    - Dodano test `test_intro_run_wait_timeout_triggers_fade_out` weryfikujący odliczanie 100 klatek i auto fade-out w py65.
+    - Dodano test `test_intro_fade_in_completion_initializes_wait_timer` weryfikujący inicjalizację licznika czasu w `update_intro_fade`.
+- **Weryfikacja**:
+  - `make all`: pomyślna kompilacja MADS i sprawdzenie mapy pamięci.
+  - `pytest tests/test_scene_flow.py`: wszystkie 10 testów przeszło pomyślnie.
+
 ## [2026-09-18] - Aktualizacja wersji Pythona do 3.14 w release.yml
 - **Cel**: Dostosowanie wersji środowiska Python w pipeline wydań GitHub Actions do lokalnej wersji projektu (Python 3.14).
 - **Wprowadzone modyfikacje**:
