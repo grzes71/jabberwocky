@@ -29,18 +29,16 @@ gameover_init
     cmp #REASON_SUCCESS
     beq @init_victory
 
-    ; Colors: Deep red background with white text (Game Over / Defeat)
+    ; Colors: Deep red background ($32) and border ($32) with white text ($0E)
     lda #$32
     sta COLOR2
     sta COLPF2
+    sta COLOR4
+    sta COLBK
 
     lda #$0E
     sta COLOR1
     sta COLPF1
-
-    lda #$30
-    sta COLOR4
-    sta COLBK
 
     ; Clear text screen
     jsr clear_stub_vram
@@ -84,18 +82,16 @@ gameover_init
     jmp @gover_common_prompt
 
 @init_victory
-    ; Colors: Deep green background ($C4) with golden/white text ($1E)
+    ; Colors: Deep green background ($C4) and border ($C4) with golden/white text ($1E)
     lda #$C4
     sta COLOR2
     sta COLPF2
+    sta COLOR4
+    sta COLBK
 
     lda #$1E
     sta COLOR1
     sta COLPF1
-
-    lda #$C0
-    sta COLOR4
-    sta COLBK
 
     ; Clear text screen
     jsr clear_stub_vram

@@ -2,6 +2,36 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Wymuszenie konwencji Conventional Commits w workflow git-push
+- **Cel**: Ścisłe egzekwowanie formatu Conventional Commits (`type(scope): description`) dla wszystkich commitów tworzonych przez workflow `/git-push`.
+- **Wprowadzone modyfikacje**:
+  - [.agents/workflows/git-push.md](.agents/workflows/git-push.md):
+    - W krokach 3 i 5 zdefiniowano bezwzględny wymóg stosowania Conventional Commits w języku angielskim wraz z dozwolonymi typami (`feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `ci`, `build`) i przykładami.
+- **Weryfikacja**:
+  - Weryfikacja spójności reguł workflow w repozytorium.
+
+## [2026-09-18] - Aktualizacja workflow git-push o wymagany parametr nazwy gałęzi
+- **Cel**: Wymuszenie podawania nazwy gałęzi jako parametru workflow `/git-push <branch name>`, utworzenie lub przełączenie na gałąź przed commitem oraz wypchnięcie ze śledzeniem upstream (`git push -u origin <branch name>`).
+- **Wprowadzone modyfikacje**:
+  - [.agents/workflows/git-push.md](.agents/workflows/git-push.md):
+    - Wprowadzono wymóg parametru `<branch name>` z blokadą wykonania przy jego braku.
+    - Dodano krok tworzenia / przełączania gałęzi (`git checkout -b <branch name>`).
+    - Zmieniono komendę wypychania na `git push -u origin <branch name>`.
+- **Weryfikacja**:
+  - Weryfikacja struktury i spójności workflow w repozytorium.
+
+## [2026-09-18] - Dopasowanie koloru ramki do tła na ekranie GAME OVER
+- **Cel**: Ujednolicenie koloru ramki ekranu (`COLOR4`/`COLBK`) z kolorem tła (`COLOR2`/`COLPF2`) na ekranie GAME OVER (zarówno przy przegranej, jak i wygranej).
+- **Wprowadzone modyfikacje**:
+  - [scenes/gameover.asm](scenes/gameover.asm):
+    - Dla przegranej: ustawiono `COLOR4`/`COLBK` na `$32` (identycznie jak tło `COLOR2`/`COLPF2`).
+    - Dla wygranej: ustawiono `COLOR4`/`COLBK` na `$C4` (identycznie jak tło `COLOR2`/`COLPF2`).
+  - [tests/test_scene_flow.py](tests/test_scene_flow.py):
+    - Dodano testy jednostkowe `test_gameover_init_border_matches_background_defeat` oraz `test_gameover_init_border_matches_background_victory` weryfikujące równość rejestrów tła i ramki w py65.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja MADS i wygenerowanie mapy pamięci.
+  - `pytest tests/test_scene_flow.py -v`: wszystkie 7 testów zaliczonych.
+
 ## [2026-09-18] - Zwiększenie odstępów w dlist_top_scores po JABBERWOCKY i TOP SCORES
 - **Cel**: Zwiększenie światła pionowego na ekranie TOP SCORES poprzez dodanie 8 pustych linii rastra ANTIC (`DL_BLANK8`) po tytule gry oraz po podtytule (wysokość całego ekranu wynosi teraz dokładnie standardowe 192 linie).
 - **Wprowadzone modyfikacje**:
