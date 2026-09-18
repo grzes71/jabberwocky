@@ -72,16 +72,20 @@ jobs:
           curl.exe -L -f -s -S "https://raw.githubusercontent.com/tebe6502/Mad-Assembler/2.1.6/bin/windows_x86_64/mads.exe" -o "$madsDir\mads.exe"
           if (!(Test-Path "$madsDir\mads.exe")) { throw "MADS download failed" }
 
-      - name: Run Tests & Build Atari XEX
+      - name: Build Atari XEX
         if: steps.semver.outputs.should_release == 'true'
         run: |
           make all
-          make test
           if (!(Test-Path "jabberwocky.xex")) {
             Write-Error "Build failed: jabberwocky.xex was not generated!"
             exit 1
           }
           Write-Host "Successfully built jabberwocky.xex (`$((Get-Item jabberwocky.xex).Length) bytes)"
+
+      - name: Run Tests
+        if: steps.semver.outputs.should_release == 'true'
+        run: |
+          make test
 
       - name: Commit & Push updated scroll.txt to main
         if: steps.semver.outputs.should_release == 'true'

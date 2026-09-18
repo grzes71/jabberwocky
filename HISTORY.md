@@ -2,6 +2,16 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-18] - Naprawa kolejności budowania w release.yml oraz zależności celu test w Makefile
+- **Cel**: Wyeliminowanie błędów w GitHub Actions wynikających z uruchamiania testów jednostkowych przed wygenerowaniem artefaktów (`jabberwocky.xex` oraz `gen/jabberwocky.lab`).
+- **Wprowadzone modyfikacje**:
+  - [.github/workflows/release.yml](.github/workflows/release.yml):
+    - Rozdzielono połączony krok budowania i testów na dwa niezależne kroki: `Build Atari XEX` (wykonujący `make all` z weryfikacją wygenerowania pliku XEX) oraz `Run Tests` (wykonujący `make test`).
+  - [Makefile](Makefile):
+    - Dodano jawną zależność celu `test` od `$(XEX_OUT)` (`test: $(XEX_OUT)`), gwarantując asemblację projektu i utworzenie tablicy symboli `.lab` przed uruchomieniem `pytest`.
+- **Weryfikacja**:
+    - Weryfikacja pliku `Makefile` i składni workflow `.github/workflows/release.yml`.
+
 ## [2026-09-18] - Dodanie 2-sekundowego limitu czasu na ekranie Intro przed auto fade-out
 - **Cel**: Umożliwienie automatycznego przejścia do fade-out na ekranie Intro po 2 sekundach od wyświetlenia wszystkich 4 linii wiersza, jeśli gracz nie naciśnie przycisku FIRE.
 - **Wprowadzone modyfikacje**:

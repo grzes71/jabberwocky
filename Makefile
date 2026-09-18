@@ -109,7 +109,7 @@ check_memory: $(XEX_OUT) $(MAP_SCRIPT)
 	@echo === Weryfikacja i generowanie mapy pamieci ===
 	$(PYTHON) $(MAP_SCRIPT) --input $(GEN_DIR)/jabberwocky.lab --out-text $(MAP_TXT) --out-json $(MAP_JSON)
 
-test:
+test: $(XEX_OUT)
 	@echo === Uruchamianie testow pytest ===
 	$(PYTHON) -m pytest tests -v
 
