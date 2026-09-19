@@ -41,7 +41,7 @@ DRAGON_ASM     := $(GEN_DIR)/dragon_sprite.asm
 SPRITE_SCRIPT  := scripts/compile_sprites.py
 
 # ---- Cele ----
-.PHONY: all xex data check_memory clean run test help
+.PHONY: all xex assets data check_memory clean run test help
 
 all: $(XEX_OUT) check_memory
 
@@ -68,6 +68,8 @@ $(TITLE_BIN): $(IMG_TITLE) $(CONVERT_SCRIPT)
 $(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
 	@echo "=== Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ==="
 	$(PYTHON) $(SPRITE_SCRIPT) -i $(SPRITE_JSON) -o $(DRAGON_ASM)
+
+assets: $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM)
 
 PROJECT_YAML    := world/project.yaml
 OBJECTS_YAML    := world/objects.yaml
@@ -130,6 +132,8 @@ endif
 help:
 	@echo "Dostępne cele:"
 	@echo "  make              - buduje $(XEX_OUT) oraz weryfikuje mape pamieci"
+	@echo "  make assets       - konwertuje grafiki, sprajty i teksty"
+	@echo "  make data         - kompiluje swiat, obiekty i zestawy znakow"
 	@echo "  make check_memory - generuje i weryfikuje docs/memory_map.txt i json"
 	@echo "  make test         - uruchamia testy jednostkowe (pytest)"
 	@echo "  make clean        - usuwa wygenerowane pliki ($(XEX_OUT), $(GEN_DIR)/)"

@@ -204,6 +204,7 @@ game_init
     sta GAME_OVER_REASON
     sta dragon_dying
     sta dragon_recharging
+    sta dragon_hit_pending
     sta dragon_p0pf
     sta flame_m_pf
     sta death_timer
@@ -1491,17 +1492,34 @@ update_energy_bar
     ; Test collision with PF0, PF1, or PF2 (bits 0, 1, 2)
     lda ZP_TMP
     and #$07
-    beq @check_pf3
+    bne @pf_hit_detected
 
-    ; Check for secret object collection first!
+    ; No PF0-PF2 collision this frame -> reset pending debouncing flag
+    lda #0
+    sta dragon_hit_pending
+    jmp @check_pf3
+
+@pf_hit_detected
+    ; Check for secret object collection first! (immediate collection on touch)
     jsr check_dragon_secret_collision
 
+    ; Only check blocking collision if collision persists for at least 2 consecutive frames
+    lda dragon_hit_pending
+    bne @check_blocking_obstacle
+
+    ; First frame of collision -> record event and defer obstacle test to next frame
+    lda #1
+    sta dragon_hit_pending
+    jmp @check_pf3
+
+@check_blocking_obstacle
     ; Only crash if collision was with an active BLOCKING object (blocking == true)
     jsr check_dragon_blocking_collision
     bcc @check_pf3              ; Non-blocking object (or clear air) -> do not crash!
 
-    ; Wall/obstacle collision: crash sound and death!
+    ; Wall/obstacle collision confirmed on 2nd frame: crash sound and death!
     lda #0
+    sta dragon_hit_pending
     sta dragon_recharging
     jsr start_dragon_crash
     rts
@@ -1857,6 +1875,7 @@ respawn_dragon
     lda #DEATH_STATE_INACTIVE
     sta dragon_dying
     sta dragon_recharging
+    sta dragon_hit_pending
     sta dragon_p0pf
     sta flame_m_pf
     sta death_timer
@@ -2919,6 +2938,7 @@ advance_to_next_level
     sta death_timer
     sta death_move_timer
     sta dragon_recharging
+    sta dragon_hit_pending
     sta dragon_p0pf
     sta flame_m_pf
     sta dragon_vel_hi
@@ -3097,6 +3117,7 @@ dragon_vel_hi       dta 0
 ; --- Dragon Death State Variables ---
 dragon_dying        dta 0           ; 0 = active/controllable, 1 = dying sequence
 dragon_recharging   dta 0           ; 0 = normal, 1 = recharging via PF3 collision
+dragon_hit_pending  dta 0           ; 0 = no pending collision, 1 = collision reported in previous frame
 dragon_p0pf         dta 0           ; Latched P0PF collision register from action area
 death_timer         dta 0           ; Countdown timer for 2s death sequence (100..0)
 death_move_timer    dta 0           ; Sub-frame timer for horizontal shift (6..1)
