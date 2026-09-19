@@ -18,8 +18,11 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
   - [Object Studio (Katalog obiektów gry)](#object-studio-katalog-obiektów-gry)
   - [Sprite Studio (Edytor grafiki PMG)](#sprite-studio-edytor-grafiki-pmg)
   - [Labirynt Builder (Kompilator świata)](#labirynt-builder-kompilator-świata)
+  - [Charset Anim & Rotate Generators](#charset-anim--rotate-generators)
+  - [Text Compiler](#text-compiler)
   - [Memory Map Generator & Validator](#memory-map-generator--validator)
   - [Image Converter](#image-converter)
+  - [Release Helper & CI/CD Pipeline](#release-helper--cicd-pipeline)
 - [Mapa pamięci](#mapa-pamięci)
 - [Testy](#testy)
 
@@ -29,10 +32,10 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
 
 - **Klasyczny target 6502**: Kod zoptymalizowany pod architekturę Atari XL/XE z zachowaniem oficjalnego zestawu instrukcji MOS 6502 oraz ścisłych reguł taktowania cykli i stron pamięci.
 - **Wielostanowa maszyna stanów**:
-  - `STATE_INTRO`: Scena narracyjna z poematem, polską czcionką i gradientami DLI (wyświetlana jednorazowo przy uruchomieniu gry, po czym następuje przejście do ekranu tytułowego).
+  - `STATE_INTRO`: Scena narracyjna z poematem, polską czcionką i gradientami DLI (wyświetlana jednorazowo przy uruchomieniu gry, po czym następuje przejście do ekranu tytułowego po naciśnięciu FIRE lub automatycznym upływie 2-sekundowego limitu czasu).
   - `STATE_TITLE`: Główny ekran tytułowy w wysokiej rozdzielczości bitmapowej ze sprzętowym scroll-tickerem; naciśnięcie FIRE uruchamia bezpośrednio rozgrywkę.
   - `STATE_GAME`: Główny ekran rozgrywki z animowaną postacią smoka, zianiem ogniem, inercją i płynnym przewijaniem świata.
-  - `STATE_GAME_OVER`: Ekran zakończenia obsługujący porażkę (utrata żyć, wyczerpanie energii smoka) oraz stan **VICTORY** po ukończeniu wszystkich poziomów; naciśnięcie FIRE przechodzi do ekranu `STATE_TOP_SCORES`.
+  - `STATE_GAME_OVER`: Ekran zakończenia obsługujący porażkę (utrata żyć, wyczerpanie energii smoka) oraz stan **VICTORY** po ukończeniu wszystkich poziomów (wersy poetyckie definiowane w `texts/game_over_fail.txt` i `texts/game_over_success.txt`); naciśnięcie FIRE przechodzi do ekranu `STATE_TOP_SCORES`.
   - `STATE_TOP_SCORES`: Tabela 10 najlepszych wyników wszech czasów (ranking, imię gracza, 4-cyfrowy wynik); naciśnięcie FIRE wraca bezpośrednio do `STATE_TITLE`.
   - `STATE_ENTER_NAME`: Ekran wprowadzania 5-znakowego imienia gracza za pomocą joysticka w przypadku zakwalifikowania wyniku do Top 10.
 - **Zaawansowane wykorzystanie ANTIC & GTIA**:
@@ -132,18 +135,23 @@ jabberwocky/
 │   ├── convert_image.py     # Konwerter grafik (ANTIC Mode F)
 │   ├── gen_animated_charset.py # Generator tablic animacji zestawu znaków
 │   ├── gen_rotated_charset.py  # Generator wariantów obróconych znaków
-│   └── generate_memory_map.py  # Analizator symboli MADS i walidator pamięci
+│   ├── generate_memory_map.py  # Analizator symboli MADS i walidator pamięci
+│   └── release_helper.py    # Narzędzie CI/CD: semver, changelog i automatyzacja wydań
 │
 ├── sprites/                 # Źródłowe definicje sprajtów (JSON)
 ├── fonts/                   # Zestawy czcionek Atari (1024 bajty)
 │   ├── text.fnt             # Czcionka tekstowa z polskimi diakrytykami
 │   └── game.fnt             # Zestaw znaków kafli pola gry (ANTIC Mode 4/5)
 ├── texts/                   # Teksty źródłowe scen
+│   ├── title.txt            # Wiersz do sceny intro
+│   ├── scroll.txt           # Tekst paska przewijanego w scenie tytułowej
+│   ├── game_over_fail.txt   # Tekst poetycki porażki
+│   └── game_over_success.txt # Tekst poetycki zwycięstwa
 ├── img/                     # Źródłowe pliki graficzne
 ├── docs/                    # Dokumentacja i generowane raporty pamięci
 │   ├── memory_map.txt       # Czytelne podsumowanie mapy pamięci i wolnej przestrzeni
 │   └── memory_map.json      # Maszynowy model alokacji segmentów
-├── tests/                   # Zestaw 143 testów jednostkowych i emulacyjnych py65 (pytest)
+├── tests/                   # Zestaw 166 testów jednostkowych i emulacyjnych py65 (pytest)
 └── gen/                     # Pliki generowane automatycznie (nie edytować!)
 ```
 
@@ -191,9 +199,9 @@ Możesz je dostosować w pliku `Makefile` lub przekazać jako zmienne środowisk
 
 | Polecenie | Opis |
 | :--- | :--- |
-| `make` / `make all` | Buduje zasoby, kompiluje świat gry, asembluje `jabberwocky.xex`, odpala testy i weryfikuje mapę pamięci |
-| `make assets` | Konwertuje grafiki, teksty i sprajty |
-| `make data` | Kompiluje `world/project.yaml`, `world/objects.yaml` oraz `world/colors.yaml` do `gen/world_data.asm` |
+| `make` / `make all` | Buduje zasoby, kompiluje świat gry, asembluje `jabberwocky.xex` oraz weryfikuje mapę pamięci (`check_memory`) |
+| `make assets` | Konwertuje grafiki, sprajty i teksty (`img/`, `sprites/`, `texts/`) |
+| `make data` | Kompiluje `world/project.yaml`, `world/objects.yaml`, `world/colors.yaml` oraz generuje obrócone i animowane znaki |
 | `make xex` | Buduje sam plik binarny `jabberwocky.xex` |
 | `make check_memory` | Generuje raport pamięci `docs/memory_map.txt` oraz `docs/memory_map.json` |
 | `make test` | Uruchamia pełny zestaw testów `pytest` (w tym emulację py65) |
@@ -253,6 +261,12 @@ Skrypty `scripts/gen_animated_charset.py` oraz `scripts/gen_rotated_charset.py`:
 - Generują klatki animowanych kafli w locie rastra na podstawie `chars/animated.json` do `gen/animated_chars.asm`.
 - Przygotowują warianty obróconych kafli z `chars/rotated.json` do `gen/rotated_chars_*.asm`.
 
+### Text Compiler
+Skrypt `scripts/compile_texts.py` kompiluje teksty narracyjne UTF-8 do wewnętrznych kodów wyświetlania ANTIC:
+- Obsługuje polskie znaki diakrytyczne (mapowane na znaki w zestawie czcionki `fonts/text.fnt`).
+- Generuje dyrektywy MADS dla wiersza intro (`texts/title.txt`), scroll-tickera (`texts/scroll.txt`) oraz poetyckich ekranów zakończenia (`texts/game_over_fail.txt`, `texts/game_over_success.txt`).
+- Automatycznie eksportuje etykiety linii tekstu oraz wspiera dynamiczne centrowanie tekstu w scenach gry.
+
 ### Memory Map Generator & Validator
 Skrypt `scripts/generate_memory_map.py` integruje się bezpośrednio z procesem asemblacji:
 - Analizuje pliki symboli (`.lab`) i listingu (`.lst`) generowane przez MADS.
@@ -265,6 +279,13 @@ Skrypt `scripts/generate_memory_map.py` integruje się bezpośrednio z procesem 
 ### Image Converter
 Skrypt `scripts/convert_image.py` wykorzystuje bibliotekę `atari-image-converter` do przygotowania 1-bitowej bitmapy dla trybu ANTIC F (320×175 pikseli), dopasowując układ danych bezpośrednio do Display Listy silnika.
 
+### Release Helper & CI/CD Pipeline
+Skrypt `scripts/release_helper.py` automatyzuje proces wersjonowania i wydań w GitHub Actions (`.github/workflows/release.yml`):
+- Parsuje historię commitów i tytuły PR zgodnie ze specyfikacją Conventional Commits.
+- Automatycznie wyznacza skok wersji semantycznej (major, minor, patch).
+- Aktualizuje wersję gry w pasku przewijanym `texts/scroll.txt`.
+- Generuje changelog wydań i zarządza tagami wydań w repozytorium.
+
 ---
 
 ## Mapa pamięci
@@ -276,19 +297,23 @@ Projekt zachowuje pełną izolację pamięci OS oraz precyzyjną alokację bufor
 | `$80` – `$89` | 10 B | Zmienne strony zerowej (`PTR_SRC`, `PTR_DST`, `ZP_TMP`, `PTR_BLK`, `PTR_COLL`) |
 | `$8A` – `$FF` | 118 B | **Wolna strona zerowa** |
 | `$0800` – `$080A` | 11 B | Wektor skoku inicjalizacyjnego (`CODE`) |
-| `$080B` – `$1FA9` | ~6.0 KB | Podsystemy silnika (`engine/`: audio, kolizje, animacje kafli, nazwa poziomu) |
-| `$1FAA` – `$27FF` | ~2.1 KB | **Wolna pamięć RAM** (w tym bufor PMG `$2000`–`$27FF`) |
-| `$2800` – `$3E7D` | ~5.8 KB | Segment głównego kodu i logiki gry (`main.asm`, `scenes/`, fizyka smoka) |
-| `$4000` – `$5B67` | ~7.0 KB | Bufor grafiki tytułowej VRAM (ANTIC Mode F, 320×175) |
+| `$080B` – `$2009` | 6143 B (~6.0 KB) | Podsystemy silnika (`engine/`: audio, kolizje, animacje kafli, nazwa poziomu) |
+| `$200A` – `$27FF` | 2038 B (~2.0 KB) | **Wolna pamięć RAM** (w tym bufor PMG) |
+| `$2800` – `$3E7F` | 5760 B (~5.8 KB) | Segment głównego kodu i logiki gry (`main.asm`, `scenes/`, fizyka smoka) |
+| `$3E80` – `$3FFF` | 384 B | **Wolna pamięć RAM** |
+| `$4000` – `$5B67` | 7016 B (~7.0 KB) | Bufor grafiki tytułowej VRAM (ANTIC Mode F, 320×175) |
+| `$5B68` – `$5BFF` | 152 B | **Wolna pamięć RAM** |
 | `$5C00` – `$5FFF` | 1024 B | Bufor czcionki tekstowej (`text.fnt`, wyrównany do 1 KB) |
 | `$6000` – `$620F` | 528 B | Główny bufor pola akcji VRAM A (11 linii ANTIC 5 z HSCROL, 48 B/wiersz) |
 | `$6300` – `$634F` | 80 B | Bufor paska statusu w grze (2 linie ANTIC 2) |
 | `$6350` – `$63F7` | 168 B | Bufor siatki kolizji blokujących `BLOCKING_VRAM` (21×8 bajtów) |
 | `$6400` – `$660F` | 528 B | Zapasowy bufor pola akcji VRAM B do podwójnego buforowania (Double Buffering) |
-| `$6610` – `$676E` | 351 B | Segment Display List dla wszystkich scen (wyrównany do granicy 1 KB) |
-| `$6800` – `$85C4` | ~7.6 KB | Czcionka gry (`game.fnt`), animowane kafle oraz dane świata (`gen/world_data.asm`) |
-| `$8800` – `$90DF` | ~2.2 KB | Bufor tekstu VRAM oraz segment Top Scores / Name Entry (`scenes/top_scores.asm`) |
-| `$90E0` – `$BFFF` | ~11.8 KB | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
+| `$6610` – `$676D` | 350 B | Segment Display List dla wszystkich scen (wyrównany do granicy 1 KB) |
+| `$676E` – `$67FF` | 146 B | **Wolna pamięć RAM** |
+| `$6800` – `$8714` | 7957 B (~7.8 KB) | Czcionka gry (`game.fnt`), animowane kafle oraz dane świata (`gen/world_data.asm`) |
+| `$8715` – `$87FF` | 235 B | **Wolna pamięć RAM** |
+| `$8800` – `$90EF` | 2288 B (~2.3 KB) | Bufor tekstu VRAM oraz segment Top Scores / Name Entry (`scenes/top_scores.asm`) |
+| `$90F0` – `$BFFF` | 12048 B (~11.8 KB) | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
 | `$C000` – `$DFFF` | — | **Naruszenie zabronione** (OS ROM / Rejestry sprzętowe I/O) |
 
 Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w pliku [docs/memory_map.txt](docs/memory_map.txt).
@@ -297,21 +322,23 @@ Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w p
 
 ## Testy
 
-Projekt posiada **145 zautomatyzowanych testów** weryfikujące poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
-- Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
+Projekt posiada **166 zautomatyzowanych testów** weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
+- Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`compile_sprites`, `compile_texts`, `labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
+- Testy asystenta wydań i reguł semver (`scripts/release_helper.py`).
 - Testy spójności modeli danych, kolorów, walidatorów `world/` oraz edytorów GUI (Studio).
 - Testy emulacyjne 6502 (py65) weryfikujące:
+  - Przejścia scen (`scenes/intro.asm`, `scenes/title.asm`, `scenes/game.asm`, `scenes/gameover.asm`, `scenes/top_scores.asm`), w tym natychmiastowe wygaszanie po FIRE oraz 2-sekundowy limit czasu na ekranie Intro.
   - Sprzętowe płynne przewijanie ekranu (`HSCROL` $D404, cykl `3 -> 2 -> 1 -> 0 -> 3`) z podwójnym buforowaniem (`GAME_ACTION_VRAM` / `GAME_ACTION_VRAM_B`) i synchronizacją VBLANK.
   - Odroczone wypiekanie ekranu (`deferred screen baking`) zapobiegające spadkom klatek podczas przewijania.
   - Przesuwanie bufora VRAM i wstrzykiwanie kolumn ze strumienia świata.
   - Wyliczanie czasu energii smoka, ubytek energii, zapobieganie natychmiastowej śmierci po respawnie oraz restart poziomu.
   - Detekcję kolizji smoka z przeszkodami w siatce blokującej (`BLOCKING_VRAM`).
-  - Niszczenie przeszkód przez ogień smoka (`check_flame_object_collision`) i aktualizację kafli VRAM.
-  - Zbieranie sekretów i znajdziek (`check_dragon_secret_collision`) ze śledzeniem zebranych obiektów w masce bitowej (`screen_obj_destroyed`) dla każdego ekranu.
+  - Niszczenie przeszkód przez ogień smoka (`check_flame_object_collision`) i dynamiczną aktualizację kafli VRAM.
+  - Zbieranie sekretów i obiektów interaktywnych (`check_dragon_secret_collision`) ze śledzeniem zebranych obiektów w masce bitowej (`screen_obj_destroyed`) dla każdego ekranu.
   - Animację zestawów znaków w locie rastra (`charset_anim.asm`).
   - Rysowanie i dynamiczne odświeżanie dolnego paska stanu (`LEVEL:01 SCORE:0000 LIVES:03 SHOTS:01`) z kolorowaniem za pomocą sprajtów i missila PMG (x4 width).
   - Wyświetlanie nakładki nazwy poziomu (`level_name.asm`).
-  - Przejście do stanu zakończenia gry z powodem VICTORY (`REASON_SUCCESS`) lub DEFEAT.
+  - Przejście do stanu zakończenia gry z powodem VICTORY (`REASON_SUCCESS`) lub DEFEAT z dopasowaniem kolorów tła i ramki.
   - Tabela 10 najlepszych wyników (`TOP SCORES`), sortowanie, przesuwanie w dół (shift-down) oraz wprowadzanie 5-znakowego imienia joystickiem (`ENTER NAME`).
 - Testy negatywne wykrywające próby kolizji i przekroczenia granic pamięci.
 

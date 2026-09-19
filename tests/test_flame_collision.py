@@ -335,10 +335,41 @@ def test_dragon_crash_on_blocking_object(clean_mpu: MPU, labels: Dict[str, int],
     mpu.memory[labels["DRAGON_DYING"]] = 0
     mpu.memory[labels["DRAGON_P0PF"]] = 0x01          # PF0 collision
 
+    # Frame 1: first frame latches hit, dragon does NOT crash yet
     run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0
+    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 1
 
-    # Dragon MUST enter crash state (3)
+    # Frame 2: collision persists -> dragon enters crash state (3)
+    mpu.memory[labels["DRAGON_P0PF"]] = 0x01
+    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
     assert mpu.memory[labels["DRAGON_DYING"]] == 3
+    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 0
+
+
+def test_dragon_single_frame_glance_forgiven(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
+    """Verify that a 1-frame collision glance does NOT crash the dragon if cleared next frame."""
+    mpu = clean_mpu
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_tolem_level_idx(project_root)
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    # Dragon overlapping blocking object 12
+    mpu.memory[labels["DRAGON_Y"]] = 40
+    mpu.memory[labels["OBJ_TYPE_FLAGS"] + 51] = 0x01
+    mpu.memory[labels["DRAGON_DYING"]] = 0
+    mpu.memory[labels["DRAGON_P0PF"]] = 0x01  # Frame 1: touch
+
+    # Frame 1: touch detected, pending flag set
+    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0
+    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 1
+
+    # Frame 2: dragon moved away, no collision
+    mpu.memory[labels["DRAGON_P0PF"]] = 0x00
+    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0
+    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 0
 
 
 def test_dragon_no_crash_on_non_blocking_object(clean_mpu: MPU, labels: Dict[str, int]):

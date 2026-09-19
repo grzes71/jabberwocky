@@ -2,7 +2,54 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
-## [2026-09-18] - Dopracowanie sekwencji Game Over i układu ekranu TOLEM_09
+## [2026-09-18] - Opcjonalny parametr nazwy gałęzi w workflow git-push
+- **Cel**: Umożliwienie uruchamiania workflow `/git-push` bez podawania nazwy brancha — w przypadku braku parametru procedurę wykonuje się bezpośrednio na bieżącej aktywnej gałęzi.
+- **Wprowadzone modyfikacje**:
+  - [.agents/workflows/git-push.md](.agents/workflows/git-push.md):
+    - Zmieniono wymóg parametru `<branch name>` na opcjonalny.
+    - Zaktualizowano krok wyznaczania docelowej gałęzi (`git branch --show-current`), przełączając na podaną nazwę tylko, jeśli została jawnie określona.
+    - Wskazano wypychanie (`git push -u origin <branch name>`) bieżącego brancha w przypadku braku parametru.
+
+## [2026-09-18] - Mniej agresywne sprawdzanie kolizji ze ścianami i przeszkodami (1-klatkowe opóźnienie)
+- **Cel**: Zmniejszenie agresywności kolizji smoka z przeszkodami i ścianami poprzez wprowadzenie 1-klatkowego filtra (debouncingu), zapobiegającego natychmiastowej śmierci przy 1-klatkowym muśnięciu krawędzi przeszkody.
+- **Wprowadzone modyfikacje**:
+  - [scenes/game.asm](scenes/game.asm):
+    - Dodano zmienną stanu `dragon_hit_pending` (0 = brak oczekującej kolizji, 1 = kolizja zarejestrowana w poprzedniej klatce).
+    - Zainicjalizowano/zresetowano `dragon_hit_pending = 0` w procedurach `init_game`, `advance_to_next_level` oraz `restart_level_after_death`.
+    - Zmodyfikowano procedurę `check_dragon_collisions`:
+      - Gdy brak kolizji z PF0–PF2 (`ZP_TMP & $07 == 0`), zmienna `dragon_hit_pending` jest zerowana.
+      - Gdy występuje kolizja z PF0–PF2 (`ZP_TMP & $07 != 0`):
+        - `check_dragon_secret_collision` nadal wykonuje się natychmiastowo w pierwszej klatce (aby uniknąć utraty sekretu przy dużej prędkości lotu).
+        - Jeśli `dragon_hit_pending == 0`: ustawiana jest flaga `dragon_hit_pending = 1` i sprawdzanie przeszkód blokujących jest odraczane (brak kraksy w tej klatce).
+        - Jeśli `dragon_hit_pending != 0`: kolizja występuje przez co najmniej 2 kolejne klatki -> wywoływane jest `check_dragon_blocking_collision`. W przypadku wykrycia przeszkody blokującej następuje zerowanie flag i przejście do `start_dragon_crash`.
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Zaktualizowano `test_dragon_crash_on_blocking_object` do weryfikacji dwuklatkowego cyklu (klatka 1: brak kraksy i `dragon_hit_pending == 1`; klatka 2: potwierdzenie kolizji i `dragon_dying == 3`).
+    - Dodano test `test_dragon_single_frame_glance_forgiven` weryfikujący, że 1-klatkowe muśnięcie przeszkody nie powoduje śmierci smoka, jeśli w kolejnej klatce kolizja ustąpi.
+  - [tests/test_status_bar.py](tests/test_status_bar.py):
+    - Zaktualizowano `test_check_dragon_crash_collisions_emulation` do testowania 2 kolejnych klatek kolizji dla masek kolorów PF0, PF1, PF2 oraz PF0+PF3.
+    - Dodano test `test_check_dragon_collision_debouncing` sprawdzający oba scenariusze (muśnięcie 1-klatkowe bez zderzenia oraz 2-klatkowe zderzenie potwierdzone kraksą).
+  - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json):
+    - Zaktualizowano mapę pamięci po ponownej asemblacji.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja MADS bez błędów i ostrzeżeń.
+  - `make test`: wszystkie 168 testów jednostkowych i emulacyjnych py65 zakończone wynikiem pozytywnym (`168 passed in 9.97s`).
+
+## [2026-09-18] - Aktualizacja dokumentacji README i celów w Makefile
+- **Cel**: Uaktualnienie pliku `README.md` do stanu faktycznego projektu (mapa pamięci, liczba testów, opis stanów, narzędzia, struktura plików) oraz dodanie jawnego celu `assets` w `Makefile`.
+- **Wprowadzone modyfikacje**:
+  - [README.md](README.md):
+    - Zaktualizowano liczbę testów jednostkowych i emulacyjnych z 145/143 na rzeczywiste 166.
+    - Zaktualizowano tabelę mapy pamięci zgodnie z najnowszym raportem `docs/memory_map.txt` (rozmiary i granice segmentów `ENGINE`, `CODE`, `FONT`, `VRAM`, wolna pamięć RAM).
+    - Dodano opisy `Text Compiler` (`scripts/compile_texts.py`) oraz `Release Helper & CI/CD Pipeline` (`scripts/release_helper.py`) do spisu treści oraz sekcji narzędzi wspomagających.
+    - Zaktualizowano drzewo projektu o pliki w `texts/` (`game_over_fail.txt`, `game_over_success.txt`, `scroll.txt`, `title.txt`) oraz skrypt `release_helper.py`.
+    - Uaktualniono opis stanów `STATE_INTRO` (2-sekundowy limit czasu do auto fade-out) oraz `STATE_GAME_OVER` (konfigurowalne teksty wiersza).
+    - Skorygowano opis celów `make` w tabeli (w tym `make all`, `make assets`, `make data`).
+  - [Makefile](Makefile):
+    - Zdefiniowano jawny cel `assets: $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM)` wraz z dodaniem go do `.PHONY` i opisu w `make help`.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja MADS i wygenerowanie raportów pamięci.
+  - `make test`: wszystkie 166 testów zakończone sukcesem.
+
 - **Cel**: Dostosowanie rozmieszczenia obiektów na ekranie TOLEM_09 w definicji projektu świata oraz aktualizacja powiązanej mapy pamięci.
 - **Wprowadzone modyfikacje**:
   - [world/project.yaml](world/project.yaml):
