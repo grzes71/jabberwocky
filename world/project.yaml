@@ -169,14 +169,6 @@ screens:
     packed_xy: 12
   - code: 78
     packed_xy: 14
-  - code: 114
-    packed_xy: 46
-  - code: 90
-    packed_xy: 48
-  - code: 81
-    packed_xy: 47
-  - code: 5
-    packed_xy: 79
   - code: 9
     packed_xy: 83
   - code: 118
@@ -203,6 +195,12 @@ screens:
     packed_xy: 110
   - code: 95
     packed_xy: 136
+  - code: 5
+    packed_xy: 47
+  - code: 14
+    packed_xy: 46
+  - code: 15
+    packed_xy: 48
 - id: FOREST_04
   objects:
   - code: 51
@@ -315,8 +313,6 @@ screens:
     packed_xy: 74
   - code: 19
     packed_xy: 108
-  - code: 23
-    packed_xy: 73
   - code: 26
     packed_xy: 109
   - code: 26
@@ -363,6 +359,8 @@ screens:
     packed_xy: 18
   - code: 166
     packed_xy: 166
+  - code: 19
+    packed_xy: 110
 - id: FOREST_06
   objects:
   - code: 194
@@ -491,6 +489,16 @@ screens:
     packed_xy: 65
   - code: 118
     packed_xy: 5
+  - code: 4
+    packed_xy: 8
+  - code: 9
+    packed_xy: 6
+  - code: 11
+    packed_xy: 7
+  - code: 11
+    packed_xy: 9
+  - code: 51
+    packed_xy: 128
 - id: FOREST_08
   objects:
   - code: 62
@@ -561,18 +569,16 @@ screens:
     packed_xy: 80
   - code: 4
     packed_xy: 18
+  - code: 51
+    packed_xy: 17
 - id: FOREST_09
   objects:
-  - code: 177
-    packed_xy: 2
   - code: 177
     packed_xy: 71
   - code: 178
     packed_xy: 132
   - code: 178
     packed_xy: 146
-  - code: 95
-    packed_xy: 129
   - code: 95
     packed_xy: 141
   - code: 51
@@ -597,14 +603,6 @@ screens:
     packed_xy: 162
   - code: 166
     packed_xy: 176
-  - code: 92
-    packed_xy: 98
-  - code: 187
-    packed_xy: 65
-  - code: 187
-    packed_xy: 67
-  - code: 92
-    packed_xy: 100
   - code: 56
     packed_xy: 170
   - code: 92
@@ -631,8 +629,6 @@ screens:
     packed_xy: 14
   - code: 4
     packed_xy: 77
-  - code: 4
-    packed_xy: 4
   - code: 197
     packed_xy: 114
   - code: 65
@@ -641,6 +637,22 @@ screens:
     packed_xy: 15
   - code: 4
     packed_xy: 1
+  - code: 194
+    packed_xy: 64
+  - code: 182
+    packed_xy: 161
+  - code: 48
+    packed_xy: 160
+  - code: 51
+    packed_xy: 3
+  - code: 51
+    packed_xy: 36
+  - code: 48
+    packed_xy: 0
+  - code: 182
+    packed_xy: 32
+  - code: 48
+    packed_xy: 34
 - id: TOLEM_01
   objects:
   - code: 177
@@ -779,8 +791,6 @@ screens:
     packed_xy: 15
   - code: 18
     packed_xy: 9
-  - code: 199
-    packed_xy: 106
   - code: 18
     packed_xy: 71
   - code: 18
@@ -793,6 +803,12 @@ screens:
     packed_xy: 10
   - code: 187
     packed_xy: 14
+  - code: 18
+    packed_xy: 105
+  - code: 18
+    packed_xy: 104
+  - code: 18
+    packed_xy: 49
 - id: TOLEM_03
   objects:
   - code: 155
@@ -2123,42 +2139,26 @@ screens:
     packed_xy: 79
   - code: 4
     packed_xy: 17
-  - code: 8
-    packed_xy: 6
-  - code: 11
-    packed_xy: 13
   - code: 182
     packed_xy: 163
   - code: 178
     packed_xy: 135
-  - code: 178
-    packed_xy: 140
   - code: 95
     packed_xy: 137
   - code: 95
     packed_xy: 132
-  - code: 51
-    packed_xy: 144
   - code: 51
     packed_xy: 145
   - code: 51
     packed_xy: 33
   - code: 51
     packed_xy: 128
-  - code: 11
-    packed_xy: 7
   - code: 7
     packed_xy: 98
   - code: 7
     packed_xy: 51
   - code: 202
     packed_xy: 10
-  - code: 201
-    packed_xy: 142
-  - code: 52
-    packed_xy: 8
-  - code: 31
-    packed_xy: 15
   - code: 31
     packed_xy: 115
   - code: 164
@@ -2171,6 +2171,20 @@ screens:
     packed_xy: 165
   - code: 56
     packed_xy: 170
+  - code: 177
+    packed_xy: 14
+  - code: 177
+    packed_xy: 6
+  - code: 177
+    packed_xy: 44
+  - code: 177
+    packed_xy: 107
+  - code: 95
+    packed_xy: 141
+  - code: 95
+    packed_xy: 146
+  - code: 202
+    packed_xy: 143
 - id: VILLAGE_03
   objects:
   - code: 73
@@ -2239,6 +2253,10 @@ screens:
     packed_xy: 4
   - code: 164
     packed_xy: 13
+  - code: 187
+    packed_xy: 66
+  - code: 187
+    packed_xy: 130
 - id: VILLAGE_04
   objects:
   - code: 112
