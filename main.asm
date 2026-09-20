@@ -11,7 +11,7 @@ LOW_CODE_ADDR   = $0800             ; Auxiliary engines & data in Low RAM ($0800
 CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
 DLIST_ADDR      = $6610             ; Display lists (316 B, $6610-$674B, after BLOCKING_VRAM)
 VRAM_ADDR       = $4000
-STUB_VRAM       = $8800             ; Dedicated 960-byte text buffer ($8800-$8BBF) for Intro, Level Name, Game Over
+STUB_VRAM       = $B000             ; Dedicated 960-byte text buffer ($B000-$B3BF) for Intro, Level Name, Game Over
 GAME_ACTION_VRAM   = $6000            ; 528-byte action playfield Buffer A ($6000-$620F, 11 lines Antic 5 with HSCROL)
 GAME_ACTION_VRAM_B = $6400            ; 528-byte action playfield Buffer B ($6400-$660F, 11 lines Antic 5 with HSCROL)
 GAME_STATUS_VRAM   = $6300            ; 80-byte status bar ($6300-$634F, 2 lines Antic 2)
@@ -70,7 +70,10 @@ engine
     icl 'gen/dragon_sprite.asm'
     icl 'scenes/text_utils.asm'
     icl 'scenes/intro.asm'
-    icl 'scenes/gameover.asm'
+
+    .if * > PM_ADDR
+    .error 'LOW_CODE exceeded PM_ADDR ($2000)'
+    .endif
 
 ; ==============================================================================
 ; CODE SEGMENT
@@ -205,6 +208,14 @@ scene_run_tbl
     ins 'gen/title.bin'
 
 ; ==============================================================================
+; DEFAULT FONT DATA
+; 1024-byte character set ($5C00-$5FFF, 1KB aligned)
+; ==============================================================================
+    org FONT_ADDR
+font_data
+    ins 'fonts/text.fnt'
+
+; ==============================================================================
 ; DISPLAY LIST SEGMENTS (within $6800 - $6BFF, never crossing 1KB boundary)
 ; ==============================================================================
     org DLIST_ADDR
@@ -334,14 +345,6 @@ dlist_game_action_lms
     dta DL_JVB, a(dlist_game)
 
 ; ==============================================================================
-; DEFAULT FONT DATA
-; 1024-byte character set ($5C00-$5FFF, 1KB aligned)
-; ==============================================================================
-    org FONT_ADDR
-font_data
-    ins 'fonts/text.fnt'
-
-; ==============================================================================
 ; GAME PLAYFIELD FONT DATA (ANTIC Mode 4/5)
 ; 1024-byte character set ($6800-$6BFF, 1KB aligned)
 ; ==============================================================================
@@ -372,10 +375,11 @@ screen_buf_b_blk    :440 dta 0
 stub_vram_buf       :960 dta 0
 
 ; ==============================================================================
-; TOP SCORES & HIGH SCORE ENTRY (High RAM $8BC0+)
+; TOP SCORES, HIGH SCORE ENTRY & GAME OVER (High RAM $B3C0+)
 ; ==============================================================================
     org STUB_VRAM + 960
     icl 'scenes/top_scores.asm'
+    icl 'scenes/gameover.asm'
 
 ; ==============================================================================
 ; RUN ADDRESS VECTOR

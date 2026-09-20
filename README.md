@@ -310,10 +310,10 @@ Projekt zachowuje pełną izolację pamięci OS oraz precyzyjną alokację bufor
 | `$6400` – `$660F` | 528 B | Zapasowy bufor pola akcji VRAM B do podwójnego buforowania (Double Buffering) |
 | `$6610` – `$676D` | 350 B | Segment Display List dla wszystkich scen (wyrównany do granicy 1 KB) |
 | `$676E` – `$67FF` | 146 B | **Wolna pamięć RAM** |
-| `$6800` – `$8714` | 7957 B (~7.8 KB) | Czcionka gry (`game.fnt`), animowane kafle oraz dane świata (`gen/world_data.asm`) |
-| `$8715` – `$87FF` | 235 B | **Wolna pamięć RAM** |
-| `$8800` – `$90EF` | 2288 B (~2.3 KB) | Bufor tekstu VRAM oraz segment Top Scores / Name Entry (`scenes/top_scores.asm`) |
-| `$90F0` – `$BFFF` | 12048 B (~11.8 KB) | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
+| `$6800` – `$8946` | 8519 B (~8.3 KB) | Czcionka gry (`game.fnt`), animowane kafle oraz dane świata (`gen/world_data.asm`) i bufory stagingowe |
+| `$8947` – `$AFFF` | 9913 B (~9.7 KB) | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
+| `$B000` – `$BB25` | 2854 B (~2.8 KB) | Bufor tekstu VRAM (`STUB_VRAM`), segment Top Scores / Name Entry (`scenes/top_scores.asm`) oraz Game Over (`scenes/gameover.asm`) |
+| `$BB26` – `$BFFF` | 1242 B (~1.2 KB) | **Wolna pamięć RAM** (nagłówek przed OS ROM) |
 | `$C000` – `$DFFF` | — | **Naruszenie zabronione** (OS ROM / Rejestry sprzętowe I/O) |
 
 Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w pliku [docs/memory_map.txt](docs/memory_map.txt).
@@ -322,7 +322,7 @@ Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w p
 
 ## Testy
 
-Projekt posiada **166 zautomatyzowanych testów** weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
+Projekt posiada **169 zautomatyzowanych testów** weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
 - Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`compile_sprites`, `compile_texts`, `labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
 - Testy asystenta wydań i reguł semver (`scripts/release_helper.py`).
 - Testy spójności modeli danych, kolorów, walidatorów `world/` oraz edytorów GUI (Studio).

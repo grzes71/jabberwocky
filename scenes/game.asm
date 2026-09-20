@@ -25,6 +25,7 @@ DEATH_STATE_EXPLODING   = 2             ; Explosion sound & effect
 DEATH_STATE_CRASH       = 3             ; Wall collision crash sound & effect
 EXPLOSION_DURATION      = 24            ; Duration of explosion in frames (~0.5s @ 50Hz)
 CRASH_DURATION          = 24            ; Duration of crash sound & sequence (~0.5s @ 50Hz)
+DRAGON_COLLISION_DEBOUNCE_FRAMES = 5    ; Number of consecutive frames of collision before triggering crash
 
 ; --- Dragon Vertical Physics & Inertia (8.8 Fixed-Point) ---
 DRAGON_MAX_VEL          = $0180         ; Max vertical velocity (1.5 px/frame)
@@ -1494,7 +1495,7 @@ update_energy_bar
     and #$07
     bne @pf_hit_detected
 
-    ; No PF0-PF2 collision this frame -> reset pending debouncing flag
+    ; No PF0-PF2 collision this frame -> reset pending debouncing counter
     lda #0
     sta dragon_hit_pending
     jmp @check_pf3
@@ -1503,21 +1504,22 @@ update_energy_bar
     ; Check for secret object collection first! (immediate collection on touch)
     jsr check_dragon_secret_collision
 
-    ; Only check blocking collision if collision persists for at least 2 consecutive frames
+    ; Only check blocking collision if collision persists for at least 5 consecutive frames
     lda dragon_hit_pending
-    bne @check_blocking_obstacle
-
-    ; First frame of collision -> record event and defer obstacle test to next frame
-    lda #1
-    sta dragon_hit_pending
-    jmp @check_pf3
+    cmp #DRAGON_COLLISION_DEBOUNCE_FRAMES
+    bcs @already_at_max
+    inc dragon_hit_pending
+@already_at_max
+    lda dragon_hit_pending
+    cmp #DRAGON_COLLISION_DEBOUNCE_FRAMES
+    bcc @check_pf3
 
 @check_blocking_obstacle
     ; Only crash if collision was with an active BLOCKING object (blocking == true)
     jsr check_dragon_blocking_collision
     bcc @check_pf3              ; Non-blocking object (or clear air) -> do not crash!
 
-    ; Wall/obstacle collision confirmed on 2nd frame: crash sound and death!
+    ; Wall/obstacle collision confirmed on 5th consecutive frame: crash sound and death!
     lda #0
     sta dragon_hit_pending
     sta dragon_recharging
@@ -2965,6 +2967,9 @@ advance_to_next_level
     lda #DRAGON_COLOR
     sta pal_action_dragon
 
+    ; Reset destroyed objects so reusable screens start fresh in the new level
+    jsr init_flame_collision
+
     jsr init_level_screens
 
     jsr show_level_name_screen
@@ -3117,7 +3122,7 @@ dragon_vel_hi       dta 0
 ; --- Dragon Death State Variables ---
 dragon_dying        dta 0           ; 0 = active/controllable, 1 = dying sequence
 dragon_recharging   dta 0           ; 0 = normal, 1 = recharging via PF3 collision
-dragon_hit_pending  dta 0           ; 0 = no pending collision, 1 = collision reported in previous frame
+dragon_hit_pending  dta 0           ; Counter of consecutive frames with PF0-PF2 collision (0..5)
 dragon_p0pf         dta 0           ; Latched P0PF collision register from action area
 death_timer         dta 0           ; Countdown timer for 2s death sequence (100..0)
 death_move_timer    dta 0           ; Sub-frame timer for horizontal shift (6..1)

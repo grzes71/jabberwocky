@@ -1,6 +1,6 @@
 ; ==============================================================================
 ; SCENES/TOP_SCORES.ASM — Top 10 High Scores & Joystick Name Entry
-; Target: ANTIC Mode 2 (40x24 text) on STUB_VRAM ($8800)
+; Target: ANTIC Mode 2 (40x24 text) on STUB_VRAM ($B000)
 ; ==============================================================================
 
 TOP_SCORES_COUNT    = 10

@@ -669,41 +669,60 @@ def test_init_flame_collision_clears_all_256_bytes(labels: Dict[str, int], clean
 
 
 def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
-    """Verify that secrets on Level 1 screens (screen >= 8, e.g. TOLEM_01 = screen 9)
+    """Verify that secrets on Level screens beyond screen 7 (e.g. TOLEM_01 = screen 9)
     are correctly collected, persist across respawn, and restore properly on game_init
     without being blocked by dirty or out-of-bounds bitmasks."""
     mpu = clean_mpu
 
-    # Find labyrinth index containing TOLEM_01 (screen 9)
     import yaml
     with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
         proj = yaml.safe_load(f)
+    with open(project_root / "world" / "objects.yaml", "r", encoding="utf-8") as f:
+        objs_data = yaml.safe_load(f)
+    objs_list = objs_data.get("objects", []) if isinstance(objs_data, dict) else objs_data
+    secret_codes = {
+        o["code"] for o in objs_list
+        if isinstance(o, dict) and o.get("flags", {}).get("secret", False)
+    }
+
+    # Find TOLEM_01 screen and its global screen index
+    screen_idx, tolem_screen = next((i, s) for i, s in enumerate(proj.get("screens", [])) if s["id"] == "TOLEM_01")
     tolem_level_idx = next(i for i, lab in enumerate(proj.get("labyrinths", [])) if "TOLEM_01" in lab.get("screens", []))
+
+    # Dynamically find a secret object on TOLEM_01
+    sec_obj = next(o for o in tolem_screen["objects"] if o["code"] in secret_codes)
+    sec_def = next(d for d in objs_list if d["code"] == sec_obj["code"])
+    pxy = sec_obj["packed_xy"]
+    w = sec_def.get("size", {}).get("width", 1)
+    tiles = sec_def.get("tiles", [])
+    tile_idx, expected_tile = next((idx, t) for idx, t in enumerate(tiles) if t != 0)
+    dx = tile_idx % w
+    dy = tile_idx // w
+    x = (pxy & 0x0F) * 2 + dx
+    y = ((pxy >> 4) & 0x0E) + dy
 
     # Initialize level screens for tolem_level_idx to bake TOLEM_01 into Buffer A
     mpu.memory[labels["CURRENT_LEVEL_IDX"]] = tolem_level_idx
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
 
-    # Screen 9 is TOLEM_01. Secret at x=6, y=5 (code $64, 1x1, secret=True)
     # Check initial tile and blocking mask
     blk_addr = labels["SCREEN_BUF_A_BLK"]
     vram_addr = labels["SCREEN_BUF_A_VRAM"]
-    offset = 5 * 40 + 6
+    offset = y * 40 + x
     orig_blk = mpu.memory[blk_addr + offset]
     orig_tile = mpu.memory[vram_addr + offset]
-    assert (orig_blk & 0x04) == 0x04, "TOLEM_01 at (6, 5) should be secret"
-    assert orig_tile == 0x64
+    assert (orig_blk & 0x04) == 0x04, f"TOLEM_01 at ({x}, {y}) should be secret"
+    assert orig_tile == expected_tile
 
-    # When incoming_col_idx = 6, Left Screen at col0 = 8 - 6 = 2.
-    # Object at x=6 aligns with VRAM col 2 + 6 = 8!
+    # When incoming_col_idx = x, Left Screen at col0 = 8 - x.
+    # Object at x aligns with VRAM col (8 - x) + x = 8!
     mpu.memory[labels["CURRENT_LEVEL_IDX"]] = tolem_level_idx
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1  # Screen 9 is Left Screen
-    mpu.memory[labels["INCOMING_COL_IDX"]] = 6   # col0 = 8 - 6 = 2 -> cur_vram_x = 2 + 6 = 8
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
-    # row 5: dragon_y = 34 + 5 * 16 = 114
-    mpu.memory[labels["DRAGON_Y"]] = 114
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
     mpu.memory[labels["ANIM_PHASE"] + 1] = 0
-    mpu.memory[labels["BLOCKING_COL8"] + 5] = 0x04
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x04
 
     # Run init_flame_collision
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
@@ -715,10 +734,10 @@ def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict
     assert mpu.memory[blk_addr + offset] == 0x00, "Secret mask must be cleared in source buffer"
     assert mpu.memory[vram_addr + offset] == 0x00, "Secret tile must be cleared in source buffer"
 
-    # Verify screen 9 bitmask in screen_obj_destroyed:
-    # Screen 9 offset is 9 * 8 = 72!
+    # Verify screen destroyed bitmask in screen_obj_destroyed:
+    screen_destroyed_offset = screen_idx * 8
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
-    assert any(mpu.memory[destroyed_base + 72 + b] != 0 for b in range(8)), "Screen 9 destroyed bitmask must have bit set"
+    assert any(mpu.memory[destroyed_base + screen_destroyed_offset + b] != 0 for b in range(8)), f"Screen {screen_idx} destroyed bitmask must have bit set"
     # And screen 0 (offset 0) must NOT be corrupted!
     assert all(mpu.memory[destroyed_base + b] == 0x00 for b in range(8)), "Screen 0 destroyed bitmask must NOT be affected"
 
@@ -726,7 +745,7 @@ def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
     run_subroutine(mpu, labels["RESPAWN_DRAGON"])
     assert mpu.memory[blk_addr + offset] == 0x00, "Secret remains collected across respawn"
-    assert any(mpu.memory[destroyed_base + 72 + b] != 0 for b in range(8)), "Screen 9 destroyed bitmask must remain set across respawn"
+    assert any(mpu.memory[destroyed_base + screen_destroyed_offset + b] != 0 for b in range(8)), f"Screen {screen_idx} destroyed bitmask must remain set across respawn"
 
     # Simulate brand new game: game_init
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
@@ -736,9 +755,9 @@ def test_level1_screen_secret_persistence_and_game_init_restoration(labels: Dict
 
     # Must be RESTORED in source buffer!
     assert (mpu.memory[blk_addr + offset] & 0x04) == 0x04, "Secret mask must be restored on game_init"
-    assert mpu.memory[vram_addr + offset] == 0x64, "Secret tile must be restored on game_init"
+    assert mpu.memory[vram_addr + offset] == expected_tile, "Secret tile must be restored on game_init"
     # Bitmask must be CLEARED for next game!
-    assert mpu.memory[destroyed_base + 72] == 0x00, "Screen 9 destroyed bitmask must be cleared on game_init"
+    assert mpu.memory[destroyed_base + screen_destroyed_offset] == 0x00, f"Screen {screen_idx} destroyed bitmask must be cleared on game_init"
 
 
 def test_fire_breathing_invincibility_against_blocking_objects(labels: Dict[str, int], clean_mpu: MPU):

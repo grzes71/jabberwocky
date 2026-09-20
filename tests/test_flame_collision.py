@@ -335,12 +335,14 @@ def test_dragon_crash_on_blocking_object(clean_mpu: MPU, labels: Dict[str, int],
     mpu.memory[labels["DRAGON_DYING"]] = 0
     mpu.memory[labels["DRAGON_P0PF"]] = 0x01          # PF0 collision
 
-    # Frame 1: first frame latches hit, dragon does NOT crash yet
-    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
-    assert mpu.memory[labels["DRAGON_DYING"]] == 0
-    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 1
+    # Frames 1..4: collision persists, dragon does NOT crash yet, counter increments
+    for frame in range(1, 5):
+        mpu.memory[labels["DRAGON_P0PF"]] = 0x01
+        run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+        assert mpu.memory[labels["DRAGON_DYING"]] == 0
+        assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == frame
 
-    # Frame 2: collision persists -> dragon enters crash state (3)
+    # Frame 5: 5th consecutive frame of collision triggers crash state (3)
     mpu.memory[labels["DRAGON_P0PF"]] = 0x01
     run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
     assert mpu.memory[labels["DRAGON_DYING"]] == 3
@@ -348,7 +350,7 @@ def test_dragon_crash_on_blocking_object(clean_mpu: MPU, labels: Dict[str, int],
 
 
 def test_dragon_single_frame_glance_forgiven(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
-    """Verify that a 1-frame collision glance does NOT crash the dragon if cleared next frame."""
+    """Verify that a collision glance (< 5 frames) does NOT crash the dragon if cleared next frame."""
     mpu = clean_mpu
     mpu.memory[labels["CURRENT_LEVEL_IDX"]] = get_tolem_level_idx(project_root)
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
@@ -358,14 +360,15 @@ def test_dragon_single_frame_glance_forgiven(clean_mpu: MPU, labels: Dict[str, i
     mpu.memory[labels["DRAGON_Y"]] = 40
     mpu.memory[labels["OBJ_TYPE_FLAGS"] + 51] = 0x01
     mpu.memory[labels["DRAGON_DYING"]] = 0
-    mpu.memory[labels["DRAGON_P0PF"]] = 0x01  # Frame 1: touch
 
-    # Frame 1: touch detected, pending flag set
-    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
-    assert mpu.memory[labels["DRAGON_DYING"]] == 0
-    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 1
+    # Frames 1..3: touch detected, pending counter increments, no crash
+    for frame in range(1, 4):
+        mpu.memory[labels["DRAGON_P0PF"]] = 0x01
+        run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+        assert mpu.memory[labels["DRAGON_DYING"]] == 0
+        assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == frame
 
-    # Frame 2: dragon moved away, no collision
+    # Frame 4: dragon moved away, no collision -> counter reset to 0, no crash
     mpu.memory[labels["DRAGON_P0PF"]] = 0x00
     run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
     assert mpu.memory[labels["DRAGON_DYING"]] == 0
@@ -476,6 +479,40 @@ def test_flame_empty_glyph_ignored_by_collision(clean_mpu: MPU, labels: Dict[str
     run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
 
     assert (mpu.memory[destroyed_mask] & 0x01) == 1, "Flame hitting solid tile 79 in PALM_SWAMP MUST destroy object!"
+
+
+def test_destroyed_objects_persistence_across_death_vs_advance_level(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
+    """Verify that:
+    1. Destroyed objects remain marked as destroyed after respawn_dragon (death within same level).
+    2. Destroyed objects are completely reset (cleared) when advancing to the next level (advance_to_next_level).
+    """
+    mpu = clean_mpu
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 0
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+
+    destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
+
+    # Mark several objects as destroyed on screen 0 and screen 1
+    mpu.memory[destroyed_base + 0] = 0x55
+    mpu.memory[destroyed_base + 1] = 0xAA
+    mpu.memory[destroyed_base + 5] = 0xFF
+
+    # 1. Simulate dragon death and respawn within the same level
+    run_subroutine(mpu, labels["RESPAWN_DRAGON"])
+
+    # Verify destroyed masks are STILL intact!
+    assert mpu.memory[destroyed_base + 0] == 0x55, "Destroyed objects must persist after dragon death / respawn"
+    assert mpu.memory[destroyed_base + 1] == 0xAA
+    assert mpu.memory[destroyed_base + 5] == 0xFF
+
+    # 2. Advance to next level
+    run_subroutine(mpu, labels["ADVANCE_TO_NEXT_LEVEL"])
+
+    # Verify screen_obj_destroyed is now completely cleared (256 bytes = 0)
+    for i in range(256):
+        assert mpu.memory[destroyed_base + i] == 0, f"screen_obj_destroyed[{i}] must be cleared upon advance_to_next_level"
+
 
 
 
