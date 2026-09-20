@@ -4,7 +4,7 @@
 
 ## [2026-09-20] - Aktualizacja i poprawki obiektów na planszach świata (Map Improvements)
 - **Zmiany w świecie gry**:
-  - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów, przeszkód oraz elementów dekoracyjnych na planszach labiryntów (`FOREST_04`, `FOREST_05`, `FOREST_07`, `FOREST_08`, `FOREST_09`, `TOLEM_02`, `VILLAGE_02`, `VILLAGE_03`) w Labirynt Studio.
+  - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów, przeszkód oraz elementów dekoracyjnych na planszach labiryntów (`FOREST_03`, `FOREST_04`, `FOREST_06`, `FOREST_07`, `FOREST_08`, `FOREST_09`) w Labirynt Studio.
   - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json): Zaktualizowano mapę pamięci po kompilacji zmodyfikowanych danych świata (33.2% wolnego RAM).
 - **Weryfikacja**:
   - `make all`: udana kompilacja świata do `gen/world_data.asm` oraz asemblacja MADS (31493 bajtów w XEX).
