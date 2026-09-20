@@ -2,6 +2,76 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-20] - Resetowanie stanu zniszczonych obiektów przy przejściu na nowy poziom
+- **Problem**: Gdy smok niszczył obiekty ogniem, a następnie ginął, obiekty na bieżącym poziomie pozostawały zniszczone (poprawne zachowanie). Jednak po przejściu do nowego poziomu (`advance_to_next_level`), jeśli nowy poziom współdzielił identyfikatory ekranów z poprzednim poziomem, obiekty na tych ekranach nadal pozostawały zniszczone.
+- **Wprowadzone modyfikacje**:
+  - [scenes/game.asm](scenes/game.asm):
+    - W procedurze `advance_to_next_level` dodano wywołanie `jsr init_flame_collision` przed `jsr init_level_screens`.
+    - Spowodowało to wyzerowanie 256-bajtowej tablicy masek `screen_obj_destroyed` oraz rejestru `flame_m_pf`, co zapewnia świeży stan wszystkich ekranów (w tym współdzielonych) na nowym poziomie.
+    - W procedurze `respawn_dragon` zachowano brak wywołania `init_flame_collision`, co gwarantuje zachowanie zniszczeń obiektów po śmierci w ramach tego samego poziomu.
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Dodano test `test_destroyed_objects_persistence_across_death_vs_advance_level`, weryfikujący, że zniszczone obiekty zachowują swój stan po `respawn_dragon`, a po `advance_to_next_level` cała tablica `screen_obj_destroyed` jest w pełni czyszczona do zer.
+  - [tests/test_secret_collision.py](tests/test_secret_collision.py):
+    - Zaktualizowano `test_level1_screen_secret_persistence_and_game_init_restoration` do dynamicznego wyszukiwania sekretów na ekranie `TOLEM_01`, co zapobiega awarii testu w przypadku edycji mapy w edytorze poziomów (Labirynt Studio).
+- **Weryfikacja**:
+  - `make all`: asemblacja MADS i generowanie mapy pamięci zakończone sukcesem (kod 0).
+  - `make test`: wszystkie 170 testów py65 i testów jednostkowych przeszły pomyślnie.
+
+
+## [2026-09-20] - Naprawa obciętego tekstu zwycięstwa w gameover (Relokacja gameover.asm do High RAM)
+- **Problem**: Na ekranie zwycięstwa (VICTORY) ostatnia linia wiersza wyświetlała się obcięta jako `"The Jabberwock"` zamiast pełnego `"The Jabberwock is spread!"`.
+- **Przyczyna**: Moduł `scenes/gameover.asm` znajdował się w segmencie `LOW_CODE_ADDR` ($0800), który rozrósł się do adresu `$2009`. W efekcie struktura `win_txt_line4` (rozpoczynająca się od `$1FF0`) przekroczyła granicę `$2000` i weszła w bufor `PM_ADDR` ($2000–$27FF). Podczas czyszczenia bufora PMG w scenie tytułowej (`title.asm`), bajty `$2000–$2009` (zawierające tekst `"is spread!"`) były zerowane, co w kodach wewnętrznych ANTIC oznaczało znaki spacji.
+- **Wprowadzone modyfikacje**:
+  - [main.asm](main.asm):
+    - Przeniesiono `scenes/gameover.asm` z bloku `LOW_CODE` do High RAM za segmentem `top_scores.asm` (`$B8F0–$BB25`).
+    - Dodano asercję asemblera `.if * > PM_ADDR .error ... .endif` uniemożliwiającą naruszenie bufora PMG przez kod w Low RAM.
+    - `LOW_CODE` kończy się teraz bezpiecznie pod adresem `$1DD3` (557 bajtów wolnej pamięci przed PMG).
+  - [tests/test_scene_flow.py](tests/test_scene_flow.py):
+    - Dodano test `test_gameover_victory_text_not_corrupted_by_pmg`, sprawdzający poprawność wszystkich 25 znaków 4. linii wiersza po czyszczeniu PMG w `title_init`.
+  - [README.md](README.md), [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json):
+    - Zaktualizowano tabelę mapy pamięci oraz liczbę testów (169 testów).
+- **Weryfikacja**:
+  - `make all`: asemblacja MADS i weryfikacja mapy pamięci zakończone sukcesem.
+  - `make test`: wszystkie 169 testów py65 i testów jednostkowych przeszły pomyślnie.
+
+
+## [2026-09-20] - Wydłużenie filtra kolizji blokujących (debouncingu) do 5 klatek
+- **Cel**: Dalsze zmniejszenie agresywności kolizji smoka ze ścianami i przeszkodami blokującymi — kraksa następuje dopiero po zarejestrowaniu kolizji przez 5 kolejnych klatek animacji.
+- **Wprowadzone modyfikacje**:
+  - [scenes/game.asm](scenes/game.asm):
+    - Zdefiniowano stałą `DRAGON_COLLISION_DEBOUNCE_FRAMES = 5`.
+    - Zmodyfikowano zachowanie licznika `dragon_hit_pending`: przy wystąpieniu kolizji z PF0–PF2 licznik jest inkrementowany (do limitu 5). Test przeszkód blokujących `check_dragon_blocking_collision` i ewentualna kraksa są uruchamiane dopiero, gdy licznik osiągnie wartość 5.
+    - W przypadku ustąpienia kolizji w dowolnej klatce (`ZP_TMP & $07 == 0`), licznik `dragon_hit_pending` jest natychmiast zerowany.
+    - Kolizje z sekretami (`check_dragon_secret_collision`) pozostają natychmiastowe (od pierwszej klatki kontaktu).
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Zaktualizowano `test_dragon_crash_on_blocking_object` do weryfikacji 5-klatkowego cyklu (klatki 1–4: brak kraksy, licznik 1..4; klatka 5: kraksa `dragon_dying == 3`).
+    - Zaktualizowano `test_dragon_single_frame_glance_forgiven` do weryfikacji wybaczenia kontaktu trwającego poniżej 5 klatek (klatki 1–3 kontakt, klatka 4 brak kolizji -> reset licznika do 0).
+  - [tests/test_status_bar.py](tests/test_status_bar.py):
+    - Zaktualizowano `test_check_dragon_crash_collisions_emulation` do testowania 5-klatkowego cyklu dla wszystkich masek kolorów PF0–PF2.
+    - Zaktualizowano `test_check_dragon_collision_debouncing` do testowania wybaczenia 4-klatkowego muśnięcia oraz kraksy w 5. klatce.
+- **Weryfikacja**:
+  - `make all`: asemblacja i walidacja mapy pamięci zakończone sukcesem.
+  - `make test`: wszystkie 168 testów jednostkowych i emulacyjnych py65 zakończone wynikiem pozytywnym.
+
+
+## [2026-09-20] - Relokacja bufora STUB_VRAM do High RAM ($B000) po dodaniu nowego poziomu
+- **Cel**: Rozwiązanie kolizji pamięci wynikającej ze zwiększenia rozmiaru `world_data` po dodaniu nowego poziomu (LEVEL 2 : Brillig Village), co spowodowało nałożenie się buforów świata ($6800-$8946) na dotychczasowy bufor tekstu `STUB_VRAM` ($8800).
+- **Wprowadzone modyfikacje**:
+  - [main.asm](main.asm):
+    - Przeniesiono bufor tekstu `STUB_VRAM` z `$8800` na `$B000` (`$B000-$B3BF`, 960 B), a powiązany segment `scenes/top_scores.asm` na adres `$B3C0` (`$B3C0-$B8EF`, 1328 B).
+    - Przestawiono deklarację segmentu czcionki tekstowej `org FONT_ADDR` ($5C00) przed listę wyświetlania `org DLIST_ADDR` ($6610), zapewniając ściśle rosnącą kolejność dyrektyw `org` w asemblacji.
+    - Uzyskano 9913 bajtów (~9.7 KB) ciągłej wolnej pamięci RAM ($8947-$AFFF) na rozbudowę danych świata i kolejnych etapów gry, z zachowaniem 1808 bajtów bufora przed granicą pamięci OS ROM ($C000).
+  - [scenes/top_scores.asm](scenes/top_scores.asm):
+    - Zaktualizowano komentarz nagłówkowy wskazujący nowy adres bufora `STUB_VRAM` ($B000).
+  - [tests/test_status_bar.py](tests/test_status_bar.py):
+    - Zaktualizowano `test_advance_to_next_level_updates_bottom_status_level_number`, dynamicznie odczytując liczbę zdefiniowanych labiryntów z [world/project.yaml](world/project.yaml) zamiast stałej liczby 3 poziomów.
+  - [README.md](README.md), [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json):
+    - Uaktualniono tabelę mapy pamięci i stan testów (168 zautomatyzowanych testów).
+- **Weryfikacja**:
+  - `make all`: asemblacja MADS i walidacja mapy pamięci zakończona sukcesem (brak nakładania się segmentów).
+  - `make test`: wszystkie 168 testów jednostkowych i emulacyjnych py65 przeszły pomyślnie.
+
+
 ## [2026-09-18] - Opcjonalny parametr nazwy gałęzi w workflow git-push
 - **Cel**: Umożliwienie uruchamiania workflow `/git-push` bez podawania nazwy brancha — w przypadku braku parametru procedurę wykonuje się bezpośrednio na bieżącej aktywnej gałęzi.
 - **Wprowadzone modyfikacje**:

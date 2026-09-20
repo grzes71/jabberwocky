@@ -201,3 +201,34 @@ def test_gameover_init_border_matches_background_victory(clean_mpu: MPU, labels:
     assert mpu.memory[labels["COLOR2"]] == 0xC4
     assert mpu.memory[labels["COLOR4"]] == 0xC4
     assert mpu.memory[labels["COLOR4"]] == mpu.memory[labels["COLOR2"]]
+
+
+def test_gameover_victory_text_not_corrupted_by_pmg(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that PMG buffer clearing in title_init does not corrupt gameover text line 4 in High RAM."""
+    mpu = clean_mpu
+
+    # Ensure PM_ADDR ($2000-$27FF) does not overlap text data
+    win_line4_addr = labels["WIN_TXT_LINE4"]
+    pm_addr = labels["PM_ADDR"]
+    assert win_line4_addr < pm_addr or win_line4_addr >= pm_addr + 0x0800, (
+        f"WIN_TXT_LINE4 at ${win_line4_addr:04X} overlaps PMG buffer ${pm_addr:04X}-${pm_addr+0x07FF:04X}"
+    )
+
+    # 1. Run title_init to clear PMG buffer ($2000-$27FF)
+    run_subroutine(mpu, labels["TITLE_INIT"])
+
+    # 2. Run gameover_init with REASON_SUCCESS
+    mpu.memory[labels["GAME_OVER_REASON"]] = labels["REASON_SUCCESS"]
+    run_subroutine(mpu, labels["GAMEOVER_INIT"])
+
+    # 3. Verify that entire line 4 ("The Jabberwock is spread!") is printed at row 14
+    stub = labels["STUB_VRAM"]
+    line4_len = mpu.memory[win_line4_addr]
+    assert line4_len == 25
+    start_col = (40 - line4_len) // 2
+
+    for i in range(line4_len):
+        actual_code = mpu.memory[stub + 14 * 40 + start_col + i]
+        expected_code = mpu.memory[win_line4_addr + 1 + i]
+        assert actual_code == expected_code, f"Mismatch at col {start_col + i}: got {actual_code} != {expected_code}"
+

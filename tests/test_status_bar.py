@@ -662,13 +662,14 @@ def test_check_dragon_crash_collisions_emulation(project_root: Path, labels: Dic
         mpu.memory[dragon_recharging] = 1
         mpu.memory[scroll_speed] = 0xC0
 
-        # Frame 1: first frame of collision latches pending flag, no crash yet
-        mpu.memory[dragon_p0pf] = mask
-        call_check_collision()
-        assert mpu.memory[dragon_dying] == 0
-        assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 1
+        # Frames 1..4: collision persists, counter increments, no crash yet
+        for f in range(1, 5):
+            mpu.memory[dragon_p0pf] = mask
+            call_check_collision()
+            assert mpu.memory[dragon_dying] == 0
+            assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == f
 
-        # Frame 2: persistent collision on 2nd frame triggers crash
+        # Frame 5: persistent collision on 5th consecutive frame triggers crash
         mpu.memory[dragon_p0pf] = mask
         call_check_collision()
 
@@ -683,7 +684,7 @@ def test_check_dragon_crash_collisions_emulation(project_root: Path, labels: Dic
 
 
 def test_check_dragon_collision_debouncing(project_root: Path, labels: Dict[str, int]):
-    """Verify 1-frame debouncing logic: momentary glance is forgiven, 2-frame hit crashes."""
+    """Verify 5-frame debouncing logic: momentary glance (<5 frames) is forgiven, 5-frame hit crashes."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
@@ -712,26 +713,28 @@ def test_check_dragon_collision_debouncing(project_root: Path, labels: Dict[str,
         mpu.step()
     mpu.memory[labels["DRAGON_Y"]] = 40
 
-    # Scenario 1: 1-frame glance (Frame 1 hit, Frame 2 clear) -> NO crash, pending cleared
+    # Scenario 1: 4-frame glance (Frames 1..4 hit, Frame 5 clear) -> NO crash, pending cleared
     mpu.memory[dragon_dying] = 0
     mpu.memory[dragon_hit_pending] = 0
-    mpu.memory[dragon_p0pf] = 0x01
-    call_check_collision()
-    assert mpu.memory[dragon_dying] == 0
-    assert mpu.memory[dragon_hit_pending] == 1
+    for f in range(1, 5):
+        mpu.memory[dragon_p0pf] = 0x01
+        call_check_collision()
+        assert mpu.memory[dragon_dying] == 0
+        assert mpu.memory[dragon_hit_pending] == f
 
     mpu.memory[dragon_p0pf] = 0x00
     call_check_collision()
     assert mpu.memory[dragon_dying] == 0
     assert mpu.memory[dragon_hit_pending] == 0
 
-    # Scenario 2: 2 consecutive frames with hit -> CRASH
+    # Scenario 2: 5 consecutive frames with hit -> CRASH
     mpu.memory[dragon_dying] = 0
     mpu.memory[dragon_hit_pending] = 0
-    mpu.memory[dragon_p0pf] = 0x01
-    call_check_collision()
-    assert mpu.memory[dragon_dying] == 0
-    assert mpu.memory[dragon_hit_pending] == 1
+    for f in range(1, 5):
+        mpu.memory[dragon_p0pf] = 0x01
+        call_check_collision()
+        assert mpu.memory[dragon_dying] == 0
+        assert mpu.memory[dragon_hit_pending] == f
 
     mpu.memory[dragon_p0pf] = 0x01
     call_check_collision()
@@ -863,31 +866,25 @@ def test_advance_to_next_level_updates_bottom_status_level_number(project_root: 
     row1_str = "".join(antic_inv_to_ascii(mpu.memory[vram_status_row1 + i]) for i in range(40))
     assert row1_str.startswith("LEVEL:01")
 
-    # 2. Advance to Level 2
-    mpu.sp = 0xFD
-    mpu.stPushWord(0x0100 - 1)
-    mpu.pc = labels["ADVANCE_TO_NEXT_LEVEL"]
-    while mpu.pc != 0x0100:
-        mpu.step()
+    # 2. Advance through each subsequent level dynamically
+    import yaml
+    with open(project_root / "world" / "project.yaml", "r", encoding="utf-8") as f:
+        proj = yaml.safe_load(f)
+    num_levels = len(proj.get("labyrinths", []))
 
-    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 1
-    assert mpu.memory[labels["LEVEL"]] == 2
-    row1_str = "".join(antic_inv_to_ascii(mpu.memory[vram_status_row1 + i]) for i in range(40))
-    assert row1_str.startswith("LEVEL:02")
+    for lvl_idx in range(1, num_levels):
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.pc = labels["ADVANCE_TO_NEXT_LEVEL"]
+        while mpu.pc != 0x0100:
+            mpu.step()
 
-    # 3. Advance to Level 3
-    mpu.sp = 0xFD
-    mpu.stPushWord(0x0100 - 1)
-    mpu.pc = labels["ADVANCE_TO_NEXT_LEVEL"]
-    while mpu.pc != 0x0100:
-        mpu.step()
+        assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == lvl_idx
+        assert mpu.memory[labels["LEVEL"]] == lvl_idx + 1
+        row1_str = "".join(antic_inv_to_ascii(mpu.memory[vram_status_row1 + i]) for i in range(40))
+        assert row1_str.startswith(f"LEVEL:{lvl_idx+1:02d}")
 
-    assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 2
-    assert mpu.memory[labels["LEVEL"]] == 3
-    row1_str = "".join(antic_inv_to_ascii(mpu.memory[vram_status_row1 + i]) for i in range(40))
-    assert row1_str.startswith("LEVEL:03")
-
-    # 4. Advance past last level -> Game Over with SUCCESS
+    # 3. Advance past last level -> Game Over with SUCCESS
     mpu.sp = 0xFD
     mpu.stPushWord(0x0100 - 1)
     mpu.pc = labels["ADVANCE_TO_NEXT_LEVEL"]
