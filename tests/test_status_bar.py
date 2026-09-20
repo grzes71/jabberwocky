@@ -894,6 +894,144 @@ def test_advance_to_next_level_updates_bottom_status_level_number(project_root: 
     assert mpu.memory[labels["GAME_OVER_REASON"]] == labels["REASON_SUCCESS"]
 
 
+def test_add_score_8_bcd_increment(project_root: Path, labels: Dict[str, int]):
+    """Verify add_score_8 increments 4-digit decimal SCORE by 8 with BCD carry propagation and capping."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    score_addr = labels["SCORE"]
+    vram_score = labels["GAME_STATUS_VRAM"] + 56
+
+    def run_add8():
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.memory[0x0100] = 0x00
+        mpu.pc = labels["ADD_SCORE_8"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+    # 1. 0000 + 8 = 0008
+    mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 0, 0])
+    run_add8()
+    assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 0, 8]
+    score_str = "".join(antic_inv_to_ascii(mpu.memory[vram_score + i]) for i in range(4))
+    assert score_str == "0008"
+
+    # 2. 0008 + 8 = 0016
+    run_add8()
+    assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 1, 6]
+    score_str = "".join(antic_inv_to_ascii(mpu.memory[vram_score + i]) for i in range(4))
+    assert score_str == "0016"
+
+    # 3. 0098 + 8 = 0106
+    mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 9, 8])
+    run_add8()
+    assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 1, 0, 6]
+
+    # 4. 0998 + 8 = 1006
+    mpu.memory[score_addr : score_addr + 4] = bytearray([0, 9, 9, 8])
+    run_add8()
+    assert list(mpu.memory[score_addr : score_addr + 4]) == [1, 0, 0, 6]
+
+    # 5. 9998 + 8 = 9999 (cap)
+    mpu.memory[score_addr : score_addr + 4] = bytearray([9, 9, 9, 8])
+    run_add8()
+    assert list(mpu.memory[score_addr : score_addr + 4]) == [9, 9, 9, 9]
+
+
+def test_bonus_sound_emulation(project_root: Path, labels: Dict[str, int]):
+    """Verify start_bonus_sound triggers Channel 3 click and update_bonus_sound silences it."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    audf3 = labels["AUDF3"]
+    audc3 = labels["AUDC3"]
+
+    def call_sub(addr: int):
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.memory[0x0100] = 0x00
+        mpu.pc = addr
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+    # Trigger bonus click sound
+    call_sub(labels["START_BONUS_SOUND"])
+    assert mpu.memory[labels["BONUS_SOUND_TIMER"]] == labels["BONUS_CLICK_FRAMES"]
+
+    # Frame 1: active click on Channel 3
+    call_sub(labels["UPDATE_BONUS_SOUND"])
+    assert mpu.memory[audf3] == 0x0C
+    assert mpu.memory[audc3] == 0xAC
+    assert mpu.memory[labels["BONUS_SOUND_TIMER"]] == 1
+
+    # Frame 0: silence
+    call_sub(labels["UPDATE_BONUS_SOUND"])
+    assert mpu.memory[audc3] == 0x00
+    assert mpu.memory[labels["BONUS_SOUND_TIMER"]] == 0
+
+
+def test_update_bonus_countdown_emulation(project_root: Path, labels: Dict[str, int]):
+    """Verify update_bonus_countdown clears energy characters from top, adds 8 pts per char, and transitions."""
+    xex_path = project_root / "jabberwocky.xex"
+    mpu = MPU()
+    load_xex(xex_path, mpu.memory)
+
+    status_base = labels["GAME_STATUS_VRAM"]
+    score_addr = labels["SCORE"]
+
+    # Start with 5 characters on the bar
+    mpu.memory[labels["COUNTER_FULL"]] = 5
+    for i in range(5):
+        mpu.memory[status_base + i] = 82
+    for i in range(5, 40):
+        mpu.memory[status_base + i] = 0
+    mpu.memory[score_addr : score_addr + 4] = bytearray([0, 0, 0, 0])
+
+    # Initiate bonus countdown
+    mpu.sp = 0xFD
+    mpu.stPushWord(0x0100 - 1)
+    mpu.memory[0x0100] = 0x00
+    mpu.pc = labels["START_BONUS_COUNTDOWN"]
+    while mpu.pc != 0x0100:
+        mpu.step()
+
+    assert mpu.memory[labels["GAME_SUBSTATE"]] == labels["SUBSTATE_BONUS_COUNTDOWN"]
+
+    # Step through countdown: as each character is removed, verify it is cleared to 0
+    while mpu.memory[labels["COUNTER_FULL"]] > 0:
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.memory[0x0100] = 0x00
+        mpu.pc = labels["UPDATE_BONUS_COUNTDOWN"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+
+        cur_full = mpu.memory[labels["COUNTER_FULL"]]
+        if cur_full < 5:
+            assert mpu.memory[status_base + cur_full] == 0, f"Character at {cur_full} must be cleared to 0"
+
+    # All 5 characters were counted: 5 * 8 = 40 points (0040)
+    assert list(mpu.memory[score_addr : score_addr + 4]) == [0, 0, 4, 0]
+
+    # Step through post-countdown delay until transition to next level
+    step_count = 0
+    while mpu.memory[labels["GAME_SUBSTATE"]] == labels["SUBSTATE_BONUS_COUNTDOWN"] and step_count < 50:
+        mpu.sp = 0xFD
+        mpu.stPushWord(0x0100 - 1)
+        mpu.memory[0x0100] = 0x00
+        mpu.pc = labels["UPDATE_BONUS_COUNTDOWN"]
+        while mpu.pc != 0x0100:
+            mpu.step()
+        step_count += 1
+
+    # Countdown completed and transitioned away from SUBSTATE_BONUS_COUNTDOWN
+    assert mpu.memory[labels["GAME_SUBSTATE"]] != labels["SUBSTATE_BONUS_COUNTDOWN"]
+
+
+
 
 
 

@@ -82,3 +82,35 @@ secret_sound_timer      dta 0
 @done
     rts
 .endp
+
+; --- Energy Bonus Countdown Click (POKEY Channel 3) ---
+BONUS_CLICK_FRAMES      = 2
+
+bonus_sound_timer       dta 0
+
+.proc start_bonus_sound
+    lda #BONUS_CLICK_FRAMES
+    sta bonus_sound_timer
+    rts
+.endp
+
+.proc update_bonus_sound
+    lda bonus_sound_timer
+    beq @done
+    dec bonus_sound_timer
+    beq @silence
+
+    ; Frame 1 (timer was 2): crisp high click on Channel 3
+    lda #$0C
+    sta AUDF3
+    lda #$AC
+    sta AUDC3
+    rts
+
+@silence
+    lda #0
+    sta AUDC3
+@done
+    rts
+.endp
+

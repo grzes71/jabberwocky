@@ -23,29 +23,29 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$1DD3",
-    "size": 5577,
+    "end_address": "$1E42",
+    "size": 5688,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1DD4",
+    "start_address": "$1E43",
     "end_address": "$27FF",
-    "size": 2604,
+    "size": 2493,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3EA8",
-    "size": 5801,
+    "end_address": "$3F2C",
+    "size": 5933,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3EA9",
+    "start_address": "$3F2D",
     "end_address": "$3FFF",
-    "size": 343,
+    "size": 211,
     "type": "free"
   },
   {

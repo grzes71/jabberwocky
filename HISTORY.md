@@ -2,6 +2,30 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-20] - Zliczanie pozostałej energii smoka na punkty (Bonus Countdown) po ukończeniu poziomu
+- **Funkcjonalność**: Po ukończeniu poziomu (przewinięciu ogona `level_tail_cols == 0`), zanim zniknie ekran gry, pozostała energia smoka jest rytmicznie zliczana na punkty `SCORE` (8 punktów za każdy znak paska energii reprezentujący 8 poziomów energii), ze znikań znaków od góry/końca paska, dynamicznym odświeżaniem licznika punktów i dźwiękiem kliknięcia "click".
+- **Wprowadzone modyfikacje**:
+  - [engine/sound.asm](engine/sound.asm):
+    - Dodano generator dźwięku kliknięcia na kanale 3 POKEY (`start_bonus_sound`, `update_bonus_sound`, `BONUS_CLICK_FRAMES = 2`, częstotliwość `AUDF3 = $0C`, czysty ton `AUDC3 = $AC`).
+  - [engine/flame_collision.asm](engine/flame_collision.asm):
+    - Dodano procedurę `add_score_8` realizującą 4-cyfrową arytmetykę dziesiętną BCD z propagacją przeniesień na dziesiątki, setki i tysiące, cappingiem do 9999 oraz natychmiastowym odświeżeniem cyfr wyniku w VRAM (`update_bottom_status`).
+  - [scenes/game.asm](scenes/game.asm):
+    - Zdefiniowano nowy podstan `SUBSTATE_BONUS_COUNTDOWN = 2` oraz stałe `BONUS_STEP_INTERVAL = 2` (tempo odliczania ~25 znaków/sek.) i `BONUS_POST_DELAY = 15` (pauza ~0.3s po wyzerowaniu).
+    - Dodano procedury `start_bonus_countdown` i `update_bonus_countdown`: rytmiczne czyszczenie kolejnych znaków od `COUNTER_FULL - 1` w dół, wywołanie `add_score_8` oraz `start_bonus_sound`.
+    - Po zakończeniu odliczania i krótkiej pauzie procedura automatycznie przechodzi do `advance_to_next_level`.
+    - W `scroll_playfield_step`: po osiągnięciu `level_tail_cols == 0` następuje wywołanie `start_bonus_countdown` zamiast natychmiastowego przejścia.
+    - W `update_energy_bar`: zablokowano ubytek energii podczas podstanu `SUBSTATE_BONUS_COUNTDOWN`.
+    - W `game_run`: dodano obsługę gałęzi `@run_bonus_countdown` z wywołaniem kroków odliczania, dźwięku i animacji machania skrzydłami smoka w miejscu (`render_dragon`).
+    - W `respawn_dragon` i `advance_to_next_level`: wyciszono rejestry kanału 3 POKEY (`AUDC3`, `AUDF3`) oraz wyzerowano `bonus_sound_timer`.
+  - [tests/test_status_bar.py](tests/test_status_bar.py):
+    - Dodano testy `test_add_score_8_bcd_increment`, `test_bonus_sound_emulation`, `test_update_bonus_countdown_emulation`.
+  - [tests/test_scrolling.py](tests/test_scrolling.py):
+    - Zaktualizowano testy `test_level_completion_and_victory_transition` oraz `test_advance_to_next_level_refills_energy_to_100_percent` do przejścia przez podstan odliczania energii.
+- **Weryfikacja**:
+  - `make all`: asemblacja i walidacja mapy pamięci bez błędów (33.3% wolnej pamięci RAM).
+  - `make test`: wszystkie 173 testy py65 i testy jednostkowe zakończone wynikiem pozytywnym (100% passed).
+
+
 ## [2026-09-20] - Resetowanie stanu zniszczonych obiektów przy przejściu na nowy poziom
 - **Problem**: Gdy smok niszczył obiekty ogniem, a następnie ginął, obiekty na bieżącym poziomie pozostawały zniszczone (poprawne zachowanie). Jednak po przejściu do nowego poziomu (`advance_to_next_level`), jeśli nowy poziom współdzielił identyfikatory ekranów z poprzednim poziomem, obiekty na tych ekranach nadal pozostawały zniszczone.
 - **Wprowadzone modyfikacje**:

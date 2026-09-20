@@ -285,6 +285,12 @@ game_run
     jsr update_level_name_screen
     rts
 
+@run_bonus_countdown
+    jsr update_bonus_countdown
+    jsr update_bonus_sound
+    jsr render_dragon
+    rts
+
 @not_start
     ; Reset OS Attract Mode timer to prevent color shifting during gameplay
     lda #0
@@ -293,6 +299,8 @@ game_run
     ; Check if currently on level name screen substate
     lda game_substate
     beq @run_level_name
+    cmp #SUBSTATE_BONUS_COUNTDOWN
+    beq @run_bonus_countdown
 
     ; Execute any deferred screen bake from previous screen transition
     jsr execute_pending_bake
@@ -589,8 +597,9 @@ game_run
     ; Update bottom status bar display (handles blinking when LIVES == 1)
     jsr update_bottom_status
 
-    ; Update secret collected pickup chime sound
+    ; Update secret collected pickup chime sound and bonus sound
     jsr update_secret_sound
+    jsr update_bonus_sound
 
     ; 5. Commit/render sprite to Player 0 buffer & missiles to M_ADDR
     jsr render_dragon
@@ -1382,11 +1391,15 @@ init_energy_bar
 ; ==============================================================================
 update_energy_bar
     lda GAME_OVER_REASON
-    bne @tb_exit
-    lda dragon_dying
-    bne @tb_exit
-    lda dragon_recharging
-    bne @tb_exit
+    ora dragon_dying
+    ora dragon_recharging
+    bne @early_exit
+    lda game_substate
+    cmp #SUBSTATE_BONUS_COUNTDOWN
+    beq @early_exit
+    jmp @tb_run
+@early_exit
+    rts
 
 @tb_run
 
@@ -1893,8 +1906,11 @@ respawn_dragon
     sta fire_prev_y
     sta AUDC1
     sta AUDC2
+    sta AUDC3
     sta AUDF1
     sta AUDF2
+    sta AUDF3
+    sta bonus_sound_timer
     sta AUDCTL
     sta HPOSM0
     sta HPOSM1
@@ -2676,8 +2692,8 @@ scroll_playfield_step
     dec level_tail_cols
     bne @tail_not_done
 
-    ; Tail completed: all screens in this level cleared!
-    jsr advance_to_next_level
+    ; Tail completed: all screens in this level cleared! Start energy bonus tally
+    jsr start_bonus_countdown
 @tail_not_done
     rts
 
@@ -2913,6 +2929,68 @@ scroll_playfield_step
 @step_rts
     rts
 
+; ==============================================================================
+; start_bonus_countdown
+; Initiates dragon energy bonus tally when level scrolling completes.
+; If COUNTER_FULL is already 0, immediately advances to next level.
+; ==============================================================================
+start_bonus_countdown
+    lda COUNTER_FULL
+    bne @have_energy
+    jmp advance_to_next_level
+
+@have_energy
+    lda #SUBSTATE_BONUS_COUNTDOWN
+    sta game_substate
+    lda #BONUS_STEP_INTERVAL
+    sta bonus_step_timer
+    lda #BONUS_POST_DELAY
+    sta bonus_delay_counter
+    rts
+
+; ==============================================================================
+; update_bonus_countdown
+; Steps the energy bonus countdown.
+; Each step removes one character from top/end of bar, adds 8 points to SCORE,
+; and plays a click sound on POKEY Channel 3.
+; ==============================================================================
+update_bonus_countdown
+    lda bonus_step_timer
+    beq @do_step
+    dec bonus_step_timer
+    rts
+
+@do_step
+    lda COUNTER_FULL
+    beq @countdown_finished
+
+    ; Decrement COUNTER_FULL (e.g. 40 -> 39, index in VRAM is 39)
+    dec COUNTER_FULL
+    ldx COUNTER_FULL
+    lda #0
+    sta GAME_STATUS_VRAM,x      ; Clear character from energy bar
+
+    ; Add 8 points (BCD with carry) and refresh SCORE display
+    jsr add_score_8
+
+    ; Trigger click sound on Channel 3
+    jsr start_bonus_sound
+
+    ; Reset timer for next character
+    lda #BONUS_STEP_INTERVAL
+    sta bonus_step_timer
+    rts
+
+@countdown_finished
+    ; Wait post-countdown delay before transition
+    lda bonus_delay_counter
+    beq @transition
+    dec bonus_delay_counter
+    rts
+
+@transition
+    jmp advance_to_next_level
+
 advance_to_next_level
     inc current_level_idx
     lda current_level_idx
@@ -2950,6 +3028,14 @@ advance_to_next_level
     sta fire_frame
     sta fire_timer
     sta fire_prev_y
+    sta AUDC1
+    sta AUDC2
+    sta AUDC3
+    sta AUDF1
+    sta AUDF2
+    sta AUDF3
+    sta bonus_sound_timer
+    sta AUDCTL
     sta HITCLR
 
     lda #<SCROLL_BASE_SPEED
@@ -3016,9 +3102,16 @@ bs_r_idx                 dta 0
 bs_c_idx                 dta 0
 
 ; --- Game Substate Variables ---
-SUBSTATE_LEVEL_NAME = 0
-SUBSTATE_PLAYING    = 1
-game_substate       dta SUBSTATE_LEVEL_NAME
+SUBSTATE_LEVEL_NAME      = 0
+SUBSTATE_PLAYING         = 1
+SUBSTATE_BONUS_COUNTDOWN = 2
+
+BONUS_STEP_INTERVAL      = 2             ; Frames per energy character removed (~25 chars/s at 50Hz)
+BONUS_POST_DELAY         = 15            ; Frames to wait after bar empty before next level (~0.3s)
+
+game_substate            dta SUBSTATE_LEVEL_NAME
+bonus_step_timer         dta 0
+bonus_delay_counter      dta 0
 
 calc_fps_sec        dta 0
 calc_temp           dta 0
