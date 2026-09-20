@@ -1684,6 +1684,53 @@ shift_blocking_vram_left    = shift_blocking_cols
 .endp
 
 ; ==============================================================================
+; add_score_8
+; Increments 4-digit decimal SCORE by 8 (BCD with carry propagation)
+; and updates the bottom status bar display.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc add_score_8
+    lda SCORE+3
+    clc
+    adc #8
+    sta SCORE+3
+    cmp #10
+    bcc @done
+    sec
+    sbc #10
+    sta SCORE+3
+
+    inc SCORE+2
+    lda SCORE+2
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+2
+
+    inc SCORE+1
+    lda SCORE+1
+    cmp #10
+    bcc @done
+    lda #0
+    sta SCORE+1
+
+    inc SCORE+0
+    lda SCORE+0
+    cmp #10
+    bcc @done
+    ; Cap at 9999
+    lda #9
+    sta SCORE+0
+    sta SCORE+1
+    sta SCORE+2
+    sta SCORE+3
+
+@done
+    jsr update_bottom_status
+    rts
+.endp
+
+; ==============================================================================
 ; add_score_10
 ; Increments 4-digit decimal SCORE by 10 (BCD with carry propagation)
 ; and updates the bottom status bar display.

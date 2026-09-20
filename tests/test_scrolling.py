@@ -295,8 +295,12 @@ def test_level_completion_and_victory_transition(project_root: Path, labels: Dic
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 1
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
-    # Running one more scroll step should decrement level_tail_cols to 0 and call advance_to_next_level
+    # Running one more scroll step decrements level_tail_cols to 0 and starts bonus countdown
     run_subroutine(mpu, labels["SCROLL_PLAYFIELD_STEP"])
+
+    # Step through bonus countdown until transition to game over
+    while mpu.memory[labels["GAME_SUBSTATE"]] == labels["SUBSTATE_BONUS_COUNTDOWN"]:
+        run_subroutine(mpu, labels["UPDATE_BONUS_COUNTDOWN"])
 
     reason_success = labels["REASON_SUCCESS"]
     assert reason_success == 4
@@ -383,8 +387,13 @@ def test_advance_to_next_level_refills_energy_to_100_percent(project_root: Path,
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 1
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
-    # Step finishes tail and calls advance_to_next_level
+    # Step finishes tail and starts bonus countdown
     run_subroutine(mpu, labels["SCROLL_PLAYFIELD_STEP"])
+    assert mpu.memory[labels["GAME_SUBSTATE"]] == labels["SUBSTATE_BONUS_COUNTDOWN"]
+
+    # Step through bonus countdown
+    while mpu.memory[labels["GAME_SUBSTATE"]] == labels["SUBSTATE_BONUS_COUNTDOWN"]:
+        run_subroutine(mpu, labels["UPDATE_BONUS_COUNTDOWN"])
 
     # Verify advanced to Level 1
     assert mpu.memory[labels["CURRENT_LEVEL_IDX"]] == 1
