@@ -2,6 +2,16 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-21] - Aktualizacja obiektów na planszach wioski (Village Screen Improvements)
+- **Zmiany w świecie gry**:
+  - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów na planszach wioski (`VILLAGE_01`, `VILLAGE_03`, `VILLAGE_04`, `VILLAGE_05`, `VILLAGE_06`, `VILLAGE_07`) w Labirynt Studio.
+  - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json): Zaktualizowano mapę pamięci po kompilacji zmodyfikowanych danych świata (33.2% wolnego RAM).
+- **Weryfikacja**:
+  - `make all`: udana kompilacja świata do `gen/world_data.asm` oraz asemblacja MADS (31521 bajtów w XEX).
+  - `make test`: wszystkie 173 testy py65 i testy jednostkowe zakończone sukcesem (100% passed).
+
+
+
 ## [2026-09-20] - Aktualizacja i poprawki obiektów na planszach świata (Map Improvements)
 - **Zmiany w świecie gry**:
   - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów, przeszkód oraz elementów dekoracyjnych na planszach labiryntów (`FOREST_03`, `FOREST_04`, `FOREST_06`, `FOREST_07`, `FOREST_08`, `FOREST_09`) w Labirynt Studio.

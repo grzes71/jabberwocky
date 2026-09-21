@@ -2121,6 +2121,8 @@ screens:
     packed_xy: 77
   - code: 56
     packed_xy: 178
+  - code: 205
+    packed_xy: 15
 - id: VILLAGE_02
   objects:
   - code: 101
@@ -2242,8 +2244,6 @@ screens:
   - code: 4
     packed_xy: 1
   - code: 8
-    packed_xy: 3
-  - code: 8
     packed_xy: 14
   - code: 48
     packed_xy: 171
@@ -2255,14 +2255,18 @@ screens:
     packed_xy: 112
   - code: 164
     packed_xy: 12
-  - code: 164
-    packed_xy: 4
-  - code: 164
-    packed_xy: 13
   - code: 187
     packed_xy: 66
   - code: 187
     packed_xy: 130
+  - code: 139
+    packed_xy: 45
+  - code: 139
+    packed_xy: 13
+  - code: 205
+    packed_xy: 35
+  - code: 205
+    packed_xy: 3
 - id: VILLAGE_04
   objects:
   - code: 112
@@ -2329,7 +2333,9 @@ screens:
     packed_xy: 73
   - code: 164
     packed_xy: 72
-  - code: 52
+  - code: 139
+    packed_xy: 47
+  - code: 139
     packed_xy: 15
 - id: VILLAGE_05
   objects:
@@ -2381,6 +2387,10 @@ screens:
     packed_xy: 78
   - code: 164
     packed_xy: 79
+  - code: 139
+    packed_xy: 50
+  - code: 139
+    packed_xy: 18
 - id: VILLAGE_06
   objects:
   - code: 106
@@ -2439,6 +2449,8 @@ screens:
     packed_xy: 5
   - code: 164
     packed_xy: 69
+  - code: 139
+    packed_xy: 16
 - id: VILLAGE_07
   objects:
   - code: 102
@@ -2539,8 +2551,6 @@ screens:
     packed_xy: 4
   - code: 4
     packed_xy: 74
-  - code: 4
-    packed_xy: 18
   - code: 51
     packed_xy: 147
   - code: 65
@@ -2555,8 +2565,6 @@ screens:
     packed_xy: 13
   - code: 95
     packed_xy: 145
-  - code: 182
-    packed_xy: 178
   - code: 193
     packed_xy: 139
   - code: 8
@@ -2577,6 +2585,20 @@ screens:
     packed_xy: 137
   - code: 164
     packed_xy: 80
+  - code: 139
+    packed_xy: 70
+  - code: 139
+    packed_xy: 38
+  - code: 139
+    packed_xy: 82
+  - code: 139
+    packed_xy: 50
+  - code: 139
+    packed_xy: 18
+  - code: 7
+    packed_xy: 19
+  - code: 48
+    packed_xy: 178
 labyrinths:
 - id: LEVEL_01
   name: 'LEVEL 1 : Tulgey Wood'
