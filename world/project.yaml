@@ -136,7 +136,7 @@ screens:
 - id: FOREST_03
   objects:
   - code: 11
-    packed_xy: 65
+    packed_xy: 5
   - code: 22
     packed_xy: 160
   - code: 31
@@ -146,7 +146,7 @@ screens:
   - code: 115
     packed_xy: 144
   - code: 4
-    packed_xy: 1
+    packed_xy: 66
   - code: 4
     packed_xy: 3
   - code: 4
@@ -156,9 +156,9 @@ screens:
   - code: 4
     packed_xy: 17
   - code: 65
-    packed_xy: 67
+    packed_xy: 129
   - code: 178
-    packed_xy: 5
+    packed_xy: 19
   - code: 182
     packed_xy: 7
   - code: 65
@@ -170,26 +170,24 @@ screens:
   - code: 78
     packed_xy: 14
   - code: 9
-    packed_xy: 83
+    packed_xy: 134
   - code: 118
-    packed_xy: 75
+    packed_xy: 76
   - code: 9
     packed_xy: 0
   - code: 166
     packed_xy: 174
   - code: 92
-    packed_xy: 19
+    packed_xy: 103
   - code: 92
     packed_xy: 172
   - code: 92
-    packed_xy: 161
+    packed_xy: 101
   - code: 117
     packed_xy: 8
   - code: 51
     packed_xy: 70
   - code: 9
-    packed_xy: 18
-  - code: 11
     packed_xy: 50
   - code: 95
     packed_xy: 110
@@ -201,6 +199,8 @@ screens:
     packed_xy: 46
   - code: 15
     packed_xy: 48
+  - code: 19
+    packed_xy: 49
 - id: FOREST_04
   objects:
   - code: 51
@@ -232,7 +232,7 @@ screens:
   - code: 48
     packed_xy: 4
   - code: 11
-    packed_xy: 103
+    packed_xy: 71
   - code: 11
     packed_xy: 10
   - code: 182
@@ -273,6 +273,10 @@ screens:
     packed_xy: 9
   - code: 178
     packed_xy: 83
+  - code: 23
+    packed_xy: 16
+  - code: 24
+    packed_xy: 161
 - id: FOREST_05
   objects:
   - code: 115
@@ -395,10 +399,6 @@ screens:
     packed_xy: 40
   - code: 83
     packed_xy: 4
-  - code: 26
-    packed_xy: 14
-  - code: 26
-    packed_xy: 15
   - code: 20
     packed_xy: 11
   - code: 172
@@ -422,13 +422,21 @@ screens:
   - code: 95
     packed_xy: 37
   - code: 9
-    packed_xy: 46
-  - code: 9
     packed_xy: 108
   - code: 51
     packed_xy: 42
   - code: 117
     packed_xy: 65
+  - code: 24
+    packed_xy: 173
+  - code: 24
+    packed_xy: 163
+  - code: 21
+    packed_xy: 14
+  - code: 178
+    packed_xy: 46
+  - code: 178
+    packed_xy: 146
 - id: FOREST_07
   objects:
   - code: 56
@@ -442,21 +450,21 @@ screens:
   - code: 7
     packed_xy: 67
   - code: 7
-    packed_xy: 107
+    packed_xy: 72
   - code: 7
-    packed_xy: 77
+    packed_xy: 76
   - code: 7
     packed_xy: 81
   - code: 7
-    packed_xy: 19
+    packed_xy: 1
   - code: 9
     packed_xy: 69
   - code: 9
-    packed_xy: 105
+    packed_xy: 17
   - code: 9
     packed_xy: 10
   - code: 9
-    packed_xy: 98
+    packed_xy: 19
   - code: 8
     packed_xy: 14
   - code: 65
@@ -464,11 +472,11 @@ screens:
   - code: 51
     packed_xy: 146
   - code: 51
-    packed_xy: 79
+    packed_xy: 137
   - code: 20
     packed_xy: 0
   - code: 23
-    packed_xy: 103
+    packed_xy: 65
   - code: 22
     packed_xy: 168
   - code: 22
@@ -476,17 +484,17 @@ screens:
   - code: 22
     packed_xy: 179
   - code: 23
-    packed_xy: 141
+    packed_xy: 18
   - code: 166
     packed_xy: 2
   - code: 62
     packed_xy: 12
   - code: 51
-    packed_xy: 39
+    packed_xy: 141
   - code: 48
-    packed_xy: 16
+    packed_xy: 15
   - code: 48
-    packed_xy: 65
+    packed_xy: 134
   - code: 118
     packed_xy: 5
   - code: 4
@@ -512,7 +520,7 @@ screens:
   - code: 193
     packed_xy: 136
   - code: 92
-    packed_xy: 175
+    packed_xy: 179
   - code: 92
     packed_xy: 178
   - code: 7
@@ -541,20 +549,18 @@ screens:
     packed_xy: 103
   - code: 95
     packed_xy: 46
-  - code: 177
-    packed_xy: 19
   - code: 178
-    packed_xy: 81
+    packed_xy: 82
   - code: 177
     packed_xy: 75
   - code: 182
-    packed_xy: 179
+    packed_xy: 19
   - code: 182
     packed_xy: 8
   - code: 182
     packed_xy: 131
   - code: 118
-    packed_xy: 142
+    packed_xy: 98
   - code: 8
     packed_xy: 128
   - code: 11
@@ -589,8 +595,6 @@ screens:
     packed_xy: 102
   - code: 9
     packed_xy: 80
-  - code: 7
-    packed_xy: 107
   - code: 7
     packed_xy: 10
   - code: 7
@@ -653,6 +657,8 @@ screens:
     packed_xy: 32
   - code: 48
     packed_xy: 34
+  - code: 178
+    packed_xy: 75
 - id: TOLEM_01
   objects:
   - code: 177
@@ -2115,6 +2121,8 @@ screens:
     packed_xy: 77
   - code: 56
     packed_xy: 178
+  - code: 205
+    packed_xy: 15
 - id: VILLAGE_02
   objects:
   - code: 101
@@ -2236,8 +2244,6 @@ screens:
   - code: 4
     packed_xy: 1
   - code: 8
-    packed_xy: 3
-  - code: 8
     packed_xy: 14
   - code: 48
     packed_xy: 171
@@ -2249,14 +2255,18 @@ screens:
     packed_xy: 112
   - code: 164
     packed_xy: 12
-  - code: 164
-    packed_xy: 4
-  - code: 164
-    packed_xy: 13
   - code: 187
     packed_xy: 66
   - code: 187
     packed_xy: 130
+  - code: 139
+    packed_xy: 45
+  - code: 139
+    packed_xy: 13
+  - code: 205
+    packed_xy: 35
+  - code: 205
+    packed_xy: 3
 - id: VILLAGE_04
   objects:
   - code: 112
@@ -2323,7 +2333,9 @@ screens:
     packed_xy: 73
   - code: 164
     packed_xy: 72
-  - code: 52
+  - code: 139
+    packed_xy: 47
+  - code: 139
     packed_xy: 15
 - id: VILLAGE_05
   objects:
@@ -2375,6 +2387,10 @@ screens:
     packed_xy: 78
   - code: 164
     packed_xy: 79
+  - code: 139
+    packed_xy: 50
+  - code: 139
+    packed_xy: 18
 - id: VILLAGE_06
   objects:
   - code: 106
@@ -2433,6 +2449,8 @@ screens:
     packed_xy: 5
   - code: 164
     packed_xy: 69
+  - code: 139
+    packed_xy: 16
 - id: VILLAGE_07
   objects:
   - code: 102
@@ -2533,8 +2551,6 @@ screens:
     packed_xy: 4
   - code: 4
     packed_xy: 74
-  - code: 4
-    packed_xy: 18
   - code: 51
     packed_xy: 147
   - code: 65
@@ -2549,8 +2565,6 @@ screens:
     packed_xy: 13
   - code: 95
     packed_xy: 145
-  - code: 182
-    packed_xy: 178
   - code: 193
     packed_xy: 139
   - code: 8
@@ -2571,6 +2585,20 @@ screens:
     packed_xy: 137
   - code: 164
     packed_xy: 80
+  - code: 139
+    packed_xy: 70
+  - code: 139
+    packed_xy: 38
+  - code: 139
+    packed_xy: 82
+  - code: 139
+    packed_xy: 50
+  - code: 139
+    packed_xy: 18
+  - code: 7
+    packed_xy: 19
+  - code: 48
+    packed_xy: 178
 labyrinths:
 - id: LEVEL_01
   name: 'LEVEL 1 : Tulgey Wood'
