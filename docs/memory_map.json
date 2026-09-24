@@ -37,15 +37,15 @@
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3F2C",
-    "size": 5933,
+    "end_address": "$3D1A",
+    "size": 5403,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3F2D",
+    "start_address": "$3D1B",
     "end_address": "$3FFF",
-    "size": 211,
+    "size": 741,
     "type": "free"
   },
   {
@@ -93,29 +93,29 @@
   {
     "name": "FONT",
     "start_address": "$6800",
-    "end_address": "$8996",
-    "size": 8599,
+    "end_address": "$89D0",
+    "size": 8657,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$8997",
+    "start_address": "$89D1",
     "end_address": "$AFFF",
-    "size": 9833,
+    "size": 9775,
     "type": "free"
   },
   {
     "name": "VRAM",
     "start_address": "$B000",
-    "end_address": "$BB25",
-    "size": 2854,
+    "end_address": "$BE8A",
+    "size": 3723,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BB26",
+    "start_address": "$BE8B",
     "end_address": "$BFFF",
-    "size": 1242,
+    "size": 373,
     "type": "free"
   }
 ]

@@ -197,7 +197,6 @@ scene_run_tbl
     dta a(enter_name_run)
 
 ; ---- Include Scene Modules ----
-    icl 'scenes/title.asm'
     icl 'scenes/game.asm'
 
 ; ==============================================================================
@@ -375,9 +374,10 @@ screen_buf_b_blk    :440 dta 0
 stub_vram_buf       :960 dta 0
 
 ; ==============================================================================
-; TOP SCORES, HIGH SCORE ENTRY & GAME OVER (High RAM $B3C0+)
+; SCENES: TITLE, TOP SCORES, HIGH SCORE ENTRY & GAME OVER (High RAM $B3C0+)
 ; ==============================================================================
     org STUB_VRAM + 960
+    icl 'scenes/title.asm'
     icl 'scenes/top_scores.asm'
     icl 'scenes/gameover.asm'
 

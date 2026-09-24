@@ -14,45 +14,45 @@ screens:
   - code: 51
     packed_xy: 136
   - code: 48
-    packed_xy: 5
+    packed_xy: 40
   - code: 48
     packed_xy: 179
   - code: 56
-    packed_xy: 166
+    packed_xy: 165
   - code: 56
     packed_xy: 163
   - code: 51
-    packed_xy: 2
+    packed_xy: 135
   - code: 51
     packed_xy: 128
   - code: 7
-    packed_xy: 0
+    packed_xy: 1
   - code: 4
     packed_xy: 16
   - code: 182
     packed_xy: 178
   - code: 182
-    packed_xy: 41
+    packed_xy: 103
   - code: 182
-    packed_xy: 36
+    packed_xy: 5
   - code: 22
     packed_xy: 161
   - code: 48
-    packed_xy: 133
+    packed_xy: 108
   - code: 95
     packed_xy: 7
   - code: 182
-    packed_xy: 110
+    packed_xy: 79
   - code: 7
     packed_xy: 13
   - code: 9
-    packed_xy: 79
+    packed_xy: 3
   - code: 51
-    packed_xy: 76
+    packed_xy: 130
   - code: 51
-    packed_xy: 81
+    packed_xy: 112
   - code: 48
-    packed_xy: 73
+    packed_xy: 74
   - code: 115
     packed_xy: 139
   - code: 56
@@ -781,18 +781,6 @@ screens:
     packed_xy: 50
   - code: 52
     packed_xy: 147
-  - code: 207
-    packed_xy: 168
-  - code: 207
-    packed_xy: 166
-  - code: 207
-    packed_xy: 43
-  - code: 207
-    packed_xy: 45
-  - code: 208
-    packed_xy: 44
-  - code: 208
-    packed_xy: 167
   - code: 15
     packed_xy: 15
   - code: 18
@@ -815,6 +803,18 @@ screens:
     packed_xy: 104
   - code: 18
     packed_xy: 49
+  - code: 211
+    packed_xy: 44
+  - code: 211
+    packed_xy: 167
+  - code: 210
+    packed_xy: 168
+  - code: 210
+    packed_xy: 166
+  - code: 210
+    packed_xy: 43
+  - code: 210
+    packed_xy: 45
 - id: TOLEM_03
   objects:
   - code: 155
@@ -1143,6 +1143,18 @@ screens:
     packed_xy: 49
   - code: 8
     packed_xy: 78
+  - code: 211
+    packed_xy: 104
+  - code: 211
+    packed_xy: 105
+  - code: 211
+    packed_xy: 106
+  - code: 211
+    packed_xy: 107
+  - code: 211
+    packed_xy: 108
+  - code: 211
+    packed_xy: 109
 - id: TOLEM_07
   objects:
   - code: 167
@@ -1221,6 +1233,18 @@ screens:
     packed_xy: 106
   - code: 54
     packed_xy: 107
+  - code: 211
+    packed_xy: 137
+  - code: 211
+    packed_xy: 138
+  - code: 211
+    packed_xy: 136
+  - code: 211
+    packed_xy: 139
+  - code: 211
+    packed_xy: 140
+  - code: 211
+    packed_xy: 141
 - id: CITY_01
   objects:
   - code: 9
@@ -1332,11 +1356,11 @@ screens:
   - code: 8
     packed_xy: 8
   - code: 8
-    packed_xy: 16
+    packed_xy: 15
   - code: 8
     packed_xy: 128
   - code: 9
-    packed_xy: 66
+    packed_xy: 16
   - code: 9
     packed_xy: 0
   - code: 7
@@ -1360,7 +1384,7 @@ screens:
   - code: 53
     packed_xy: 179
   - code: 164
-    packed_xy: 65
+    packed_xy: 133
   - code: 164
     packed_xy: 7
   - code: 164
@@ -1378,13 +1402,21 @@ screens:
   - code: 82
     packed_xy: 74
   - code: 182
-    packed_xy: 164
+    packed_xy: 132
   - code: 166
     packed_xy: 165
-  - code: 53
-    packed_xy: 2
   - code: 164
     packed_xy: 80
+  - code: 138
+    packed_xy: 5
+  - code: 139
+    packed_xy: 98
+  - code: 139
+    packed_xy: 66
+  - code: 139
+    packed_xy: 34
+  - code: 139
+    packed_xy: 2
 - id: CITY_03
   objects:
   - code: 110
@@ -1396,7 +1428,7 @@ screens:
   - code: 184
     packed_xy: 4
   - code: 7
-    packed_xy: 9
+    packed_xy: 13
   - code: 51
     packed_xy: 135
   - code: 95
@@ -1405,8 +1437,6 @@ screens:
     packed_xy: 129
   - code: 95
     packed_xy: 146
-  - code: 48
-    packed_xy: 11
   - code: 48
     packed_xy: 171
   - code: 48
@@ -1423,8 +1453,6 @@ screens:
     packed_xy: 169
   - code: 182
     packed_xy: 12
-  - code: 11
-    packed_xy: 10
   - code: 202
     packed_xy: 14
   - code: 53
@@ -1467,6 +1495,32 @@ screens:
     packed_xy: 134
   - code: 164
     packed_xy: 82
+  - code: 138
+    packed_xy: 42
+  - code: 138
+    packed_xy: 10
+  - code: 8
+    packed_xy: 3
+  - code: 210
+    packed_xy: 108
+  - code: 210
+    packed_xy: 109
+  - code: 210
+    packed_xy: 110
+  - code: 210
+    packed_xy: 111
+  - code: 210
+    packed_xy: 112
+  - code: 211
+    packed_xy: 99
+  - code: 211
+    packed_xy: 100
+  - code: 211
+    packed_xy: 101
+  - code: 211
+    packed_xy: 102
+  - code: 211
+    packed_xy: 103
 - id: CITY_04
   objects:
   - code: 132

@@ -2031,3 +2031,27 @@ objects:
     secret: false
   tiles: [95, 95, 95, 95, 95, 95]
   tags: [infrastruktura]
+- object: BRICKS_1_D
+  id: BRICKS_1_D
+  code: 210
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: false
+    interactive: false
+    secret: false
+  tiles: [222, 222]
+  tags: [infrastruktura]
+- object: BRICK_WALL_1_D
+  id: BRICK_WALL_1_D
+  code: 211
+  size:
+    width: 2
+    height: 1
+  flags:
+    blocking: false
+    interactive: false
+    secret: false
+  tiles: [45, 45]
+  tags: [infrastruktura]
