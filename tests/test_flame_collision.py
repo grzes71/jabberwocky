@@ -141,7 +141,7 @@ def find_object_idx_on_screen0(mpu: MPU, labels: Dict[str, int], code: int, row:
         if mpu.memory[codes_ptr + i] == code:
             pxy = mpu.memory[coords_ptr + i]
             obj_row = (pxy >> 4) & 0x0E
-            obj_col = (pxy & 0x0F) * 2
+            obj_col = (pxy & 0x1F) * 2
             if obj_row == row and obj_col == col:
                 return i
     raise ValueError(f"Object {code} at row={row}, col={col} not found on screen 0")
@@ -157,28 +157,30 @@ def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int], p
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
-    # Object on Screen 0 (code 48) is at x=10, y=8, size 2x1.
-    # In VRAM: cols = 4 + 10 = 14..15, row = 8.
-    cell_r8_c14 = vram_base + 8 * 48 + 14
-    cell_r8_c15 = vram_base + 8 * 48 + 15
+    # Object on Screen 0 (code 56, ROCK_GREEN) is at x=6, y=10, size 3x1.
+    # In VRAM: cols = 4 + 6 = 10..12, row = 10.
+    cell_r10_c10 = vram_base + 10 * 48 + 10
+    cell_r10_c11 = vram_base + 10 * 48 + 11
+    cell_r10_c12 = vram_base + 10 * 48 + 12
 
-    # Verify cells contain object tiles initially ($47, $48)
-    assert mpu.memory[cell_r8_c14] != 0, "Object cell should have baked tiles initially"
-    assert mpu.memory[cell_r8_c15] != 0
+    # Verify cells contain object tiles initially
+    assert mpu.memory[cell_r10_c10] != 0, "Object cell should have baked tiles initially"
+    assert mpu.memory[cell_r10_c11] != 0
+    assert mpu.memory[cell_r10_c12] != 0
 
-    # Ensure object 48 is marked as blocking=true (bit 0 = 1)
+    # Ensure object 56 is marked as blocking=true (bit 0 = 1)
     flags_base = labels["OBJ_TYPE_FLAGS"]
-    mpu.memory[flags_base + 48] = 0x01
+    mpu.memory[flags_base + 56] = 0x01
 
-    # 2. Position dragon facing row 8: dragon_y = 155
-    # (rel_start = 155 - 24 = 131, row = 131 // 16 = 8)
-    mpu.memory[labels["DRAGON_Y"]] = 155
+    # 2. Position dragon facing row 10: dragon_y = 187
+    # (rel_start = 187 - 24 = 163, row = 163 // 16 = 10)
+    mpu.memory[labels["DRAGON_Y"]] = 187
     mpu.memory[labels["FIRE_STATE"]] = 2     # PEAK HOLD
     mpu.memory[labels["FIRE_FRAME"]] = 7     # Full reach (cols 10..18)
     mpu.memory[labels["FLAME_M_PF"]] = 0x01   # Hardware collision with PF0
 
     # Dynamic bitmask for target object on screen 0
-    obj_idx = find_object_idx_on_screen0(mpu, labels, 48, row=8, col=10)
+    obj_idx = find_object_idx_on_screen0(mpu, labels, 56, row=10, col=6)
     byte_offset = obj_idx // 8
     bit_mask = 1 << (obj_idx % 8)
 
@@ -189,8 +191,9 @@ def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int], p
     run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
 
     # 4. Verify all object cells are erased to $00 (background)
-    assert mpu.memory[cell_r8_c14] == 0, "Cell (r8, c14) must be cleared"
-    assert mpu.memory[cell_r8_c15] == 0, "Cell (r8, c15) must be cleared"
+    assert mpu.memory[cell_r10_c10] == 0, "Cell (r10, c10) must be cleared"
+    assert mpu.memory[cell_r10_c11] == 0, "Cell (r10, c11) must be cleared"
+    assert mpu.memory[cell_r10_c12] == 0, "Cell (r10, c12) must be cleared"
 
     # 5. Verify destroyed bitmask is set
     assert (mpu.memory[destroyed_base + byte_offset] & bit_mask) != 0, f"Bit for object {obj_idx} must be set"
@@ -208,9 +211,9 @@ def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dic
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
-    # Object is on row 8
-    cell_r8_c14 = vram_base + 8 * 48 + 14
-    initial_tile = mpu.memory[cell_r8_c14]
+    # Object is on row 10
+    cell_r10_c10 = vram_base + 10 * 48 + 10
+    initial_tile = mpu.memory[cell_r10_c10]
     assert initial_tile != 0
 
     # Dragon on row 2 (dragon_y = 60: rel_start = 36 // 16 = row 2)
@@ -221,10 +224,10 @@ def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dic
 
     run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
 
-    # Object on row 8 must be intact
-    assert mpu.memory[cell_r8_c14] == initial_tile
+    # Object on row 10 must be intact
+    assert mpu.memory[cell_r10_c10] == initial_tile
 
-    obj_idx = find_object_idx_on_screen0(mpu, labels, 48, row=8, col=10)
+    obj_idx = find_object_idx_on_screen0(mpu, labels, 56, row=10, col=6)
     byte_offset = obj_idx // 8
     bit_mask = 1 << (obj_idx % 8)
 
@@ -241,7 +244,7 @@ def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
-    obj_idx = find_object_idx_on_screen0(mpu, labels, 48, row=8, col=10)
+    obj_idx = find_object_idx_on_screen0(mpu, labels, 56, row=10, col=6)
     byte_offset = obj_idx // 8
     bit_mask = 1 << (obj_idx % 8)
 
@@ -249,16 +252,16 @@ def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
     mpu.memory[destroyed_base + byte_offset] |= bit_mask
 
-    # Ensure object 48 is marked as blocking=true (bit 0 = 1)
+    # Ensure object 56 is marked as blocking=true (bit 0 = 1)
     flags_base = labels["OBJ_TYPE_FLAGS"]
-    mpu.memory[flags_base + 48] = 0x01
+    mpu.memory[flags_base + 56] = 0x01
 
     # Write a test value into the object's cell
-    cell_r8_c14 = vram_base + 8 * 48 + 14
-    mpu.memory[cell_r8_c14] = 0xAA
+    cell_r10_c10 = vram_base + 10 * 48 + 10
+    mpu.memory[cell_r10_c10] = 0xAA
 
-    # Aim dragon right at it
-    mpu.memory[labels["DRAGON_Y"]] = 155
+    # Aim dragon right at it (row 10)
+    mpu.memory[labels["DRAGON_Y"]] = 187
     mpu.memory[labels["FIRE_STATE"]] = 2
     mpu.memory[labels["FIRE_FRAME"]] = 7
     mpu.memory[labels["FLAME_M_PF"]] = 0x01
@@ -266,7 +269,7 @@ def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str
     run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
 
     # Cell must NOT be erased (remains 0xAA) because object was skipped
-    assert mpu.memory[cell_r8_c14] == 0xAA
+    assert mpu.memory[cell_r10_c10] == 0xAA
 
 
 def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):
@@ -278,17 +281,17 @@ def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[st
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
-    # Object 23 is code 48 on row 8, col 14
-    cell_r8_c14 = vram_base + 8 * 48 + 14
-    initial_tile = mpu.memory[cell_r8_c14]
+    # Object is code 56 on row 10, col 6 (VRAM col 10)
+    cell_r10_c10 = vram_base + 10 * 48 + 10
+    initial_tile = mpu.memory[cell_r10_c10]
     assert initial_tile != 0
 
-    # Set object 48 flags to 0 (non-blocking)
+    # Set object 56 flags to 0 (non-blocking)
     flags_base = labels["OBJ_TYPE_FLAGS"]
-    mpu.memory[flags_base + 48] = 0x00
+    mpu.memory[flags_base + 56] = 0x00
 
-    # Aim dragon right at it with active fire and hit
-    mpu.memory[labels["DRAGON_Y"]] = 155
+    # Aim dragon right at it with active fire and hit (row 10)
+    mpu.memory[labels["DRAGON_Y"]] = 187
     mpu.memory[labels["FIRE_STATE"]] = 2
     mpu.memory[labels["FIRE_FRAME"]] = 7
     mpu.memory[labels["FLAME_M_PF"]] = 0x01
@@ -296,10 +299,13 @@ def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[st
     run_subroutine(mpu, labels["CHECK_FLAME_OBJECT_COLLISION"])
 
     # Object must NOT be destroyed because blocking=false!
-    assert mpu.memory[cell_r8_c14] == initial_tile, "Non-blocking object must not be erased from VRAM"
+    assert mpu.memory[cell_r10_c10] == initial_tile, "Non-blocking object must not be erased from VRAM"
 
+    obj_idx = find_object_idx_on_screen0(mpu, labels, 56, row=10, col=6)
+    byte_offset = obj_idx // 8
+    bit_mask = 1 << (obj_idx % 8)
     destroyed_base = labels["SCREEN_OBJ_DESTROYED"]
-    assert (mpu.memory[destroyed_base + 2] & 0x20) == 0, "Non-blocking object bit must not be set"
+    assert (mpu.memory[destroyed_base + byte_offset] & bit_mask) == 0, "Non-blocking object bit must not be set"
 
 
 def get_forest_level_idx(project_root: Path) -> int:

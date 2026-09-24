@@ -2,6 +2,17 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-24] - Naprawa testów kolizji ognia bez modyfikacji project.yaml (Fix flame collision tests)
+- **Korekta testów**:
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Poprawiono dekodowanie kolumny w `find_object_idx_on_screen0` z maski `0x0F` na `0x1F` (`obj_col = (pxy & 0x1F) * 2`), zgodnie z asemblerową implementacją w [engine/flame_collision.asm](engine/flame_collision.asm).
+    - Zaktualizowano 4 testy py65 (`test_flame_destroys_object_in_path`, `test_flame_different_row_does_not_destroy_object`, `test_flame_destroyed_object_not_reprocessed`, `test_flame_non_blocking_object_not_destroyed`), aby targetowały istniejący na planszy `FOREST_01` obiekt `ROCK_GREEN` (kod 56, wiersz 10, kolumna 6, VRAM kolumny 10..12) zamiast nieistniejącego obiektu pod dawnymi współrzędnymi.
+    - Plik [world/project.yaml](world/project.yaml) pozostał nienaruszony (zero modyfikacji).
+- **Weryfikacja**:
+  - `make all`: czysta kompilacja i generowanie mapy pamięci (32.3% wolnego RAM).
+  - `make test`: 179/179 testów py65 i testów jednostkowych zakończonych sukcesem (100% passed).
+
+
 ## [2026-09-24] - Płynne wsunięcie ekranu tytułowego z dołu do góry (Title Screen Slide-Up)
 - **Funkcjonalność**: Zaimplementowano sprzętowy efekt płynnego wjazdu ekranu tytułowego (Slide-Up) od dolnej krawędzi telewizora ku górze, wywoływany wyłącznie jednorazowo po przejściu ze `STATE_INTRO`. Przy kolejnych wejściach na ekran tytułowy (np. z `STATE_GAME_OVER` lub `STATE_TOP_SCORES`) ekran wyświetla się natychmiastowo. Wciśnięcie przycisku FIRE w trakcie animacji natychmiast przerywa wsuwanie i przechodzi do rozgrywki (`STATE_GAME`).
 - **Architektura & Rozwiązanie sprzętowe ANTIC**:
