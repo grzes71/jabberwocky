@@ -98,11 +98,6 @@ title_init
     sta COLPF1
     sta COLBK
 
-    ; Enable playfield DMA + single-line PMG + Player DMA (%00111010 = $3A)
-    lda #$3A
-    sta SDMCTL
-    sta DMACTL
-
     ; Enable inverse video in CHACTL (bit 1 = 1)
     lda #2
     sta CHACTL
@@ -121,6 +116,76 @@ title_init
     lda #3
     sta title_scroll_fine
 
+    ; Check if slide-up effect is needed (only on first entry from STATE_INTRO)
+    lda title_need_slide
+    beq @direct_title_init
+
+    ; ---- Initialize Slide-Up Animation ----
+    lda #0
+    sta title_need_slide        ; Consume flag (runs only once!)
+    sta title_slide_lines       ; 0 visible lines initially
+    sta title_slide_buf_idx     ; Start on buffer 0
+    lda #1
+    sta title_slide_active
+
+    ; Build initial frame 0 display list into buffer 0 ($6000)
+    lda #<TITLE_SLIDE_DLIST0
+    sta PTR_DST
+    lda #>TITLE_SLIDE_DLIST0
+    sta PTR_DST+1
+    jsr build_slide_dlist
+
+    ; Set ANTIC Display List to slide buffer
+    lda #<TITLE_SLIDE_DLIST0
+    sta SDLSTL
+    sta DLISTL
+    lda #>TITLE_SLIDE_DLIST0
+    sta SDLSTH
+    sta DLISTH
+
+    ; Turn off GTIA PMG players during slide
+    lda #0
+    sta GRACTL
+
+    ; Enable standard playfield DMA only (no PMG: $22)
+    lda #$22
+    sta SDMCTL
+    sta DMACTL
+
+    ; VBLANK only ($40) — DLI disabled during slide
+    lda #$40
+    sta NMIEN
+    rts
+
+@direct_title_init
+    jsr title_finish_slide
+    rts
+
+; ==============================================================================
+; TITLE_FINISH_SLIDE — Ends slide and restores normal Title DLIST & PMG display
+; ==============================================================================
+title_finish_slide
+    lda #0
+    sta title_slide_active
+
+    ; Set Display List pointer (shadow and hardware)
+    lda #<dlist_title
+    sta SDLSTL
+    sta DLISTL
+    lda #>dlist_title
+    sta SDLSTH
+    sta DLISTH
+
+    ; Enable GTIA PMG player display
+    lda #2
+    sta GRACTL
+    sta HITCLR
+
+    ; Enable playfield DMA + single-line PMG + Player DMA (%00111010 = $3A)
+    lda #$3A
+    sta SDMCTL
+    sta DMACTL
+
     ; Set DLI vector for Title scroll line
     lda #<dli_title_scroll
     sta VDSLST
@@ -133,6 +198,28 @@ title_init
     rts
 
 title_run
+    lda title_slide_active
+    beq @normal_run
+
+    ; ---- Slide-up is active ----
+    lda fire_pressed
+    beq @do_slide_step
+
+    ; User pressed FIRE during slide: skip slide directly to STATE_GAME
+    lda #0
+    sta fire_pressed
+    jsr title_finish_slide
+    lda #$40                    ; VBLANK only, DLI disabled
+    sta NMIEN
+    lda #STATE_GAME
+    sta game_state
+    rts
+
+@do_slide_step
+    jsr update_title_slide
+    rts
+
+@normal_run
     ; Update smooth scrolling ticker (once per frame)
     jsr update_title_scroll
 
@@ -148,6 +235,165 @@ title_run
     lda #STATE_GAME
     sta game_state
 @   rts
+
+; ==============================================================================
+; UPDATE_TITLE_SLIDE — Advances visible lines by TITLE_SLIDE_STEP each frame
+; ==============================================================================
+update_title_slide
+    lda title_slide_lines
+    clc
+    adc #TITLE_SLIDE_STEP
+    cmp #TITLE_TOTAL_LINES
+    bcc @continue_slide
+
+    ; Slide complete: transition to normal static title screen
+    jsr title_finish_slide
+    rts
+
+@continue_slide
+    sta title_slide_lines
+
+    ; Toggle double-buffer index
+    lda title_slide_buf_idx
+    eor #1
+    sta title_slide_buf_idx
+    bne @use_buf1
+
+    lda #<TITLE_SLIDE_DLIST0
+    sta PTR_DST
+    lda #>TITLE_SLIDE_DLIST0
+    sta PTR_DST+1
+    jmp @do_build
+
+@use_buf1
+    lda #<TITLE_SLIDE_DLIST1
+    sta PTR_DST
+    lda #>TITLE_SLIDE_DLIST1
+    sta PTR_DST+1
+
+@do_build
+    jsr build_slide_dlist
+
+    ; Update ANTIC display list pointer to newly prepared buffer
+    lda PTR_DST
+    sta SDLSTL
+    sta DLISTL
+    lda PTR_DST+1
+    sta SDLSTH
+    sta DLISTH
+    rts
+
+; ==============================================================================
+; BUILD_SLIDE_DLIST — Dynamic Display List Generator for Slide-Up
+; Total scanlines in frame = 199 (constant throughout slide)
+; Top blanks: 199 - title_slide_lines scanlines
+; Followed by title_slide_lines of ANTIC Mode F, then DL_JVB.
+; ==============================================================================
+build_slide_dlist
+    ldy #0
+
+    ; 1. Calculate top blank scanlines: (199 - title_slide_lines)
+    lda #199
+    sec
+    sbc title_slide_lines
+    tax                         ; X = blank scanlines remaining (0..199)
+
+@b8_loop
+    cpx #8
+    bcc @b_rem
+    lda #DL_BLANK8
+    sta (PTR_DST),y
+    iny
+    txa
+    sec
+    sbc #8
+    tax
+    jmp @b8_loop
+
+@b_rem
+    cpx #0
+    beq @do_content
+    ; X in range 1..7: opcode is (X - 1) << 4
+    dex                         ; 0..6
+    txa
+    asl
+    asl
+    asl
+    asl
+    sta (PTR_DST),y
+    iny
+
+@do_content
+    lda title_slide_lines
+    beq @put_jvb
+
+    ; First line with LMS: DL_MODE_F | DL_LMS, a(VRAM_ADDR)
+    lda #DL_MODE_F | DL_LMS
+    sta (PTR_DST),y
+    iny
+    lda #<VRAM_ADDR
+    sta (PTR_DST),y
+    iny
+    lda #>VRAM_ADDR
+    sta (PTR_DST),y
+    iny
+
+    ; First segment Mode F lines: min(title_slide_lines - 1, 101)
+    lda title_slide_lines
+    sec
+    sbc #1
+    cmp #101
+    bcc @seg1_cnt
+    lda #101
+@seg1_cnt
+    tax
+    beq @check_seg2
+    lda #DL_MODE_F
+@seg1_loop
+    sta (PTR_DST),y
+    iny
+    dex
+    bne @seg1_loop
+
+@check_seg2
+    lda title_slide_lines
+    cmp #103
+    bcc @put_jvb
+
+    ; Second segment LMS: DL_MODE_F | DL_LMS, a(VRAM_ADDR + $1000)
+    lda #DL_MODE_F | DL_LMS
+    sta (PTR_DST),y
+    iny
+    lda #<(VRAM_ADDR + $1000)
+    sta (PTR_DST),y
+    iny
+    lda #>(VRAM_ADDR + $1000)
+    sta (PTR_DST),y
+    iny
+
+    ; Second segment Mode F lines: (title_slide_lines - 103)
+    lda title_slide_lines
+    sec
+    sbc #103
+    tax
+    beq @put_jvb
+    lda #DL_MODE_F
+@seg2_loop
+    sta (PTR_DST),y
+    iny
+    dex
+    bne @seg2_loop
+
+@put_jvb
+    lda #DL_JVB
+    sta (PTR_DST),y
+    iny
+    lda PTR_DST
+    sta (PTR_DST),y
+    iny
+    lda PTR_DST+1
+    sta (PTR_DST),y
+    rts
 
 ; ==============================================================================
 ; DLI ROUTINE — Triggered on DL_BLANK1 right before ANTIC Mode 2 scroll line
@@ -223,10 +469,19 @@ update_title_scroll
 ; ==============================================================================
 TITLE_SCROLL_VRAM_LEN   = 48    ; ANTIC normal width fetches 48 bytes with DL_HSCROL
 TITLE_SCROLL_SPEED      = 1     ; Step every 1 frame (smooth 50/60 fps)
+TITLE_SLIDE_STEP        = 2     ; 2 scanlines per frame (~1.7s total slide)
+TITLE_TOTAL_LINES       = 175   ; Mode F image height
+TITLE_SLIDE_DLIST0      = $6000 ; Slide DLIST double-buffer 0 (256 B, page aligned)
+TITLE_SLIDE_DLIST1      = $6100 ; Slide DLIST double-buffer 1 (256 B, page aligned)
 
 title_scroll_fine       dta 3
 title_scroll_delay      dta TITLE_SCROLL_SPEED
 title_scroll_idx        dta 0
+
+title_need_slide        dta 1   ; 1 = slide up on first entry from STATE_INTRO, 0 = direct
+title_slide_active      dta 0   ; 1 during active slide animation
+title_slide_lines       dta 0   ; Current visible Mode F lines (0..175)
+title_slide_buf_idx     dta 0   ; Double-buffer toggle (0 or 1)
 
 ; 48-byte VRAM buffer for Mode 2 scroll line
 title_scroll_vram

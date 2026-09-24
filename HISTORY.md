@@ -2,7 +2,27 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
-## [2026-09-21] - Aktualizacja obiektów na planszach wioski (Village Screen Improvements)
+## [2026-09-24] - Płynne wsunięcie ekranu tytułowego z dołu do góry (Title Screen Slide-Up)
+- **Funkcjonalność**: Zaimplementowano sprzętowy efekt płynnego wjazdu ekranu tytułowego (Slide-Up) od dolnej krawędzi telewizora ku górze, wywoływany wyłącznie jednorazowo po przejściu ze `STATE_INTRO`. Przy kolejnych wejściach na ekran tytułowy (np. z `STATE_GAME_OVER` lub `STATE_TOP_SCORES`) ekran wyświetla się natychmiastowo. Wciśnięcie przycisku FIRE w trakcie animacji natychmiast przerywa wsuwanie i przechodzi do rozgrywki (`STATE_GAME`).
+- **Architektura & Rozwiązanie sprzętowe ANTIC**:
+  - Wykorzystano podwójne buforowanie Display Listy (`$6000` i `$6100` w wolnej przestrzeni `GAME_ACTION_VRAM`) ze stałą liczbą 199 scanline'ów w każdej klatce animacji (`top_blanks + title_slide_lines = 199`).
+  - Generator DLIST (`build_slide_dlist`) dynamicznie buduje instrukcje pustych linii (`DL_BLANK8` oraz resztę `DL_BLANK1..DL_BLANK7`) oraz linie graficzne `DL_MODE_F` z zachowaniem reguły granicy 4 KB (`VRAM_ADDR = $4000` dla linii 0..101 oraz `VRAM_ADDR + $1000 = $5000` od linii 102).
+  - W trakcie wsuwania odtwarzacz PMG i przerwania DLI paska informacyjnego są wygaszone. Po osiągnięciu pozycji spoczynkowej procedura `title_finish_slide` płynnie przełącza wektor na `dlist_title` ($6610), aktywuje zielone sprajty graczy (`GRACTL = 2`, `SDMCTL = $3A`) oraz włącza DLI scrollera tekstu (`NMIEN = $C0`).
+- **Modyfikacje w kodzie**:
+  - [scenes/title.asm](scenes/title.asm):
+    - Dodano zmienne stanu animacji: `title_need_slide` (inicjalnie 1), `title_slide_active`, `title_slide_lines`, `title_slide_buf_idx`.
+    - Dodano procedury: `build_slide_dlist`, `update_title_slide`, `title_finish_slide`.
+    - W `title_init` dodano rozgałęzienie: jeśli `title_need_slide == 1`, flaga jest zerowana i uruchamiany jest slajd; jeśli 0, następuje bezpośrednia inicjalizacja.
+    - W `title_run` zintegrowano krok animacji oraz obsługę natychmiastowego pominięcia po wciśnięciu FIRE.
+  - [main.asm](main.asm):
+    - Przeniesiono `icl 'scenes/title.asm'` do segmentu High RAM (`STUB_VRAM + 960 = $B3C0`) obok innych modułów scen (`scenes/top_scores.asm`, `scenes/gameover.asm`), zwalniając 530 bajtów w segmencie `CODE_ADDR` ($2800) i zapewniając 741 bajtów wolnego miejsca przed granicą `$4000`.
+  - [tests/test_title_slide.py](tests/test_title_slide.py):
+    - Dodano zestaw 6 testów py65 weryfikujących: flagę początkową, aktywację slajdu w `title_init`, pomijanie slajdu przy ponownym wejściu, krok animacji i podwójne buforowanie, zakończenie po 175 liniach oraz przerwanie przyciskiem FIRE.
+- **Weryfikacja**:
+  - `make xex check_memory`: asemblacja MADS bez błędów, walidacja mapy pamięci zakończona sukcesem (32.3% wolnego RAM, 0 nakładania segmentów).
+  - `pytest tests/test_title_slide.py`: 6/6 testów zakończonych sukcesem.
+  - `pytest tests/test_scene_flow.py`: 11/11 testów zakończonych sukcesem.
+
 - **Zmiany w świecie gry**:
   - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów na planszach wioski (`VILLAGE_01`, `VILLAGE_03`, `VILLAGE_04`, `VILLAGE_05`, `VILLAGE_06`, `VILLAGE_07`) w Labirynt Studio.
   - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json): Zaktualizowano mapę pamięci po kompilacji zmodyfikowanych danych świata (33.2% wolnego RAM).
