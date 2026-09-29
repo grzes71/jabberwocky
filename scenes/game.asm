@@ -47,6 +47,10 @@ SCROLL_DRAG             = $0006         ; Momentum decay towards hover when neut
 SCROLL_COL_THRESHOLD    = $0400         ; 4 color clocks (8 pixels) = 1 Mode 5 column
 
 game_init
+    ; Start Gameplay music (Subsong 2, index 1: 04:45)
+    lda #MUSIC_GAMEPLAY
+    jsr Music_PlaySong
+
     ; Blank DMA during reconfiguration
     lda #0
     sta SDMCTL
@@ -1077,11 +1081,6 @@ render_fire
 update_fire_sound
     lda fire_state
     bne @snd_active
-
-    ; Silence both fire sound channels when fire is inactive
-    lda #0
-    sta AUDC1
-    sta AUDC2
     rts
 
 @snd_active

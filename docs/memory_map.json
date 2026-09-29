@@ -23,15 +23,15 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$1E42",
-    "size": 5688,
+    "end_address": "$1EA5",
+    "size": 5787,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1E43",
+    "start_address": "$1EA6",
     "end_address": "$27FF",
-    "size": 2493,
+    "size": 2394,
     "type": "free"
   },
   {
@@ -100,22 +100,50 @@
   {
     "name": "FREE_SPACE",
     "start_address": "$89D1",
+    "end_address": "$8FFF",
+    "size": 1583,
+    "type": "free"
+  },
+  {
+    "name": "MUSIC_DATA_ADDR",
+    "start_address": "$9000",
+    "end_address": "$9921",
+    "size": 2338,
+    "type": "code"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$9922",
+    "end_address": "$99FF",
+    "size": 222,
+    "type": "free"
+  },
+  {
+    "name": "CMC_PLAYER_ADDR",
+    "start_address": "$9A00",
+    "end_address": "$A155",
+    "size": 1878,
+    "type": "code"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$A156",
     "end_address": "$AFFF",
-    "size": 9775,
+    "size": 3754,
     "type": "free"
   },
   {
     "name": "VRAM",
     "start_address": "$B000",
-    "end_address": "$BE8A",
-    "size": 3723,
+    "end_address": "$BEB5",
+    "size": 3766,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BE8B",
+    "start_address": "$BEB6",
     "end_address": "$BFFF",
-    "size": 373,
+    "size": 330,
     "type": "free"
   }
 ]
