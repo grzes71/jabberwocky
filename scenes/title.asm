@@ -4,6 +4,10 @@
 ; ==============================================================================
 
 title_init
+    ; Start Title Screen music (Subsong 3, index 2: 02:47)
+    lda #MUSIC_TITLE
+    jsr Music_PlaySong
+
     ; Blank screen DMA during setup
     lda #0
     sta SDMCTL

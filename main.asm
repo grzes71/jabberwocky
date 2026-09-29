@@ -65,6 +65,7 @@ disable_basic
 engine
     icl 'engine/charset_anim.asm'
     icl 'engine/sound.asm'
+    icl 'engine/music.asm'
     icl 'engine/flame_collision.asm'
     icl 'engine/level_name.asm'
     icl 'gen/dragon_sprite.asm'
@@ -105,6 +106,9 @@ main_loop
 @wait_frame
     cmp RTCLOK+2
     beq @wait_frame
+
+    ; Update audio subsystem (50 Hz frame tick)
+    jsr Audio_Update
 
     ; Update inputs (joystick fire edge detection)
     jsr update_input
@@ -366,6 +370,16 @@ screen_buf_a_vram   :440 dta 0
 screen_buf_a_blk    :440 dta 0
 screen_buf_b_vram   :440 dta 0
 screen_buf_b_blk    :440 dta 0
+
+; ==============================================================================
+; CMC MUSIC DATA & RELOCATABLE PLAYER (Free RAM $9000 - $A155)
+; ==============================================================================
+    org MUSIC_DATA_ADDR
+music_data
+    ins 'gen/music.cmc'
+
+    org CMC_PLAYER_ADDR
+    icl 'engine/cmc_player_reloc.asm'
 
 ; ==============================================================================
 ; STUB TEXT VRAM BUFFER (960 B for Intro, Level Name, Game Over screens)

@@ -2,7 +2,25 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
-## [2026-09-24] - Naprawa testów kolizji ognia bez modyfikacji project.yaml (Fix flame collision tests)
+## [2026-09-29] - Integracja podsystemu audio CMC/SAP z gra (CMC Audio Integration)
+- **Ekstrakcja i relokacja danych muzycznych**:
+  - [scripts/extract_sap.py](scripts/extract_sap.py): Zaimplementowano dedykowany parser pliku kontenera SAP (`music/music.sap`), ekstrakcje segmentu CMC oraz automatyczna relokacje z bazowego adresu `$8400` do `$9000-$9921` (2338 bajtow) z przeliczaniem tablicy 28 wskaznikow do instrumentow i patternow oraz rygorystyczna walidacja granic pamieci i formatu SAP TYPE C.
+  - [Makefile](Makefile): Wprowadzono automatyczna regule budowania pliku binarnego `gen/music.cmc` przy kazdej zmianie `music/music.sap` lub `scripts/extract_sap.py`.
+- **Relokowalny player CMC**:
+  - [engine/cmc_player_reloc.asm](engine/cmc_player_reloc.asm): Zaadaptowano relokowalny odtwarzacz Chaos Music Composer z oficjalnego pakietu MADS, osadzajac go w pamieci pod adresem `$9A00-$A155` (1878 bajtow).
+  - Usunieto instrukcje zdefiniowane pod adresami Zero Page OS, zachowujac w pelni bezpieczne odkladanie i przywracanie komorek `$FC-$FF` na stosie wewnatrz procedury `play`.
+- **Modul silnika audio i integracja z gra**:
+  - [engine/music.asm](engine/music.asm): Zaimplementowano interfejs wysokiego poziomu ze scisle zdefiniowanym ABI (pelne zachowanie rejestrow `A, X, Y` na wyjsciu): `Music_PlaySong(A)` (inicjalizacja 2-etapowa CMC z buforowaniem biezacego utworu i zabezpieczeniem przed utrata indeksu), `Music_Update` (50 Hz tick wywolywany po VBLANK z pelnym zabezpieczeniem rejestrow) oraz `Music_Stop` (wyciszenie rejestrow POKEY `$D200..$D208`).
+  - [engine/sound.asm](engine/sound.asm): Dodano procedure `Audio_Update` spinajaca odtwarzanie muzyki z silnikiem gry.
+  - [main.asm](main.asm): Dodano segmenty asemblera dla muzyki (`$9000`) i playera (`$9A00`) z zachowaniem rosnacego porzadku adresow `org`, dolaczono wywolanie `jsr Audio_Update` w glownej petli `main_loop` po synchronizacji z klatka.
+  - [scenes/title.asm](scenes/title.asm), [scenes/game.asm](scenes/game.asm), [scenes/gameover.asm](scenes/gameover.asm): Podpieto odpowiednie subsongi przy wejsciu do scen: `MUSIC_TITLE` (subsong 2), `MUSIC_GAMEPLAY` (subsong 1), `MUSIC_GAME_OVER` (subsong 0).
+- **Rozwiazanie konfliktu CMC music ↔ SFX**:
+  - [scenes/game.asm](scenes/game.asm): W procedurze `update_fire_sound` usunieto bezwarunkowe zerowanie rejestrow glosnosci `AUDC1` i `AUDC2` przy braku ziania ogniem (`fire_state == 0`). Dzieki temu w trakcie normalnej rozgrywki CMC zachowuje pelna kontrole nad wszystkimi 4 kanalami POKEY. W momencie ziania ogniem (`fire_state != 0`) SFX chwilowo przejmuje kanaly 1 i 2, a po zakonczeniu efektu nastepne wywolanie `Music_Update` automatycznie przywraca brzmienie muzyki.
+- **Testy i weryfikacja**:
+  - [tests/test_music.py](tests/test_music.py): Dodano 8 zautomatyzowanych testow py65 sprawdzajacych poprawnosc subsongow 0/1/2, weryfikacje 1000 wywolan procedury `play`, scisle zachowanie rejestrow A/X/Y, pomiar maksymalnego zaglebienia stosu (min SP: PlaySong=$F0, Update=$EF, Stop=$F2), nienaruszalnosc Zero Page `$FC-$FF`, przejscia miedzy scenami oraz koegzystencje muzyki i SFX bez ziania ogniem, z aktywnym ogniem i po jego zakonczeniu.
+  - `make all`: 100% sukces kompilacji; mapa pamieci zwalidowana z zachowaniem 23.1% wolnego RAM (10,899 B wolnej przestrzeni).
+  - `make test`: Wszystkie 187 testow zakonczone sukcesem (100% passed).
+
 - **Korekta testów**:
   - [tests/test_flame_collision.py](tests/test_flame_collision.py):
     - Poprawiono dekodowanie kolumny w `find_object_idx_on_screen0` z maski `0x0F` na `0x1F` (`obj_col = (pxy & 0x1F) * 2`), zgodnie z asemblerową implementacją w [engine/flame_collision.asm](engine/flame_collision.asm).

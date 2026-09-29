@@ -3,6 +3,10 @@
 ; ==============================================================================
 
 gameover_init
+    ; Start Game Over music (Subsong 1, index 0: 02:34)
+    lda #MUSIC_GAME_OVER
+    jsr Music_PlaySong
+
     ; Blank DMA during reconfiguration
     lda #0
     sta SDMCTL
