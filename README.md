@@ -1,8 +1,10 @@
 # Jabberwocky — Atari 8-bit (XL/XE)
 
-Projekt gry/dema na komputery **Atari 800XL / 65XE** (procesor 6502, układy ANTIC, GTIA, POKEY) inspirowany poematem Lewisa Carrolla *"Jabberwocky"* (w polskim przekładzie Stanisława Barańczaka jako *"Żabrołak"*).
+Gra na komputery **Atari 800XL / 65XE** (procesor 6502, układy ANTIC, GTIA, POKEY) inspirowany poematem Lewisa Carrolla *"Jabberwocky"* (w polskim przekładzie Stanisława Barańczaka jako *"Żabrołak"*).
 
 Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym zautomatyzowanym potokiem budowania (Python 3, Pydantic, PySide6, pytest, py65) oraz zintegrowanym środowiskiem edytorów GUI do tworzenia sprajtów, obiektów gry i labiryntów.
+
+![Game cover](/cover.png)
 
 ---
 
@@ -87,7 +89,7 @@ Główna pętla gry działa w sposób deterministyczny w oparciu o synchronizacj
 1. **Input Poll** (`update_input`): Odczyt joysticka/przycisku Fire z detekcją zbocza opadającego.
 2. **State Dispatcher** (`dispatch_state`): Obsługa przejść stanów (`*_init`) oraz klatki logiki (`*_run`: fizyka smoka, zianie ogniem, odroczone wypiekanie kafelków `execute_pending_bake`).
 3. **Detekcja kolizji i zbieranie**: Obsługa kolizji z terenem (`check_dragon_blocking_collision`), niszczenia obiektów ogniem (`check_flame_object_collision`) i sekretów (`check_dragon_secret_collision`).
-4. **VBLANK NMI** (`vblank_game`): Bezpieczne przełączanie wskaźników LMS podwójnego bufora VRAM (`dlist_game_action_lms + 2`), aktualizacja sprzętowego rejestru `HSCROL`, tyknięcia podsystemu audio POKEY oraz animacja paska energii.
+4. **VBLANK NMI** (`vblank_game`): Atomowa aktualizacja wskaźników per-row LMS bufora kołowego z lustrzanym powieleniem (`update_ring_dlist_lms`), synchronizacja sprzętowego rejestru `HSCROL`, obsługa dźwięku i paska energii.
 
 ---
 
@@ -110,7 +112,7 @@ jabberwocky/
 ├── scenes/                  # Moduły poszczególnych scen (6502 ASM)
 │   ├── title.asm            # Ekran tytułowy
 │   ├── intro.asm            # Wprowadzenie i wyświetlanie wiersza (DLI)
-│   ├── game.asm             # Logika gry, fizyka PMG, HSCROL, podwójne buforowanie i streaming
+│   ├── game.asm             # Logika gry, fizyka PMG, płynny scrolling (bufor kołowy z per-row LMS), streaming ekranów
 │   ├── gameover.asm         # Ekran końca gry (Porażka / Sukces)
 │   ├── top_scores.asm       # Tabela 10 najlepszych wyników i edycja imienia joystickiem
 │   └── text_utils.asm       # Procedury wypisywania i konwersji znaków ATASCII/Internal

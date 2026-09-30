@@ -23,29 +23,29 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$1EA5",
-    "size": 5787,
+    "end_address": "$1EB1",
+    "size": 5799,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1EA6",
+    "start_address": "$1EB2",
     "end_address": "$27FF",
-    "size": 2394,
+    "size": 2382,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3D1A",
-    "size": 5403,
+    "end_address": "$3BF5",
+    "size": 5110,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3D1B",
+    "start_address": "$3BF6",
     "end_address": "$3FFF",
-    "size": 741,
+    "size": 1034,
     "type": "free"
   },
   {
@@ -79,15 +79,15 @@
   {
     "name": "DLIST",
     "start_address": "$6610",
-    "end_address": "$676D",
-    "size": 350,
+    "end_address": "$6781",
+    "size": 370,
     "type": "display_list"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$676E",
+    "start_address": "$6782",
     "end_address": "$67FF",
-    "size": 146,
+    "size": 126,
     "type": "free"
   },
   {
@@ -135,15 +135,15 @@
   {
     "name": "VRAM",
     "start_address": "$B000",
-    "end_address": "$BEB5",
-    "size": 3766,
+    "end_address": "$BEB9",
+    "size": 3770,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BEB6",
+    "start_address": "$BEBA",
     "end_address": "$BFFF",
-    "size": 330,
+    "size": 326,
     "type": "free"
   }
 ]

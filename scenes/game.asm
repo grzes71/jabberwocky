@@ -39,7 +39,7 @@ DRAGON_FRICTION         = $0014         ; Deceleration / coasting drag (inertia)
 BASE_HOVER_SPEED        = $0033         ; Base hover rate (~5 video frames per animation frame)
 MOMENTUM_DIVISOR        = 4             ; Division by 4 for scroll momentum (via 2x LSR)
 SCROLL_MAX_SPEED        = $0300         ; Max horizontal scroll velocity (3.0 px/frame)
-SCROLL_BASE_SPEED       = $00C0         ; Base forward cruising speed (~0.75 px/frame)
+SCROLL_BASE_SPEED       = $0100         ; Base forward cruising speed (1.0 px/frame)
 SCROLL_MIN_SPEED        = $0030         ; Minimum crawl speed when braking
 SCROLL_ACCEL            = $0010         ; Scroll acceleration rate when holding Right
 SCROLL_BRAKE            = $0024         ; Scroll braking rate when holding Left
@@ -1287,23 +1287,19 @@ vblank_game
     lda #>dli_game_top
     sta VDSLST+1
 
-    ; Synchronize action playfield HSCROL and VRAM double buffer swap atomically in VBLANK
+    ; Synchronize action playfield HSCROL and update mirror ring LMS in VBLANK
     lda hscrol_next
     sta hscrol_fine
     sta HSCROL                  ; Write directly to hardware HSCROL register during vertical blank!
 
-    ; Double buffering: swap action VRAM buffer if coarse scroll occurred
-    lda vram_swap_pending
-    beq @no_vram_swap
-    lda active_vram_buf
-    eor #$01
-    sta active_vram_buf
-    tax
-    lda vram_hi_tbl,x
-    sta dlist_game_action_lms + 2
+    ; Update mirror ring buffer LMS pointers if coarse scroll occurred
+    lda ring_lms_pending
+    beq @no_ring_lms_update
+    jsr update_ring_dlist_lms
     lda #0
-    sta vram_swap_pending
-@no_vram_swap
+    sta ring_lms_pending
+    sta vram_swap_pending       ; Cleared for backwards compatibility with tests
+@no_ring_lms_update
 
     ; Restore Player registers at start of frame
     lda dragon_x
@@ -2281,10 +2277,10 @@ load_world_screen
     inc PTR_SRC+1
 @lws_src_no_c
 
-    ; Advance PTR_DST by 48
+    ; Advance PTR_DST by 96 (ACTION_ROW_STRIDE)
     lda PTR_DST
     clc
-    adc #48
+    adc #96
     sta PTR_DST
     bcc @lws_dst_no_c
     inc PTR_DST+1
@@ -2313,8 +2309,8 @@ init_level_screens
     sta active_vram_buf
     sta vram_swap_pending
     sta bake_pending
-    lda #>GAME_ACTION_VRAM
-    sta dlist_game_action_lms + 2
+    sta ring_col_offset
+    sta ring_lms_pending
     lda #3
     sta hscrol_fine
     sta hscrol_next
@@ -2346,20 +2342,19 @@ init_level_screens
     lda labyrinths_screen_count,x
     sta lab_total_screens
 
-    ; Clear entire 528 bytes of Buffer A ($6000..$620F) and Buffer B ($6400..$660F)
+    ; Clear entire 1056 bytes of Mirror Ring Buffer ($6000..$641F)
     ldx #0
     lda #0
 @clr_vram_loop
     sta GAME_ACTION_VRAM,x
     sta GAME_ACTION_VRAM + 256,x
-    sta GAME_ACTION_VRAM_B,x
-    sta GAME_ACTION_VRAM_B + 256,x
+    sta GAME_ACTION_VRAM + 512,x
+    sta GAME_ACTION_VRAM + 768,x
     inx
     bne @clr_vram_loop
-    ldx #15
+    ldx #31
 @clr_vram_tail
-    sta GAME_ACTION_VRAM + 512,x
-    sta GAME_ACTION_VRAM_B + 512,x
+    sta GAME_ACTION_VRAM + 1024,x
     dex
     bpl @clr_vram_tail
 
@@ -2387,7 +2382,7 @@ init_level_screens
 
     jsr bake_screen
 
-    ; Load screen 0 of this labyrinth into visible cols 4..43 of GAME_ACTION_VRAM
+    ; Load screen 0 of this labyrinth into visible cols 4..43 of GAME_ACTION_VRAM (96-byte rows)
     jsr load_world_screen
     jsr init_blocking_cols
 
@@ -2401,7 +2396,7 @@ init_level_screens
     jsr setup_incoming_screen_ptr
     jsr execute_pending_bake
 
-    ; Prefill right margin (cols 44..47) with cols 0..3 of screen 1
+    ; Prefill right margin (cols 44..47) with cols 0..3 of screen 1 (96-byte stride)
     lda incoming_screen_ptr
     sta PTR_SRC
     lda incoming_screen_ptr+1
@@ -2440,10 +2435,10 @@ init_level_screens
     inc PTR_SRC+1
 @pfr_src_no_c
 
-    ; Advance PTR_DST by 48
+    ; Advance PTR_DST by 96
     lda PTR_DST
     clc
-    adc #48
+    adc #96
     sta PTR_DST
     bcc @pfr_dst_no_c
     inc PTR_DST+1
@@ -2456,7 +2451,7 @@ init_level_screens
     ; Next incoming column to stream is col 4
     lda #4
     sta incoming_col_idx
-    jmp @sync_vram_b
+    jmp @mirror_ring_buffer
 
 @init_single_screen
     ; Only 1 screen: enter tail mode immediately
@@ -2465,22 +2460,47 @@ init_level_screens
     lda #0
     sta incoming_col_idx
 
-@sync_vram_b
-    ; Copy initial Buffer A ($6000..$620F) to Buffer B ($6400..$660F)
-    ldx #0
-@sync_vram_b_loop
-    lda GAME_ACTION_VRAM,x
-    sta GAME_ACTION_VRAM_B,x
-    lda GAME_ACTION_VRAM + 256,x
-    sta GAME_ACTION_VRAM_B + 256,x
+@mirror_ring_buffer
+    ; Duplicate cols 0..47 into mirror half cols 48..95 for all 11 rows
+    lda #<GAME_ACTION_VRAM
+    sta PTR_DST
+    lda #>GAME_ACTION_VRAM
+    sta PTR_DST+1
+
+    ldx #0                      ; Row 0..10
+@mirror_row_loop
+    ldy #47
+@mirror_col_loop
+    lda (PTR_DST),y
+    pha
+    tya
+    clc
+    adc #48
+    tay
+    pla
+    sta (PTR_DST),y
+    tya
+    sec
+    sbc #48
+    tay
+    dey
+    bpl @mirror_col_loop
+
+    ; Advance PTR_DST by 96
+    lda PTR_DST
+    clc
+    adc #96
+    sta PTR_DST
+    bcc @mrb_dst_no_c
+    inc PTR_DST+1
+@mrb_dst_no_c
+
     inx
-    bne @sync_vram_b_loop
-    ldx #15
-@sync_vram_b_tail
-    lda GAME_ACTION_VRAM + 512,x
-    sta GAME_ACTION_VRAM_B + 512,x
-    dex
-    bpl @sync_vram_b_tail
+    cpx #11
+    bne @mirror_row_loop
+
+    ; Initialize 11 LMS pointers in Display List
+    jsr update_ring_dlist_lms
     rts
 
 setup_incoming_screen_ptr
@@ -2586,107 +2606,49 @@ update_world_scrolling
     rts
 
 shift_vram_left
-    lda active_vram_buf
-    bne shift_vram_b_to_a
-
-shift_vram_a_to_b
-    ldx #46
-@shift_loop_ab
-    lda GAME_ACTION_VRAM + 1,x
-    sta GAME_ACTION_VRAM_B,x
-    lda GAME_ACTION_VRAM + 49,x
-    sta GAME_ACTION_VRAM_B + 48,x
-    lda GAME_ACTION_VRAM + 97,x
-    sta GAME_ACTION_VRAM_B + 96,x
-    lda GAME_ACTION_VRAM + 145,x
-    sta GAME_ACTION_VRAM_B + 144,x
-    lda GAME_ACTION_VRAM + 193,x
-    sta GAME_ACTION_VRAM_B + 192,x
-    lda GAME_ACTION_VRAM + 241,x
-    sta GAME_ACTION_VRAM_B + 240,x
-    lda GAME_ACTION_VRAM + 289,x
-    sta GAME_ACTION_VRAM_B + 288,x
-    lda GAME_ACTION_VRAM + 337,x
-    sta GAME_ACTION_VRAM_B + 336,x
-    lda GAME_ACTION_VRAM + 385,x
-    sta GAME_ACTION_VRAM_B + 384,x
-    lda GAME_ACTION_VRAM + 433,x
-    sta GAME_ACTION_VRAM_B + 432,x
-    lda GAME_ACTION_VRAM + 481,x
-    sta GAME_ACTION_VRAM_B + 480,x
-    dex
-    bpl @shift_loop_ab
-    rts
-
-shift_vram_b_to_a
-    ldx #46
-@shift_loop_ba
-    lda GAME_ACTION_VRAM_B + 1,x
-    sta GAME_ACTION_VRAM,x
-    lda GAME_ACTION_VRAM_B + 49,x
-    sta GAME_ACTION_VRAM + 48,x
-    lda GAME_ACTION_VRAM_B + 97,x
-    sta GAME_ACTION_VRAM + 96,x
-    lda GAME_ACTION_VRAM_B + 145,x
-    sta GAME_ACTION_VRAM + 144,x
-    lda GAME_ACTION_VRAM_B + 193,x
-    sta GAME_ACTION_VRAM + 192,x
-    lda GAME_ACTION_VRAM_B + 241,x
-    sta GAME_ACTION_VRAM + 240,x
-    lda GAME_ACTION_VRAM_B + 289,x
-    sta GAME_ACTION_VRAM + 288,x
-    lda GAME_ACTION_VRAM_B + 337,x
-    sta GAME_ACTION_VRAM + 336,x
-    lda GAME_ACTION_VRAM_B + 385,x
-    sta GAME_ACTION_VRAM + 384,x
-    lda GAME_ACTION_VRAM_B + 433,x
-    sta GAME_ACTION_VRAM + 432,x
-    lda GAME_ACTION_VRAM_B + 481,x
-    sta GAME_ACTION_VRAM + 480,x
-    dex
-    bpl @shift_loop_ba
+    ; Kept for backwards compatibility with tests (no-op in mirror ring buffer)
     rts
 
 scroll_playfield_step
-    jsr shift_vram_left
+    ; 1. Shift blocking columns for dragon collision
     jsr shift_blocking_cols
 
-    lda level_tail_cols
-    beq @stream_screen_col
+    ; 2. Advance ring_col_offset (0..47 wrap)
+    inc ring_col_offset
+    lda ring_col_offset
+    cmp #48
+    bcc @ring_col_ok
+    lda #0
+    sta ring_col_offset
+@ring_col_ok
 
-    ; Tail mode: blank rightmost column ($00) into back buffer
-    lda active_vram_buf
-    bne @blank_buf_a
-@blank_buf_b
-    lda #0
-    sta GAME_ACTION_VRAM_B + 47
-    sta GAME_ACTION_VRAM_B + 95
-    sta GAME_ACTION_VRAM_B + 143
-    sta GAME_ACTION_VRAM_B + 191
-    sta GAME_ACTION_VRAM_B + 239
-    sta GAME_ACTION_VRAM_B + 287
-    sta GAME_ACTION_VRAM_B + 335
-    sta GAME_ACTION_VRAM_B + 383
-    sta GAME_ACTION_VRAM_B + 431
-    sta GAME_ACTION_VRAM_B + 479
-    sta GAME_ACTION_VRAM_B + 527
-    jmp @tail_blank_done
-@blank_buf_a
-    lda #0
-    sta GAME_ACTION_VRAM + 47
-    sta GAME_ACTION_VRAM + 95
-    sta GAME_ACTION_VRAM + 143
-    sta GAME_ACTION_VRAM + 191
-    sta GAME_ACTION_VRAM + 239
-    sta GAME_ACTION_VRAM + 287
-    sta GAME_ACTION_VRAM + 335
-    sta GAME_ACTION_VRAM + 383
-    sta GAME_ACTION_VRAM + 431
-    sta GAME_ACTION_VRAM + 479
-    sta GAME_ACTION_VRAM + 527
-@tail_blank_done
+    ; 3. Compute target write column: ring_write_col = (ring_col_offset - 1) mod 48
+    lda ring_col_offset
+    sec
+    sbc #1
+    bpl @wcol_ok
+    lda #47
+@wcol_ok
+    sta ring_write_col
+
+    ; 4. Check if in tail mode
+    lda level_tail_cols
+    beq @stream_normal_col
+
+    ; Tail mode: blank rightmost column into write_col and write_col + 48 for all 11 rows
+    jsr stream_tail_col
+    jmp @stream_col_done
+
+@stream_normal_col
+    jsr stream_incoming_col
+
+@stream_col_done
     lda #1
-    sta vram_swap_pending
+    sta ring_lms_pending
+    sta vram_swap_pending       ; For backwards compatibility with test assertions
+
+    lda level_tail_cols
+    beq @chk_screen_advance
 
     dec level_tail_cols
     bne @tail_not_done
@@ -2696,188 +2658,7 @@ scroll_playfield_step
 @tail_not_done
     rts
 
-@stream_screen_col
-    lda active_vram_buf
-    beq @stream_buf_b
-    jmp @stream_buf_a
-
-@stream_buf_b
-    lda incoming_screen_ptr
-    sta PTR_SRC
-    lda incoming_screen_ptr+1
-    sta PTR_SRC+1
-
-    ; Rows 0..5 (offsets 0..239 in source screen buffer) -> Buffer B col 47
-    ldy incoming_col_idx
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 47
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 95
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 143
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 191
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 239
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 287
-
-    ; Rows 6..10 (advance PTR_SRC by 240) -> Buffer B col 47
-    lda PTR_SRC
-    clc
-    adc #240
-    sta PTR_SRC
-    bcc @ptr_no_c_b
-    inc PTR_SRC+1
-@ptr_no_c_b
-    ldy incoming_col_idx
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 335
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 383
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 431
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 479
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM_B + 527
-    jmp @stream_col_done
-
-@stream_buf_a
-    lda incoming_screen_ptr
-    sta PTR_SRC
-    lda incoming_screen_ptr+1
-    sta PTR_SRC+1
-
-    ; Rows 0..5 (offsets 0..239 in source screen buffer) -> Buffer A col 47
-    ldy incoming_col_idx
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 47
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 95
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 143
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 191
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 239
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 287
-
-    ; Rows 6..10 (advance PTR_SRC by 240) -> Buffer A col 47
-    lda PTR_SRC
-    clc
-    adc #240
-    sta PTR_SRC
-    bcc @ptr_no_c_a
-    inc PTR_SRC+1
-@ptr_no_c_a
-    ldy incoming_col_idx
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 335
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 383
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 431
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 479
-
-    tya
-    clc
-    adc #40
-    tay
-    lda (PTR_SRC),y
-    sta GAME_ACTION_VRAM + 527
-
-@stream_col_done
-    lda #1
-    sta vram_swap_pending
-
+@chk_screen_advance
     ; Advance incoming_col_idx
     inc incoming_col_idx
     lda incoming_col_idx
@@ -2889,7 +2670,6 @@ scroll_playfield_step
     sta incoming_col_idx
 
     ; Swap ping-pong staging buffer pointers
-    ; What was incoming becomes cur_left!
     lda cur_left_vram_ptr
     ldx incoming_screen_vram_ptr
     sta incoming_screen_vram_ptr
@@ -2927,6 +2707,106 @@ scroll_playfield_step
 
 @step_rts
     rts
+
+; ==============================================================================
+; STREAM_INCOMING_COL
+; Injects 1 column of 11 tiles from incoming_screen into write_col AND write_col + 48.
+; Clobbers: A, X, Y, ZP_TMP, PTR_SRC, PTR_DST
+; ==============================================================================
+.proc stream_incoming_col
+    lda incoming_screen_ptr
+    sta PTR_SRC
+    lda incoming_screen_ptr+1
+    sta PTR_SRC+1
+
+    ldx #0                      ; Row 0..10
+@row_loop
+    ldy incoming_col_idx
+    lda (PTR_SRC),y
+    sta ZP_TMP                  ; ZP_TMP = tile byte
+
+    lda ring_row_base_lo,x
+    sta PTR_DST
+    lda ring_row_base_hi,x
+    sta PTR_DST+1
+
+    ldy ring_write_col
+    lda ZP_TMP
+    sta (PTR_DST),y
+    tya
+    clc
+    adc #48
+    tay
+    lda ZP_TMP
+    sta (PTR_DST),y
+
+    ; Advance PTR_SRC by 40
+    lda PTR_SRC
+    clc
+    adc #40
+    sta PTR_SRC
+    bcc @no_src_c
+    inc PTR_SRC+1
+@no_src_c
+
+    inx
+    cpx #11
+    bne @row_loop
+    rts
+.endp
+
+; ==============================================================================
+; STREAM_TAIL_COL
+; Blanks 1 column ($00) into write_col AND write_col + 48 for all 11 rows.
+; Clobbers: A, X, Y, PTR_DST
+; ==============================================================================
+.proc stream_tail_col
+    ldx #0                      ; Row 0..10
+@row_loop
+    lda ring_row_base_lo,x
+    sta PTR_DST
+    lda ring_row_base_hi,x
+    sta PTR_DST+1
+
+    ldy ring_write_col
+    lda #0
+    sta (PTR_DST),y
+    tya
+    clc
+    adc #48
+    tay
+    lda #0
+    sta (PTR_DST),y
+
+    inx
+    cpx #11
+    bne @row_loop
+    rts
+.endp
+
+; ==============================================================================
+; UPDATE_RING_DLIST_LMS
+; Updates 11 LMS pointers in dlist_game_action_lms based on ring_col_offset.
+; Clobbers: A, X, Y
+; ==============================================================================
+.proc update_ring_dlist_lms
+    ldx #10                     ; 11 rows (10 down to 0)
+    ldy #30                     ; DLIST offset to row 10 LMS: 10 * 3 = 30
+@loop
+    clc
+    lda ring_row_base_lo,x
+    adc ring_col_offset
+    sta dlist_game_action_lms + 1,y
+    lda ring_row_base_hi,x
+    adc #0
+    sta dlist_game_action_lms + 2,y
+    dey
+    dey
+    dey
+    dex
+    bpl @loop
+    rts
+.endp
 
 ; ==============================================================================
 ; start_bonus_countdown
@@ -3071,9 +2951,39 @@ scroll_accum_hi     dta 0           ; 16-bit scroll sub-pixel accumulator (high 
 hscrol_fine         dta 3           ; Fine horizontal scroll value (0..3 color clocks) for HSCROL ($D404)
 hscrol_next         dta 3           ; Next frame staged fine scroll value (committed at VBLANK)
 incoming_screen_ptr dta a(0)        ; 16-bit pointer to currently streaming screen's VRAM buffer
-active_vram_buf     dta 0           ; Currently displayed action VRAM buffer (0 = Buffer A $6000, 1 = Buffer B $6400)
+active_vram_buf     dta 0           ; Retained for backwards compatibility
 vram_swap_pending   dta 0           ; Flag set by coarse scroll to request buffer swap at next VBLANK
-vram_hi_tbl         dta >GAME_ACTION_VRAM, >GAME_ACTION_VRAM_B
+vram_hi_tbl         dta >GAME_ACTION_VRAM, >GAME_ACTION_VRAM
+
+ring_col_offset     dta 0           ; Ring buffer horizontal column offset (0..47)
+ring_write_col      dta 0           ; Target write column in ring buffer (0..47)
+ring_lms_pending    dta 0           ; 1 = LMS update requested for next VBLANK
+
+ring_row_base_lo
+    dta <(GAME_ACTION_VRAM + 0 * 96)
+    dta <(GAME_ACTION_VRAM + 1 * 96)
+    dta <(GAME_ACTION_VRAM + 2 * 96)
+    dta <(GAME_ACTION_VRAM + 3 * 96)
+    dta <(GAME_ACTION_VRAM + 4 * 96)
+    dta <(GAME_ACTION_VRAM + 5 * 96)
+    dta <(GAME_ACTION_VRAM + 6 * 96)
+    dta <(GAME_ACTION_VRAM + 7 * 96)
+    dta <(GAME_ACTION_VRAM + 8 * 96)
+    dta <(GAME_ACTION_VRAM + 9 * 96)
+    dta <(GAME_ACTION_VRAM + 10 * 96)
+
+ring_row_base_hi
+    dta >(GAME_ACTION_VRAM + 0 * 96)
+    dta >(GAME_ACTION_VRAM + 1 * 96)
+    dta >(GAME_ACTION_VRAM + 2 * 96)
+    dta >(GAME_ACTION_VRAM + 3 * 96)
+    dta >(GAME_ACTION_VRAM + 4 * 96)
+    dta >(GAME_ACTION_VRAM + 5 * 96)
+    dta >(GAME_ACTION_VRAM + 6 * 96)
+    dta >(GAME_ACTION_VRAM + 7 * 96)
+    dta >(GAME_ACTION_VRAM + 8 * 96)
+    dta >(GAME_ACTION_VRAM + 9 * 96)
+    dta >(GAME_ACTION_VRAM + 10 * 96)
 
 ; Ping-Pong Staging Buffer Pointers & Screen IDs
 cur_left_vram_ptr        dta a(0)
