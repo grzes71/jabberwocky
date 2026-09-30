@@ -12,10 +12,12 @@ CODE_ADDR       = $2800             ; Starts after PMG ($2000-$27FF)
 DLIST_ADDR      = $6610             ; Display lists (316 B, $6610-$674B, after BLOCKING_VRAM)
 VRAM_ADDR       = $4000
 STUB_VRAM       = $B000             ; Dedicated 960-byte text buffer ($B000-$B3BF) for Intro, Level Name, Game Over
-GAME_ACTION_VRAM   = $6000            ; 528-byte action playfield Buffer A ($6000-$620F, 11 lines Antic 5 with HSCROL)
-GAME_ACTION_VRAM_B = $6400            ; 528-byte action playfield Buffer B ($6400-$660F, 11 lines Antic 5 with HSCROL)
-GAME_STATUS_VRAM   = $6300            ; 80-byte status bar ($6300-$634F, 2 lines Antic 2)
-BLOCKING_VRAM      = $6400            ; Deprecated alias for Buffer B / legacy blocking grid equate
+GAME_ACTION_VRAM   = $6000            ; 1056-byte action playfield Mirror Ring Buffer ($6000-$641F, 11 lines Antic 5 x 96 B)
+RING_ACTION_VRAM   = GAME_ACTION_VRAM ; Alias for mirror ring buffer
+ACTION_ROW_STRIDE  = 96               ; 96 bytes per row in mirror ring buffer (48 primary + 48 duplicate mirror)
+GAME_ACTION_VRAM_B = $6400            ; Deprecated alias for backwards compatibility
+GAME_STATUS_VRAM   = $6420            ; 80-byte status bar ($6420-$646F, 2 lines Antic 2)
+BLOCKING_VRAM      = $6400            ; Deprecated alias for legacy blocking grid equate
 FONT_ADDR          = $5C00             ; 1024-byte font ($5C00-$5FFF, 1KB aligned)
 GAME_FONT_ADDR     = $6800             ; 1024-byte action playfield font ($6800-$6BFF, 1KB aligned)
 WORLD_DATA_ADDR    = $6C00             ; World data (screens, labyrinths, objects, starts at $6C00)
@@ -333,10 +335,19 @@ dlist_game
     dta DL_MODE_2 | DL_LMS | DL_DLI, a(GAME_STATUS_VRAM) ; DLI 2: triggers after top status line (restores action palette)
     dta DL_BLANK2 ; 2 empty line
 
-    ; Action playfield: 11 lines of ANTIC Mode 5 (48x11 with DL_HSCROL, 16 scanlines each)
+    ; Action playfield: 11 lines of ANTIC Mode 5 with per-row LMS in Mirror Ring Buffer ($6000-$641F)
 dlist_game_action_lms
-    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM)
-    :10 dta DL_MODE_5 | DL_HSCROL
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 0 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 1 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 2 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 3 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 4 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 5 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 6 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 7 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 8 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 9 * 96)
+    dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + 10 * 96)
 
     ; 1 blank line with DLI before bottom status bar
     dta DL_BLANK1 | DL_DLI      ; DLI 3: triggers before bottom status line (sets text color $34)

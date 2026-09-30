@@ -30,27 +30,27 @@ $02E0 - $02E1          2   RUNAD                vector
 Start - End     Size (B)   Segment / Name       Type
 --------------------------------------------------------------------------------
 $0800 - $080A         11   CODE                 code
-$080B - $1EA5       5787   ENGINE               code
-[ FREE SPACE: $1EA6 - $27FF (2394 bytes) ]
-$2800 - $3D1A       5403   CODE                 code
-[ FREE SPACE: $3D1B - $3FFF (741 bytes) ]
+$080B - $1EB1       5799   ENGINE               code
+[ FREE SPACE: $1EB2 - $27FF (2382 bytes) ]
+$2800 - $3BF5       5110   CODE                 code
+[ FREE SPACE: $3BF6 - $3FFF (1034 bytes) ]
 $4000 - $5B67       7016   VRAM                 data
 [ FREE SPACE: $5B68 - $5BFF (152 bytes) ]
 $5C00 - $5FFF       1024   FONT                 data
 [ FREE SPACE: $6000 - $660F (1552 bytes) ]
-$6610 - $676D        350   DLIST                display_list
-[ FREE SPACE: $676E - $67FF (146 bytes) ]
+$6610 - $6781        370   DLIST                display_list
+[ FREE SPACE: $6782 - $67FF (126 bytes) ]
 $6800 - $89D0       8657   FONT                 data
 [ FREE SPACE: $89D1 - $8FFF (1583 bytes) ]
 $9000 - $9921       2338   MUSIC_DATA_ADDR      code
 [ FREE SPACE: $9922 - $99FF (222 bytes) ]
 $9A00 - $A155       1878   CMC_PLAYER_ADDR      code
 [ FREE SPACE: $A156 - $AFFF (3754 bytes) ]
-$B000 - $BEB5       3766   VRAM                 data
-[ FREE SPACE: $BEB6 - $BFFF (330 bytes) ]
+$B000 - $BEB9       3770   VRAM                 data
+[ FREE SPACE: $BEBA - $BFFF (326 bytes) ]
 ================================================================================
-Total RAM Used:   36230 bytes
-Total Free RAM:   10874 bytes (23.1% free headroom)
+Total RAM Used:   35973 bytes
+Total Free RAM:   11131 bytes (23.6% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

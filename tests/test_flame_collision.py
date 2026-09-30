@@ -159,9 +159,10 @@ def test_flame_destroys_object_in_path(clean_mpu: MPU, labels: Dict[str, int], p
 
     # Object on Screen 0 (code 56, ROCK_GREEN) is at x=6, y=10, size 3x1.
     # In VRAM: cols = 4 + 6 = 10..12, row = 10.
-    cell_r10_c10 = vram_base + 10 * 48 + 10
-    cell_r10_c11 = vram_base + 10 * 48 + 11
-    cell_r10_c12 = vram_base + 10 * 48 + 12
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    cell_r10_c10 = vram_base + 10 * stride + 10
+    cell_r10_c11 = vram_base + 10 * stride + 11
+    cell_r10_c12 = vram_base + 10 * stride + 12
 
     # Verify cells contain object tiles initially
     assert mpu.memory[cell_r10_c10] != 0, "Object cell should have baked tiles initially"
@@ -212,7 +213,8 @@ def test_flame_different_row_does_not_destroy_object(clean_mpu: MPU, labels: Dic
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
     # Object is on row 10
-    cell_r10_c10 = vram_base + 10 * 48 + 10
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    cell_r10_c10 = vram_base + 10 * stride + 10
     initial_tile = mpu.memory[cell_r10_c10]
     assert initial_tile != 0
 
@@ -257,7 +259,8 @@ def test_flame_destroyed_object_not_reprocessed(clean_mpu: MPU, labels: Dict[str
     mpu.memory[flags_base + 56] = 0x01
 
     # Write a test value into the object's cell
-    cell_r10_c10 = vram_base + 10 * 48 + 10
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    cell_r10_c10 = vram_base + 10 * stride + 10
     mpu.memory[cell_r10_c10] = 0xAA
 
     # Aim dragon right at it (row 10)
@@ -282,7 +285,8 @@ def test_flame_non_blocking_object_not_destroyed(clean_mpu: MPU, labels: Dict[st
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
     # Object is code 56 on row 10, col 6 (VRAM col 10)
-    cell_r10_c10 = vram_base + 10 * 48 + 10
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    cell_r10_c10 = vram_base + 10 * stride + 10
     initial_tile = mpu.memory[cell_r10_c10]
     assert initial_tile != 0
 

@@ -27,32 +27,32 @@ screen_destroyed_offsets
 fc_bit_mask_tbl
     dta $01, $02, $04, $08, $10, $20, $40, $80
 
-; VRAM Mode 5 row start address lookup table (11 rows of 48 bytes each)
+; VRAM Mode 5 row start address lookup table (11 rows of 96 bytes each for mirror ring buffer)
 vram_row_offsets_lo
-    dta <(GAME_ACTION_VRAM + 0 * 48)
-    dta <(GAME_ACTION_VRAM + 1 * 48)
-    dta <(GAME_ACTION_VRAM + 2 * 48)
-    dta <(GAME_ACTION_VRAM + 3 * 48)
-    dta <(GAME_ACTION_VRAM + 4 * 48)
-    dta <(GAME_ACTION_VRAM + 5 * 48)
-    dta <(GAME_ACTION_VRAM + 6 * 48)
-    dta <(GAME_ACTION_VRAM + 7 * 48)
-    dta <(GAME_ACTION_VRAM + 8 * 48)
-    dta <(GAME_ACTION_VRAM + 9 * 48)
-    dta <(GAME_ACTION_VRAM + 10 * 48)
+    dta <(GAME_ACTION_VRAM + 0 * 96)
+    dta <(GAME_ACTION_VRAM + 1 * 96)
+    dta <(GAME_ACTION_VRAM + 2 * 96)
+    dta <(GAME_ACTION_VRAM + 3 * 96)
+    dta <(GAME_ACTION_VRAM + 4 * 96)
+    dta <(GAME_ACTION_VRAM + 5 * 96)
+    dta <(GAME_ACTION_VRAM + 6 * 96)
+    dta <(GAME_ACTION_VRAM + 7 * 96)
+    dta <(GAME_ACTION_VRAM + 8 * 96)
+    dta <(GAME_ACTION_VRAM + 9 * 96)
+    dta <(GAME_ACTION_VRAM + 10 * 96)
 
 vram_row_offsets_hi
-    dta >(GAME_ACTION_VRAM + 0 * 48)
-    dta >(GAME_ACTION_VRAM + 1 * 48)
-    dta >(GAME_ACTION_VRAM + 2 * 48)
-    dta >(GAME_ACTION_VRAM + 3 * 48)
-    dta >(GAME_ACTION_VRAM + 4 * 48)
-    dta >(GAME_ACTION_VRAM + 5 * 48)
-    dta >(GAME_ACTION_VRAM + 6 * 48)
-    dta >(GAME_ACTION_VRAM + 7 * 48)
-    dta >(GAME_ACTION_VRAM + 8 * 48)
-    dta >(GAME_ACTION_VRAM + 9 * 48)
-    dta >(GAME_ACTION_VRAM + 10 * 48)
+    dta >(GAME_ACTION_VRAM + 0 * 96)
+    dta >(GAME_ACTION_VRAM + 1 * 96)
+    dta >(GAME_ACTION_VRAM + 2 * 96)
+    dta >(GAME_ACTION_VRAM + 3 * 96)
+    dta >(GAME_ACTION_VRAM + 4 * 96)
+    dta >(GAME_ACTION_VRAM + 5 * 96)
+    dta >(GAME_ACTION_VRAM + 6 * 96)
+    dta >(GAME_ACTION_VRAM + 7 * 96)
+    dta >(GAME_ACTION_VRAM + 8 * 96)
+    dta >(GAME_ACTION_VRAM + 9 * 96)
+    dta >(GAME_ACTION_VRAM + 10 * 96)
 
 ; Screen 40-column row start offset lookup table (11 rows of 40 bytes each)
 screen40_row_offsets_lo
@@ -656,7 +656,9 @@ fc_energy_cnt           dta 0
     clc
     adc fc_erase_r
     cmp #11
-    bcs @erase_done             ; Beyond row 10
+    bcc @row_valid
+    jmp @erase_done             ; Beyond row 10
+@row_valid
     tax                         ; X = row (0..10)
     stx fc_erase_row_idx
 
@@ -686,28 +688,37 @@ fc_energy_cnt           dta 0
     bmi @skip_cell              ; < 0
     cmp #48
     bcs @skip_cell              ; >= 48
-    tay
-    lda #0
-    sta (PTR_DST),y             ; Clear cell in GAME_ACTION_VRAM (Buffer A) to background $00
-    lda PTR_DST+1
-    ora #$04
-    sta PTR_DST+1
-    lda #0
-    sta (PTR_DST),y             ; Clear cell in GAME_ACTION_VRAM_B (Buffer B) to background $00
-    lda PTR_DST+1
-    and #$FB
-    sta PTR_DST+1
-    lda #0
+    sta ZP_TMP                  ; ZP_TMP = screen column (0..47)
 
-    cpy #8
+    ; Calculate ring column: ring_c = (screen_col + ring_col_offset) % 48
+    clc
+    adc ring_col_offset
+    cmp #48
+    bcc @ring_col_ok
+    sbc #48
+@ring_col_ok
+    tay                         ; Y = ring_c (0..47)
+    lda #0
+    sta (PTR_DST),y             ; Clear primary ring cell to $00
+    tya
+    clc
+    adc #48
+    tay                         ; Y = ring_c + 48
+    lda #0
+    sta (PTR_DST),y             ; Clear mirror ring cell to $00
+
+    lda ZP_TMP                  ; Restore screen column (0..47)
+    cmp #8
     bne @chk_col9
     ldx fc_erase_row_idx
+    lda #0
     sta blocking_col8,x
     jmp @skip_cell
 @chk_col9
-    cpy #9
+    cmp #9
     bne @skip_cell
     ldx fc_erase_row_idx
+    lda #0
     sta blocking_col9,x
 
 @skip_cell

@@ -2,6 +2,34 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-09-30] - Zwiększenie bazowej prędkości przewijania (SCROLL_BASE_SPEED)
+- [scenes/game.asm](scenes/game.asm): Zwiększono domyślną prędkość przelotową `SCROLL_BASE_SPEED` z `$00C0` (0.75 px/klatkę) do `$0100` (1.0 px/klatkę = 1 zegar koloru na ramkę), podnosząc dynamikę rozgrywki po wdrożeniu bezkopiowego bufora kołowego.
+- `make all`: Pomyślna asemblacja MADS i regeneracja `jabberwocky.xex`.
+- `pytest tests`: Wszystkie 187 testów przeszły pomyślnie (100% passed).
+
+## [2026-09-30] - Implementacja bufora lustrzanego (Mirror Ring Buffer) z per-row LMS
+- **Architektura Mirror Ring Buffer z per-row LMS**:
+  - Zastąpiono procedurę kopiowania całego bufora ekranu (`shift_vram_left`, koszt ~4,900 cykli CPU/skok kolumny) bezkopiowym buforem kołowym z powieleniem lustrzanym (Mirror Ring Buffer) i per-row LMS, redukując koszt przesunięcia gruboziarnistego do zaledwie ~180 cykli CPU (zapis 1 kolumny: 11 wierszy × 2 zapisy).
+  - Geometria bufora: 11 wierszy ANTIC Mode 5 w przestrzeni `$6000-$641F` (`GAME_ACTION_VRAM`), każdy wiersz o szerokości 96 bajtów (`ACTION_ROW_STRIDE = 96`: 48 bajtów danych właściwych + 48 bajtów lustrzanego powielenia). Cały bufor zajmuje 1056 B i mieści się w całości wewnątrz pojedynczej 4-kilobajtowej strony ANTIC (`$6000-$6FFF`), wykluczając ryzyko przekroczenia granicy 4 KB.
+- **Display List i przerwanie VBLANK**:
+  - [main.asm](main.asm): Rozbito blok ekranu akcji `dlist_game_action_lms` w `dlist_game` na 11 niezależnych instrukcji LMS dla każdego wiersza (`DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + r * 96)`). Zaktualizowano stałą `ACTION_ROW_STRIDE = 96` oraz adres dolnego paska statusu `GAME_STATUS_VRAM = $6420`.
+  - [scenes/game.asm](scenes/game.asm): W przerwaniu `vblank_game` dodano wywołanie procedury `update_ring_dlist_lms`, która atomowo aktualizuje 11 wskaźników LMS w Display List na podstawie przesunięcia `ring_col_offset` (`dlist_game_action_lms + 3*r + 1/2 = row_base[r] + ring_col_offset`), gdy ustawiona jest flaga `ring_lms_pending`.
+- **Procedury przewijania i streamingu**:
+  - [scenes/game.asm](scenes/game.asm):
+    - W `scroll_playfield_step` zaimplementowano inkrementację `ring_col_offset` (z zawijaniem modulo 48), wyliczenie kolumny zapisu `ring_write_col = (ring_col_offset - 1) mod 48` oraz wywołanie `stream_incoming_col` lub `stream_tail_col`.
+    - W `stream_incoming_col` i `stream_tail_col` zaimplementowano zapis nowego kafelka jednocześnie pod offset `ring_write_col` (połowa pierwotna) oraz `ring_write_col + 48` (połowa lustrzana) dla wszystkich 11 wierszy.
+    - W `init_level_screens` dodano inicjalizację bufora: zerowanie 1056 B, kopiowanie kafelków z krokiem 96 bajtów, powielenie kolumn 0..47 do 48..95 oraz inicjalne ustawienie 11 wskaźników LMS.
+    - Procedurę `shift_vram_left` zastąpiono bezpiecznym `rts` (backward compatibility stub).
+- **Obsługa kolizji i usuwania obiektów w buforze kołowym**:
+  - [engine/flame_collision.asm](engine/flame_collision.asm):
+    - Zaktualizowano tablice offsetów wierszy `vram_row_offsets_lo` i `vram_row_offsets_hi` dla kroku 96 bajtów (`r * 96`).
+    - W procedurze niszczenia przeszkód `erase_cur_object` uwzględniono przesunięcie kołowe: obliczanie pozycji kolumny w buforze `ring_c = (screen_col + ring_col_offset) % 48` oraz jednoczesne wymazywanie znaku pod indeksem `ring_c` oraz w lustrzanej połówce `ring_c + 48`.
+- **Dostosowanie testów i weryfikacja**:
+  - [tests/test_scrolling.py](tests/test_scrolling.py): Zaktualizowano testy `test_init_level_screens_emulation`, `test_scroll_playfield_step_streams_column`, `test_vblank_game_commits_hscrol_and_lms_swap`, `test_shift_vram_left_emulation` oraz `test_dragon_respawn_restarts_level_from_beginning`, weryfikując poprawność kroku 96 bajtów, synchronizację per-row LMS oraz lustrzane powielanie kolumn.
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py), [tests/test_secret_collision.py](tests/test_secret_collision.py): Zaktualizowano adresację wierszy na krok 96 bajtów.
+  - `make all`: Pełna kompilacja MADS i weryfikacja mapy pamięci (23.6% wolnego RAM).
+  - `pytest tests`: Wszystkie 187 testów zakończone sukcesem (100% passed).
+
 ## [2026-09-29] - Integracja podsystemu audio CMC/SAP z gra (CMC Audio Integration)
 - **Ekstrakcja i relokacja danych muzycznych**:
   - [scripts/extract_sap.py](scripts/extract_sap.py): Zaimplementowano dedykowany parser pliku kontenera SAP (`music/music.sap`), ekstrakcje segmentu CMC oraz automatyczna relokacje z bazowego adresu `$8400` do `$9000-$9921` (2338 bajtow) z przeliczaniem tablicy 28 wskaznikow do instrumentow i patternow oraz rygorystyczna walidacja granic pamieci i formatu SAP TYPE C.
