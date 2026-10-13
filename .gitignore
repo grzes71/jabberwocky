@@ -1,8 +1,6 @@
 # We WANT Git to track your rules/profiles, but IGNORE runtime agent state & logs.
 .agent/logs/
 .agent/workspace-state/
-.agent/tasks/
-.agents/skills/
 
 # MADS Assembler & Build Artifacts
 *.xex
