@@ -2,6 +2,61 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-10-18] - Usprawnienia dopasowania i wysokości klatek przy imporcie obrazów
+- **Moduł importu i binaryzacji**:
+  - [sprite_studio/image_import.py](sprite_studio/image_import.py): Dodano obsługę trybów dopasowania `fit_mode` (`"fit"` - zachowanie proporcji z czystym marginesem, `"stretch"` - rozciągnięcie do pełnego $8 \times H$ bez marginesów, `"crop"` - zoom i obcięcie marginesów bocznych). Naprawiono wypełnienie letterboxu (komórki poza faktycznym obszarem obrazu bezwzględnie otrzymują `'0'`, eliminując niepożądane pasy po inwersji).
+- **Interfejs okna dialogowego i integracja**:
+  - [sprite_studio/widgets/import_dialog.py](sprite_studio/widgets/import_dialog.py): Dodano pole `Target Height (H)` z przyciskiem `Auto Height` (automatycznie wyliczającym wysokość proporcjonalną do proporcji klatki źródłowej) oraz selektor trybu dopasowania (`Fit Mode`).
+  - [sprite_studio/main.py](sprite_studio/main.py): Zaktualizowano `action_import_image` o dynamiczną aktualizację wysokości sprite'a do wysokości wybranej w oknie importu.
+- **Testy jednostkowe**:
+  - [tests/test_image_import.py](tests/test_image_import.py): Dodano testy `test_12_white_background_padding_not_inverted` oraz `test_13_stretch_fit_mode`, zaktualizowano testy UI.
+- **Weryfikacja**:
+  - `pytest`: 197 testów zakończonych sukcesem (100% passed).
+  - `make all`: pomyślna kompilacja zasobów i asemblacja projektu.
+
+## [2026-10-18] - Czyszczenie klatki sprite'a (Clear Frame)
+- **Funkcjonalność edytora**:
+  - [sprite_studio/widgets/timeline.py](sprite_studio/widgets/timeline.py): Dodano przycisk `Clear` w pasku transformacji osi czasu oraz sygnał `clear_requested`.
+  - [sprite_studio/main.py](sprite_studio/main.py): Dodano obsługę czyszczenia aktualnej klatki (`_on_clear_frame`), akcję w menu `Edit → Clear Frame` oraz pełną integrację z historią poleceń Undo/Redo.
+- **Testy jednostkowe**:
+  - [tests/test_sprite_studio_frame_ops.py](tests/test_sprite_studio_frame_ops.py): Dodano testy operacji czyszczenia klatki (zerowanie pikseli do `'00000000'`, operacje Undo/Redo oraz kliknięcie przycisku na osi czasu).
+- **Weryfikacja**:
+  - `pytest`: 195 testów zakończonych sukcesem (100% passed).
+  - `make all`: pomyślna kompilacja zasobów i asemblacja projektu.
+
+## [2026-10-18] - Opcja INVERSE przy imporcie obrazu w Sprite Editorze
+- **Moduł importu obrazu**:
+  - [sprite_studio/image_import.py](sprite_studio/image_import.py): Dodano parametr `inverse: bool = False` do funkcji `convert_frame_to_binary` oraz `import_raster_frames`, umożliwiający negację pikseli ('1' $\leftrightarrow$ '0') podczas binaryzacji wyciętych klatek.
+- **Interfejs okna dialogowego**:
+  - [sprite_studio/widgets/import_dialog.py](sprite_studio/widgets/import_dialog.py): Dodano pole wyboru `Inverse (Invert pixels)` w parametrach okna `ImageImportDialog`, z natychmiastowym przeliczaniem podglądu binarnego w pamięci.
+- **Testy jednostkowe**:
+  - [tests/test_image_import.py](tests/test_image_import.py): Dodano test `test_11_inverse_option` oraz weryfikację przełączania opcji `chk_inverse` w testach UI.
+- **Weryfikacja**:
+  - `pytest`: 193 testy zakończone sukcesem (100% passed).
+  - `make all`: pomyślna kompilacja zasobów i asemblacja projektu.
+
+## [2026-10-18] - Odwracanie klatki sprite'a (Inverse Frame)
+- **Funkcjonalność edytora**:
+  - [sprite_studio/widgets/timeline.py](sprite_studio/widgets/timeline.py): Dodano przycisk `Inverse` w pasku transformacji osi czasu oraz sygnał `inverse_requested`.
+  - [sprite_studio/main.py](sprite_studio/main.py): Dodano obsługę odwracania pikseli aktywnej klatki (`_on_inverse_frame`), akcję w menu `Edit → Inverse Frame` oraz pełną integrację z historią poleceń Undo/Redo.
+- **Testy jednostkowe**:
+  - [tests/test_sprite_studio_frame_ops.py](tests/test_sprite_studio_frame_ops.py): Dodano testy operacji odwracania klatki (zamiana '0' $\leftrightarrow$ '1', zachowanie wymiarów, operacje Undo/Redo oraz kliknięcie przycisku na osi czasu).
+- **Weryfikacja**:
+  - `pytest`: 192 testy zakończone sukcesem (100% passed).
+  - `make all`: pomyślna kompilacja zasobów i asemblacja projektu.
+
+## [2026-10-18] - Import grafiki rastrowej w Sprite Editorze (Raster Image Import)
+- **Moduł importu i konwersji**:
+  - [sprite_studio/image_import.py](sprite_studio/image_import.py): Dodano bezstanowy moduł do wczytywania plików PNG, JPG/JPEG i BMP, automatycznego podziału na $N$ klatek (poziomo lub pionowo z równomiernym rozkładem pikseli reszty, różnica wymiarów $\le 1$ px), centrowania i dopasowania do proporcji sprite'a $8 \times H$ z dopełnieniem czernią (letterbox) oraz binaryzacji opartej o luminancję ($Y = 0.2126R + 0.7152G + 0.0722B$) ze zmiennym progiem (0–100%).
+- **Interfejs użytkownika**:
+  - [sprite_studio/widgets/import_dialog.py](sprite_studio/widgets/import_dialog.py): Zaimplementowano okno dialogowe `ImageImportDialog` z podglądem źródła i wizualizacją linii podziału, interaktywną kontrolą kierunku i liczby klatek, suwakiem progu binaryzacji oraz powiększonym podglądem siatki binarnej wybranej klatki.
+  - [sprite_studio/main.py](sprite_studio/main.py): Dodano opcję `Import Image...` (`Ctrl+I`) w menu `File`, zintegrowaną z transakcyjnym mechanizmem Undo/Redo edytora.
+- **Testy automatyczne**:
+  - [tests/test_image_import.py](tests/test_image_import.py): Zaimplementowano 17 testów jednostkowych i akceptacyjnych sprawdzających m.in. podział, kolejność klatek, zachowanie proporcji, skrajne wysokości ($H=1, 22, 255$), kompozycję kanału alfa, formaty JPG/BMP/PNG oraz integrację z `MainWindow`.
+- **Weryfikacja**:
+  - `pytest`: 190 testów zakończonych sukcesem (100% passed).
+  - `make all`: pomyślna kompilacja zasobów i asemblacja projektu.
+
 ## [2026-09-21] - Aktualizacja obiektów na planszach wioski (Village Screen Improvements)
 - **Zmiany w świecie gry**:
   - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów na planszach wioski (`VILLAGE_01`, `VILLAGE_03`, `VILLAGE_04`, `VILLAGE_05`, `VILLAGE_06`, `VILLAGE_07`) w Labirynt Studio.

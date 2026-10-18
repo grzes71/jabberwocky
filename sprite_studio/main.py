@@ -2,7 +2,7 @@ import sys
 import copy
 from pathlib import Path
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, 
-                               QVBoxLayout, QMenuBar, QMenu, QFileDialog, QMessageBox, QScrollArea)
+                               QVBoxLayout, QMenuBar, QMenu, QFileDialog, QMessageBox, QScrollArea, QDialog)
 from PySide6.QtGui import QAction, QKeySequence
 
 from sprite_studio.models import Project, Sprite, Animation, Frame
@@ -14,6 +14,7 @@ from sprite_studio.widgets.properties import PropertiesWidget
 from sprite_studio.widgets.pixel_editor import PixelEditorWidget
 from sprite_studio.widgets.timeline import TimelineWidget
 from sprite_studio.widgets.preview import PreviewWidget
+from sprite_studio.widgets.import_dialog import ImageImportDialog
 
 # Basic command class wrapper
 class GenericCommand(Command):
@@ -76,6 +77,8 @@ class MainWindow(QMainWindow):
         self.timeline.insert_requested.connect(self._on_insert_frame)
         self.timeline.reorder_requested.connect(self._on_reorder_frame)
         self.timeline.mirror_requested.connect(self._on_mirror_frame)
+        self.timeline.inverse_requested.connect(self._on_inverse_frame)
+        self.timeline.clear_requested.connect(self._on_clear_frame)
         self.timeline.shift_requested.connect(self._on_shift_frame)
         center_layout.addWidget(self.timeline, 1)
         
@@ -120,6 +123,12 @@ class MainWindow(QMainWindow):
         act_save_as.triggered.connect(self.action_save_as)
         file_menu.addAction(act_save_as)
         
+        file_menu.addSeparator()
+        act_import = QAction("Import Image...", self)
+        act_import.triggered.connect(self.action_import_image)
+        act_import.setShortcut(QKeySequence("Ctrl+I"))
+        file_menu.addAction(act_import)
+        
         edit_menu = menubar.addMenu("Edit")
         
         act_undo = QAction("Undo", self)
@@ -131,6 +140,19 @@ class MainWindow(QMainWindow):
         act_redo.triggered.connect(self._redo)
         act_redo.setShortcut(QKeySequence("Ctrl+Y"))
         edit_menu.addAction(act_redo)
+        
+        edit_menu.addSeparator()
+        act_inverse = QAction("Inverse Frame", self)
+        act_inverse.triggered.connect(lambda: self._on_inverse_frame(self.current_frame_idx))
+        edit_menu.addAction(act_inverse)
+        
+        act_clear = QAction("Clear Frame", self)
+        act_clear.triggered.connect(lambda: self._on_clear_frame(self.current_frame_idx))
+        edit_menu.addAction(act_clear)
+        
+        act_mirror = QAction("Mirror Frame", self)
+        act_mirror.triggered.connect(lambda: self._on_mirror_frame(self.current_frame_idx))
+        edit_menu.addAction(act_mirror)
 
     # --- Commands Framework ---
     
@@ -183,6 +205,66 @@ class MainWindow(QMainWindow):
         if path:
             self.project_path = Path(path)
             self._save_to(self.project_path)
+
+    def action_import_image(self):
+        if not self.current_sprite:
+            QMessageBox.warning(self, "Import Image", "Please select or create a sprite first before importing an image.")
+            return
+
+        file_filter = (
+            "Image Files (*.png *.jpg *.jpeg *.bmp);;"
+            "PNG (*.png);;"
+            "JPEG (*.jpg *.jpeg);;"
+            "BMP (*.bmp);;"
+            "All Files (*)"
+        )
+        path, _ = QFileDialog.getOpenFileName(self, "Import Raster Image", "", file_filter)
+        if not path:
+            return
+
+        try:
+            dialog = ImageImportDialog(
+                image_path=path,
+                target_height=self.current_sprite.height,
+                parent=self,
+            )
+            if dialog.exec() == QDialog.Accepted:
+                new_frames = dialog.get_imported_frames()
+                if not new_frames:
+                    QMessageBox.warning(self, "Import Image", "No frames were generated from the image.")
+                    return
+
+                spr = self.current_sprite
+                old_frames = list(spr.frames)
+                old_height = spr.height
+                new_height = dialog.get_target_height()
+
+                def do():
+                    if new_height != old_height:
+                        adjusted = []
+                        for f in spr.frames:
+                            nf = Frame(pixels=list(f.pixels))
+                            if new_height > old_height:
+                                nf.pixels.extend(["00000000"] * (new_height - old_height))
+                            else:
+                                nf.pixels = nf.pixels[:new_height]
+                            adjusted.append(nf)
+                        spr.frames = adjusted
+                        spr.height = new_height
+                    spr.frames.extend(new_frames)
+
+                def undo():
+                    spr.height = old_height
+                    spr.frames = list(old_frames)
+
+                self._execute_cmd(f"Import {len(new_frames)} Frames", do, undo, self._refresh_sprite)
+                QMessageBox.information(
+                    self,
+                    "Import Successful",
+                    f"Successfully imported {len(new_frames)} frame(s) to sprite '{spr.id}'.",
+                )
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", f"Failed to import image:\n{e}")
 
     def _save_to(self, path):
         errs = validate_project(self.project)
@@ -320,6 +402,30 @@ class MainWindow(QMainWindow):
         def undo():
             f.pixels = old_pixels
         self._execute_cmd("Mirror Frame", do, undo, self._refresh_frame)
+
+    def _on_inverse_frame(self, idx):
+        if not self.current_sprite or idx < 0 or idx >= len(self.current_sprite.frames): return
+        spr = self.current_sprite
+        f = spr.frames[idx]
+        old_pixels = list(f.pixels)
+        inversed = ["".join("0" if c == "1" else "1" for c in row) for row in old_pixels]
+        def do():
+            f.pixels = inversed
+        def undo():
+            f.pixels = old_pixels
+        self._execute_cmd("Inverse Frame", do, undo, self._refresh_frame)
+
+    def _on_clear_frame(self, idx):
+        if not self.current_sprite or idx < 0 or idx >= len(self.current_sprite.frames): return
+        spr = self.current_sprite
+        f = spr.frames[idx]
+        old_pixels = list(f.pixels)
+        cleared = ["00000000"] * spr.height
+        def do():
+            f.pixels = cleared
+        def undo():
+            f.pixels = old_pixels
+        self._execute_cmd("Clear Frame", do, undo, self._refresh_frame)
 
     def _on_shift_frame(self, direction):
         if not self.current_sprite or self.current_frame_idx < 0: return

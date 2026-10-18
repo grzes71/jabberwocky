@@ -10,6 +10,8 @@ class TimelineWidget(QWidget):
     insert_requested = Signal(int)
     reorder_requested = Signal(int, int) # from_idx, to_idx
     mirror_requested = Signal(int)
+    inverse_requested = Signal(int)
+    clear_requested = Signal(int)
     shift_requested = Signal(str)
 
     def __init__(self):
@@ -56,6 +58,10 @@ class TimelineWidget(QWidget):
         transform_layout = QHBoxLayout()
         self.btn_mirror = QPushButton("Mirror")
         self.btn_mirror.clicked.connect(self._on_mirror)
+        self.btn_inverse = QPushButton("Inverse")
+        self.btn_inverse.clicked.connect(self._on_inverse)
+        self.btn_clear = QPushButton("Clear")
+        self.btn_clear.clicked.connect(self._on_clear)
         
         self.btn_sl = QPushButton("Shift L")
         self.btn_sl.clicked.connect(lambda: self._on_shift("left"))
@@ -67,6 +73,8 @@ class TimelineWidget(QWidget):
         self.btn_sd.clicked.connect(lambda: self._on_shift("down"))
         
         transform_layout.addWidget(self.btn_mirror)
+        transform_layout.addWidget(self.btn_inverse)
+        transform_layout.addWidget(self.btn_clear)
         transform_layout.addWidget(self.btn_sl)
         transform_layout.addWidget(self.btn_sr)
         transform_layout.addWidget(self.btn_su)
@@ -112,6 +120,16 @@ class TimelineWidget(QWidget):
         idx = self.list_widget.currentRow()
         if idx >= 0:
             self.mirror_requested.emit(idx)
+
+    def _on_inverse(self):
+        idx = self.list_widget.currentRow()
+        if idx >= 0:
+            self.inverse_requested.emit(idx)
+
+    def _on_clear(self):
+        idx = self.list_widget.currentRow()
+        if idx >= 0:
+            self.clear_requested.emit(idx)
 
     def _on_shift(self, direction):
         idx = self.list_widget.currentRow()
