@@ -114,3 +114,12 @@ bonus_sound_timer       dta 0
     rts
 .endp
 
+; ==============================================================================
+; Audio_Update — Master audio update called once per frame from main_loop
+; ==============================================================================
+.proc Audio_Update
+    jsr Music_Update
+    rts
+.endp
+
+

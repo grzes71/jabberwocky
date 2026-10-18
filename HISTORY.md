@@ -58,6 +58,106 @@
   - `make all`: pomyślna kompilacja zasobów i asemblacja projektu.
 
 ## [2026-09-21] - Aktualizacja obiektów na planszach wioski (Village Screen Improvements)
+## [2026-10-13] - Weryfikacja skilli mads i py65
+- [.agents/skills/mads/](.agents/skills/mads): zweryfikowano wszystkie 53 pliki względem lokalnej oficjalnej dokumentacji (`C:/Apps/Mad-Assembler-2.1.6/doc/mads_eng.html` i `mads.html`) oraz testów asemblacji binarką MADS 2.1.7. Poprawki m.in.: pseudokomendy bez kropki (`org`, `dta`, `ins`, `ift` — `.ORG`/`.DTA`/`.INS`/`.IFT` to *Unknown directive*), `.LONGA/.LONGI ON|OFF` istnieją i tylko ustawiają szerokość (bez `SEP`/`REP`, w odróżnieniu od `.A8/.A16/.I8/.I16`, które je emitują), cudzysłowy w `dta`, `.ENDS` + `.LEN`/`.SIZEOF` zamiast samej nazwy struktury, `.ARRAY[n]` = n elementów, ekspansje `@CALL/@EXIT`/`@PUSH`, `INS *` = XOR $80, `INS 'file',-N` = ostatnie N bajtów, adresy i nagłówki bloków (`$FFFA`/`$FFFE`/`$FFFD`/`$FFFB`/`$FFFC`, blok `$FFEE`), zasady etykiet w `.RELOC`/`blk`/bankach (`LMB/NMB/RMB` tylko z `#`, nie w kolumnie 0), martwe odsyłacze i anchory w plikach-routerach, `-bc`/`-ml` w opcjach wiersza poleceń.
+- [.agents/skills/py65/SKILL.md](.agents/skills/py65/SKILL.md): zweryfikowano względem py65 1.2.0 z `.venv/Lib/site-packages/py65` i testów wykonawczych. Poprawki: `mpu.irq()`/`mpu.nmi()` istnieją (wcześniejsze „brak przerwań" było nieprawdą), `reset()` bierze `pc` z argumentu konstruktora (domyślne 0 to nie wektor RESET; `pc=None` czyta `$FFFC/$FFFD`), nieudokumentowane opkody są 2-bajtowymi no-opami bez wyjątku, kolejność stosu dla `RTI` (PC, potem P), wydajność zmierzona ~10^6 prostych kroków/s, doprecyzowane `.lab` (MADS wypisuje symbole wielkimi literami, etykiety lokalne jako `PROC.@LOOP`), `load_xex` nie wykonuje segmentów INIT/RUNAD.
+
+## [2026-10-13] - Weryfikacja i korekta pozostałych skilli atari8bit
+- [.agents/skills/atari8bit/](.agents/skills/atari8bit): zweryfikowano wszystkie pliki skilli (poza wcześniej poprawionym `graphics/character-modes.md`) względem Wikipedii, De Re Atari, Altirra HRM, źródeł OS (Altirra Modular Kernel ROM — `atari800/emuos`), repo `tebe6502/Mad-Assembler` oraz firmware FujiNet; dane halucynowane usunięto lub poprawiono.
+- [hardware/antic](.agents/skills/atari8bit/hardware/antic), [graphics/display-lists](.agents/skills/atari8bit/graphics/display-lists): błędna matryca bajtów display listy, fałszywe „JVB na każdej linii", złe adresy cieni (`CHACT $02F3`, `CHBAS $02F4`), wymyślone budżety cykli DMA/DLI i reguły 4 KB.
+- [hardware/gtia](.agents/skills/atari8bit/hardware/gtia), [graphics](.agents/skills/atari8bit/graphics): poprawione znaczenie `PRIOR`, model koloru (8-bit hue+luma), rejestry `$D000-$D01F` (odczyt/zapis), fałszywe palety i kernele HIP/RIP/TIP, model zapisu bitmap ANTIC 8-F.
+- [hardware/pokey.md](.agents/skills/atari8bit/hardware/pokey.md), [hardware/cpu](.agents/skills/atari8bit/hardware/cpu): AUDCTL (bit 6/5 = zegar 1.79 MHz, bit 0 = 15 kHz), wzory częstotliwości z poprawkami +4/+7, tabele IRQEN/SKCTL/SKSTAT; cykle i flagi 6502/65C02/65816 oraz nieudokumentowane opkody potwierdzone.
+- [audio](.agents/skills/atari8bit/audio): przepisany kernel 4-bit PCM (poprzedni nie synchronizował się z VCOUNT, miał martwe gałęzie i odwróconą kolejność nibbli), tempo 7,85 kHz zamiast 3,9 kHz, poprawne liczby cykli ISR, usunięta wymyślona matematyka PDM, poprawne wejścia `RASTERMUSICTRACKER` (init, `+3` play, `+9` silence), `STEREOMODE` i tempo NTSC/PAL.
+- [system](.agents/skills/atari8bit/system): sloty kartridży 800 (lewy `$A000-$BFFF`, prawy `$8000-$9FFF`), `SETVBV` (X = starszy bajt, Y = młodszy), PORTB bit 6 (XEGS), nagłówek ATR (16 B), kody SIO/CIO, ATASCII i kody wewnętrzne, tabela skanów klawiatury wg `emuos/src/keytable.s`, `SHFLOK $02BE` vs `CRSINH $02F0`, obsługa myszy/light pena, mapa 5200.
+- [algorithms](.agents/skills/atari8bit/algorithms), [tooling](.agents/skills/atari8bit/tooling), [exotics](.agents/skills/atari8bit/exotics): m.in. reguły `RECIP`/`VSCROL`/`SDLSTL` w 3D, liczniki komparatorów sieci sortujących, formaty RLE/LZ4/Exomizer/DEFLATE, rejestry VBXE na `$D640-$D65F`, komendy i identyfikatory FujiNet wg firmware, usunięte nieistniejące ścieżki źródłowe.
+- Weryfikacja empiryczna: [standard-macros.asm](.agents/skills/atari8bit/algorithms/macros/standard-macros.asm) asembluje się w MADS 2.1.7 (wszystkie 63 makra) i przechodzi 115 testów numerycznych w py65 (16/32-bit add/sub/mul/div, przesunięcia, neg/abs/not/cmp, kopiowanie bloków z nakładaniem).
+- Ustalenia składni MADS 2.1.7 (zweryfikowane empirycznie): `ASL A`/`LSR A`/`ROL A`/`ROR A` są odrzucane (poprawnie `ASL`/`ASL @`), instrukcje rozdziela `\` (nie `:` — `:` tylko łączy mnemoniki dzielące jeden argument, np. `lda:cmp:req 20`), kod 65816 wymaga `opt c+`, etykiety `?nazwa` muszą startować w kolumnie 0 (lub `opt ?+`), `BLK`/`.RELOC` nie mogą startować w kolumnie 0. Notka zbiorcza w `SKILL.md`.
+
+## [2026-10-12] - Korekta skilla atari8bit/graphics/character-modes.md
+- [.agents/skills/atari8bit/graphics/character-modes.md](.agents/skills/atari8bit/graphics/character-modes.md): Pełne przepisanie — usunięto błędne dane (nieistniejące tryby znakowe 0/1/F, zła tabela bajtów/linię np. "mode 2: 20 B", CHBASE/CHACTL pod złymi adresami `$02F9/$02FA`, zmyślona semantyka CHACTL jako trybu zapisu OR/AND, sekcje o POKEY/AUDCTL).
+- Nowa treść zweryfikowana z Wikipedią (ANTIC: CHACTL/CHBASE, Glyph Rendering) i De Re Atari / Altirra HRM: tabela trybów 2–7 (32/40/48 i 16/20/24 B/linię, linie skanowania, rozmiar/wyrównanie zestawu), CHBASE `$D409`/CHBAS `$02F4`, CHACTL `$D401`/CHACT `$02F3` (bity blank/inverse/reflect), mapowanie descenderów trybu 3, kolory par bitów trybów 4/5 (COLPF3 przy bicie 7), kolory trybów 6/7, DLI swap fontu, zakresy VSCROL, technika soft-pixel 2×2.
+
+## [2026-10-12] - Dodano skill py65
+- [.agents/skills/py65/SKILL.md](.agents/skills/py65/SKILL.md): Nowy skill opisujący API py65 (MPU, stack helpers, ObservableMemory), wzorzec harnessu testowego projektu (`load_xex`, `parse_labels`, `run_subroutine`), pułapki (brak sprzętu Atari, INIT/RUNAD, RTI vs RTS).
+
+## [2026-09-30] - Zwiększenie bazowej prędkości przewijania (SCROLL_BASE_SPEED)
+- [scenes/game.asm](scenes/game.asm): Zwiększono domyślną prędkość przelotową `SCROLL_BASE_SPEED` z `$00C0` (0.75 px/klatkę) do `$0100` (1.0 px/klatkę = 1 zegar koloru na ramkę), podnosząc dynamikę rozgrywki po wdrożeniu bezkopiowego bufora kołowego.
+- `make all`: Pomyślna asemblacja MADS i regeneracja `jabberwocky.xex`.
+- `pytest tests`: Wszystkie 187 testów przeszły pomyślnie (100% passed).
+
+## [2026-09-30] - Implementacja bufora lustrzanego (Mirror Ring Buffer) z per-row LMS
+- **Architektura Mirror Ring Buffer z per-row LMS**:
+  - Zastąpiono procedurę kopiowania całego bufora ekranu (`shift_vram_left`, koszt ~4,900 cykli CPU/skok kolumny) bezkopiowym buforem kołowym z powieleniem lustrzanym (Mirror Ring Buffer) i per-row LMS, redukując koszt przesunięcia gruboziarnistego do zaledwie ~180 cykli CPU (zapis 1 kolumny: 11 wierszy × 2 zapisy).
+  - Geometria bufora: 11 wierszy ANTIC Mode 5 w przestrzeni `$6000-$641F` (`GAME_ACTION_VRAM`), każdy wiersz o szerokości 96 bajtów (`ACTION_ROW_STRIDE = 96`: 48 bajtów danych właściwych + 48 bajtów lustrzanego powielenia). Cały bufor zajmuje 1056 B i mieści się w całości wewnątrz pojedynczej 4-kilobajtowej strony ANTIC (`$6000-$6FFF`), wykluczając ryzyko przekroczenia granicy 4 KB.
+- **Display List i przerwanie VBLANK**:
+  - [main.asm](main.asm): Rozbito blok ekranu akcji `dlist_game_action_lms` w `dlist_game` na 11 niezależnych instrukcji LMS dla każdego wiersza (`DL_MODE_5 | DL_LMS | DL_HSCROL, a(GAME_ACTION_VRAM + r * 96)`). Zaktualizowano stałą `ACTION_ROW_STRIDE = 96` oraz adres dolnego paska statusu `GAME_STATUS_VRAM = $6420`.
+  - [scenes/game.asm](scenes/game.asm): W przerwaniu `vblank_game` dodano wywołanie procedury `update_ring_dlist_lms`, która atomowo aktualizuje 11 wskaźników LMS w Display List na podstawie przesunięcia `ring_col_offset` (`dlist_game_action_lms + 3*r + 1/2 = row_base[r] + ring_col_offset`), gdy ustawiona jest flaga `ring_lms_pending`.
+- **Procedury przewijania i streamingu**:
+  - [scenes/game.asm](scenes/game.asm):
+    - W `scroll_playfield_step` zaimplementowano inkrementację `ring_col_offset` (z zawijaniem modulo 48), wyliczenie kolumny zapisu `ring_write_col = (ring_col_offset - 1) mod 48` oraz wywołanie `stream_incoming_col` lub `stream_tail_col`.
+    - W `stream_incoming_col` i `stream_tail_col` zaimplementowano zapis nowego kafelka jednocześnie pod offset `ring_write_col` (połowa pierwotna) oraz `ring_write_col + 48` (połowa lustrzana) dla wszystkich 11 wierszy.
+    - W `init_level_screens` dodano inicjalizację bufora: zerowanie 1056 B, kopiowanie kafelków z krokiem 96 bajtów, powielenie kolumn 0..47 do 48..95 oraz inicjalne ustawienie 11 wskaźników LMS.
+    - Procedurę `shift_vram_left` zastąpiono bezpiecznym `rts` (backward compatibility stub).
+- **Obsługa kolizji i usuwania obiektów w buforze kołowym**:
+  - [engine/flame_collision.asm](engine/flame_collision.asm):
+    - Zaktualizowano tablice offsetów wierszy `vram_row_offsets_lo` i `vram_row_offsets_hi` dla kroku 96 bajtów (`r * 96`).
+    - W procedurze niszczenia przeszkód `erase_cur_object` uwzględniono przesunięcie kołowe: obliczanie pozycji kolumny w buforze `ring_c = (screen_col + ring_col_offset) % 48` oraz jednoczesne wymazywanie znaku pod indeksem `ring_c` oraz w lustrzanej połówce `ring_c + 48`.
+- **Dostosowanie testów i weryfikacja**:
+  - [tests/test_scrolling.py](tests/test_scrolling.py): Zaktualizowano testy `test_init_level_screens_emulation`, `test_scroll_playfield_step_streams_column`, `test_vblank_game_commits_hscrol_and_lms_swap`, `test_shift_vram_left_emulation` oraz `test_dragon_respawn_restarts_level_from_beginning`, weryfikując poprawność kroku 96 bajtów, synchronizację per-row LMS oraz lustrzane powielanie kolumn.
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py), [tests/test_secret_collision.py](tests/test_secret_collision.py): Zaktualizowano adresację wierszy na krok 96 bajtów.
+  - `make all`: Pełna kompilacja MADS i weryfikacja mapy pamięci (23.6% wolnego RAM).
+  - `pytest tests`: Wszystkie 187 testów zakończone sukcesem (100% passed).
+
+## [2026-09-29] - Integracja podsystemu audio CMC/SAP z gra (CMC Audio Integration)
+- **Ekstrakcja i relokacja danych muzycznych**:
+  - [scripts/extract_sap.py](scripts/extract_sap.py): Zaimplementowano dedykowany parser pliku kontenera SAP (`music/music.sap`), ekstrakcje segmentu CMC oraz automatyczna relokacje z bazowego adresu `$8400` do `$9000-$9921` (2338 bajtow) z przeliczaniem tablicy 28 wskaznikow do instrumentow i patternow oraz rygorystyczna walidacja granic pamieci i formatu SAP TYPE C.
+  - [Makefile](Makefile): Wprowadzono automatyczna regule budowania pliku binarnego `gen/music.cmc` przy kazdej zmianie `music/music.sap` lub `scripts/extract_sap.py`.
+- **Relokowalny player CMC**:
+  - [engine/cmc_player_reloc.asm](engine/cmc_player_reloc.asm): Zaadaptowano relokowalny odtwarzacz Chaos Music Composer z oficjalnego pakietu MADS, osadzajac go w pamieci pod adresem `$9A00-$A155` (1878 bajtow).
+  - Usunieto instrukcje zdefiniowane pod adresami Zero Page OS, zachowujac w pelni bezpieczne odkladanie i przywracanie komorek `$FC-$FF` na stosie wewnatrz procedury `play`.
+- **Modul silnika audio i integracja z gra**:
+  - [engine/music.asm](engine/music.asm): Zaimplementowano interfejs wysokiego poziomu ze scisle zdefiniowanym ABI (pelne zachowanie rejestrow `A, X, Y` na wyjsciu): `Music_PlaySong(A)` (inicjalizacja 2-etapowa CMC z buforowaniem biezacego utworu i zabezpieczeniem przed utrata indeksu), `Music_Update` (50 Hz tick wywolywany po VBLANK z pelnym zabezpieczeniem rejestrow) oraz `Music_Stop` (wyciszenie rejestrow POKEY `$D200..$D208`).
+  - [engine/sound.asm](engine/sound.asm): Dodano procedure `Audio_Update` spinajaca odtwarzanie muzyki z silnikiem gry.
+  - [main.asm](main.asm): Dodano segmenty asemblera dla muzyki (`$9000`) i playera (`$9A00`) z zachowaniem rosnacego porzadku adresow `org`, dolaczono wywolanie `jsr Audio_Update` w glownej petli `main_loop` po synchronizacji z klatka.
+  - [scenes/title.asm](scenes/title.asm), [scenes/game.asm](scenes/game.asm), [scenes/gameover.asm](scenes/gameover.asm): Podpieto odpowiednie subsongi przy wejsciu do scen: `MUSIC_TITLE` (subsong 2), `MUSIC_GAMEPLAY` (subsong 1), `MUSIC_GAME_OVER` (subsong 0).
+- **Rozwiazanie konfliktu CMC music ↔ SFX**:
+  - [scenes/game.asm](scenes/game.asm): W procedurze `update_fire_sound` usunieto bezwarunkowe zerowanie rejestrow glosnosci `AUDC1` i `AUDC2` przy braku ziania ogniem (`fire_state == 0`). Dzieki temu w trakcie normalnej rozgrywki CMC zachowuje pelna kontrole nad wszystkimi 4 kanalami POKEY. W momencie ziania ogniem (`fire_state != 0`) SFX chwilowo przejmuje kanaly 1 i 2, a po zakonczeniu efektu nastepne wywolanie `Music_Update` automatycznie przywraca brzmienie muzyki.
+- **Testy i weryfikacja**:
+  - [tests/test_music.py](tests/test_music.py): Dodano 8 zautomatyzowanych testow py65 sprawdzajacych poprawnosc subsongow 0/1/2, weryfikacje 1000 wywolan procedury `play`, scisle zachowanie rejestrow A/X/Y, pomiar maksymalnego zaglebienia stosu (min SP: PlaySong=$F0, Update=$EF, Stop=$F2), nienaruszalnosc Zero Page `$FC-$FF`, przejscia miedzy scenami oraz koegzystencje muzyki i SFX bez ziania ogniem, z aktywnym ogniem i po jego zakonczeniu.
+  - `make all`: 100% sukces kompilacji; mapa pamieci zwalidowana z zachowaniem 23.1% wolnego RAM (10,899 B wolnej przestrzeni).
+  - `make test`: Wszystkie 187 testow zakonczone sukcesem (100% passed).
+
+- **Korekta testów**:
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py):
+    - Poprawiono dekodowanie kolumny w `find_object_idx_on_screen0` z maski `0x0F` na `0x1F` (`obj_col = (pxy & 0x1F) * 2`), zgodnie z asemblerową implementacją w [engine/flame_collision.asm](engine/flame_collision.asm).
+    - Zaktualizowano 4 testy py65 (`test_flame_destroys_object_in_path`, `test_flame_different_row_does_not_destroy_object`, `test_flame_destroyed_object_not_reprocessed`, `test_flame_non_blocking_object_not_destroyed`), aby targetowały istniejący na planszy `FOREST_01` obiekt `ROCK_GREEN` (kod 56, wiersz 10, kolumna 6, VRAM kolumny 10..12) zamiast nieistniejącego obiektu pod dawnymi współrzędnymi.
+    - Plik [world/project.yaml](world/project.yaml) pozostał nienaruszony (zero modyfikacji).
+- **Weryfikacja**:
+  - `make all`: czysta kompilacja i generowanie mapy pamięci (32.3% wolnego RAM).
+  - `make test`: 179/179 testów py65 i testów jednostkowych zakończonych sukcesem (100% passed).
+
+
+## [2026-09-24] - Płynne wsunięcie ekranu tytułowego z dołu do góry (Title Screen Slide-Up)
+- **Funkcjonalność**: Zaimplementowano sprzętowy efekt płynnego wjazdu ekranu tytułowego (Slide-Up) od dolnej krawędzi telewizora ku górze, wywoływany wyłącznie jednorazowo po przejściu ze `STATE_INTRO`. Przy kolejnych wejściach na ekran tytułowy (np. z `STATE_GAME_OVER` lub `STATE_TOP_SCORES`) ekran wyświetla się natychmiastowo. Wciśnięcie przycisku FIRE w trakcie animacji natychmiast przerywa wsuwanie i przechodzi do rozgrywki (`STATE_GAME`).
+- **Architektura & Rozwiązanie sprzętowe ANTIC**:
+  - Wykorzystano podwójne buforowanie Display Listy (`$6000` i `$6100` w wolnej przestrzeni `GAME_ACTION_VRAM`) ze stałą liczbą 199 scanline'ów w każdej klatce animacji (`top_blanks + title_slide_lines = 199`).
+  - Generator DLIST (`build_slide_dlist`) dynamicznie buduje instrukcje pustych linii (`DL_BLANK8` oraz resztę `DL_BLANK1..DL_BLANK7`) oraz linie graficzne `DL_MODE_F` z zachowaniem reguły granicy 4 KB (`VRAM_ADDR = $4000` dla linii 0..101 oraz `VRAM_ADDR + $1000 = $5000` od linii 102).
+  - W trakcie wsuwania odtwarzacz PMG i przerwania DLI paska informacyjnego są wygaszone. Po osiągnięciu pozycji spoczynkowej procedura `title_finish_slide` płynnie przełącza wektor na `dlist_title` ($6610), aktywuje zielone sprajty graczy (`GRACTL = 2`, `SDMCTL = $3A`) oraz włącza DLI scrollera tekstu (`NMIEN = $C0`).
+- **Modyfikacje w kodzie**:
+  - [scenes/title.asm](scenes/title.asm):
+    - Dodano zmienne stanu animacji: `title_need_slide` (inicjalnie 1), `title_slide_active`, `title_slide_lines`, `title_slide_buf_idx`.
+    - Dodano procedury: `build_slide_dlist`, `update_title_slide`, `title_finish_slide`.
+    - W `title_init` dodano rozgałęzienie: jeśli `title_need_slide == 1`, flaga jest zerowana i uruchamiany jest slajd; jeśli 0, następuje bezpośrednia inicjalizacja.
+    - W `title_run` zintegrowano krok animacji oraz obsługę natychmiastowego pominięcia po wciśnięciu FIRE.
+  - [main.asm](main.asm):
+    - Przeniesiono `icl 'scenes/title.asm'` do segmentu High RAM (`STUB_VRAM + 960 = $B3C0`) obok innych modułów scen (`scenes/top_scores.asm`, `scenes/gameover.asm`), zwalniając 530 bajtów w segmencie `CODE_ADDR` ($2800) i zapewniając 741 bajtów wolnego miejsca przed granicą `$4000`.
+  - [tests/test_title_slide.py](tests/test_title_slide.py):
+    - Dodano zestaw 6 testów py65 weryfikujących: flagę początkową, aktywację slajdu w `title_init`, pomijanie slajdu przy ponownym wejściu, krok animacji i podwójne buforowanie, zakończenie po 175 liniach oraz przerwanie przyciskiem FIRE.
+- **Weryfikacja**:
+  - `make xex check_memory`: asemblacja MADS bez błędów, walidacja mapy pamięci zakończona sukcesem (32.3% wolnego RAM, 0 nakładania segmentów).
+  - `pytest tests/test_title_slide.py`: 6/6 testów zakończonych sukcesem.
+  - `pytest tests/test_scene_flow.py`: 11/11 testów zakończonych sukcesem.
+
 - **Zmiany w świecie gry**:
   - [world/project.yaml](world/project.yaml): Zaktualizowano i zoptymalizowano rozmieszczenie obiektów na planszach wioski (`VILLAGE_01`, `VILLAGE_03`, `VILLAGE_04`, `VILLAGE_05`, `VILLAGE_06`, `VILLAGE_07`) w Labirynt Studio.
   - [docs/memory_map.txt](docs/memory_map.txt), [docs/memory_map.json](docs/memory_map.json): Zaktualizowano mapę pamięci po kompilacji zmodyfikowanych danych świata (33.2% wolnego RAM).

@@ -23,29 +23,29 @@
   {
     "name": "ENGINE",
     "start_address": "$080B",
-    "end_address": "$1E42",
-    "size": 5688,
+    "end_address": "$1EB1",
+    "size": 5799,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$1E43",
+    "start_address": "$1EB2",
     "end_address": "$27FF",
-    "size": 2493,
+    "size": 2382,
     "type": "free"
   },
   {
     "name": "CODE",
     "start_address": "$2800",
-    "end_address": "$3F2C",
-    "size": 5933,
+    "end_address": "$3BF5",
+    "size": 5110,
     "type": "code"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$3F2D",
+    "start_address": "$3BF6",
     "end_address": "$3FFF",
-    "size": 211,
+    "size": 1034,
     "type": "free"
   },
   {
@@ -79,43 +79,71 @@
   {
     "name": "DLIST",
     "start_address": "$6610",
-    "end_address": "$676D",
-    "size": 350,
+    "end_address": "$6781",
+    "size": 370,
     "type": "display_list"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$676E",
+    "start_address": "$6782",
     "end_address": "$67FF",
-    "size": 146,
+    "size": 126,
     "type": "free"
   },
   {
     "name": "FONT",
     "start_address": "$6800",
-    "end_address": "$8996",
-    "size": 8599,
+    "end_address": "$89D0",
+    "size": 8657,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$8997",
+    "start_address": "$89D1",
+    "end_address": "$8FFF",
+    "size": 1583,
+    "type": "free"
+  },
+  {
+    "name": "MUSIC_DATA_ADDR",
+    "start_address": "$9000",
+    "end_address": "$9921",
+    "size": 2338,
+    "type": "code"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$9922",
+    "end_address": "$99FF",
+    "size": 222,
+    "type": "free"
+  },
+  {
+    "name": "CMC_PLAYER_ADDR",
+    "start_address": "$9A00",
+    "end_address": "$A155",
+    "size": 1878,
+    "type": "code"
+  },
+  {
+    "name": "FREE_SPACE",
+    "start_address": "$A156",
     "end_address": "$AFFF",
-    "size": 9833,
+    "size": 3754,
     "type": "free"
   },
   {
     "name": "VRAM",
     "start_address": "$B000",
-    "end_address": "$BB25",
-    "size": 2854,
+    "end_address": "$BEB9",
+    "size": 3770,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BB26",
+    "start_address": "$BEBA",
     "end_address": "$BFFF",
-    "size": 1242,
+    "size": 326,
     "type": "free"
   }
 ]

@@ -96,54 +96,42 @@ def test_scrolling_symbols_exist(labels: Dict[str, int]):
         "DLIST_GAME_ACTION_LMS",
         "BAKE_PENDING",
         "EXECUTE_PENDING_BAKE",
+        "RING_COL_OFFSET",
+        "RING_WRITE_COL",
+        "RING_LMS_PENDING",
+        "ACTION_ROW_STRIDE",
     ]
     for sym in expected_symbols:
         assert sym in labels, f"Expected symbol {sym} not found in label table"
 
 
 def test_shift_vram_left_emulation(project_root: Path, labels: Dict[str, int]):
-    """Test that shift_vram_left shifts all 11 rows of 48 bytes left by 1 column into back buffer."""
+    """Verify that shift_vram_left is a safe no-op stub and test update_ring_dlist_lms."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
 
-    vram_a = labels["GAME_ACTION_VRAM"]
-    vram_b = labels["GAME_ACTION_VRAM_B"]
-
-    # 1. Test Buffer A -> Buffer B shift (ACTIVE_VRAM_BUF = 0)
-    mpu.memory[labels["ACTIVE_VRAM_BUF"]] = 0
-    for r in range(11):
-        for c in range(48):
-            mpu.memory[vram_a + r * 48 + c] = (r * 48 + c + 1) & 0xFF
-            mpu.memory[vram_b + r * 48 + c] = 0x00
-
+    # 1. SHIFT_VRAM_LEFT must return cleanly without corrupting memory or looping
     run_subroutine(mpu, labels["SHIFT_VRAM_LEFT"])
 
-    # Verify that Buffer A was untouched (no tearing!) and Buffer B contains shifted bytes
-    for r in range(11):
-        for c in range(47):
-            expected = (r * 48 + (c + 1) + 1) & 0xFF
-            actual = mpu.memory[vram_b + r * 48 + c]
-            assert actual == expected, f"A->B: Row {r} col {c}: expected {expected}, got {actual}"
+    # 2. Test update_ring_dlist_lms updates all 11 LMS pointers in Display List
+    action_vram = labels["GAME_ACTION_VRAM"]
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    dlist_lms = labels["DLIST_GAME_ACTION_LMS"]
+    update_lms_addr = labels.get("UPDATE_RING_DLIST_LMS")
 
-    # 2. Test Buffer B -> Buffer A shift (ACTIVE_VRAM_BUF = 1)
-    mpu.memory[labels["ACTIVE_VRAM_BUF"]] = 1
-    for r in range(11):
-        for c in range(48):
-            mpu.memory[vram_b + r * 48 + c] = (r * 48 + c + 5) & 0xFF
-            mpu.memory[vram_a + r * 48 + c] = 0x00
-
-    run_subroutine(mpu, labels["SHIFT_VRAM_LEFT"])
-
-    for r in range(11):
-        for c in range(47):
-            expected = (r * 48 + (c + 1) + 5) & 0xFF
-            actual = mpu.memory[vram_a + r * 48 + c]
-            assert actual == expected, f"B->A: Row {r} col {c}: expected {expected}, got {actual}"
+    if update_lms_addr:
+        for offset in [0, 7, 23, 47]:
+            mpu.memory[labels["RING_COL_OFFSET"]] = offset
+            run_subroutine(mpu, update_lms_addr)
+            for r in range(11):
+                expected_addr = action_vram + r * stride + offset
+                actual_addr = mpu.memory[dlist_lms + 3 * r + 1] | (mpu.memory[dlist_lms + 3 * r + 2] << 8)
+                assert actual_addr == expected_addr, f"Offset {offset} Row {r} LMS mismatch: expected {hex(expected_addr)}, got {hex(actual_addr)}"
 
 
 def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]):
-    """Test that init_level_screens preloads screen 0 into visible cols 4..43 and primes screen 1."""
+    """Test that init_level_screens preloads screen 0 into visible cols 4..43, primes screen 1, and mirrors cols 48..95."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
@@ -158,15 +146,17 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
     assert mpu.memory[labels["LEVEL_TAIL_COLS"]] == 0
     assert mpu.memory[labels["LAB_TOTAL_SCREENS"]] >= 8
     assert mpu.memory[labels["HSCROL_FINE"]] == 3
+    assert mpu.memory[labels["RING_COL_OFFSET"]] == 0
 
     # Check that visible columns 4..43 match Screen 0 (baked into Buffer A)
     screen0_vram = labels["SCREEN_BUF_A_VRAM"]
     screen0_blk = labels["SCREEN_BUF_A_BLK"]
     action_vram = labels["GAME_ACTION_VRAM"]
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
     for r in range(11):
         for c in range(40):
             expected = mpu.memory[screen0_vram + r * 40 + c]
-            actual = mpu.memory[action_vram + r * 48 + 4 + c]
+            actual = mpu.memory[action_vram + r * stride + 4 + c]
             assert actual == expected, f"Row {r} visible col {c}: expected {expected}, got {actual}"
 
     # Check that right margin columns 44..47 match cols 0..3 of Screen 1 (baked into Buffer B)
@@ -174,8 +164,15 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
     for r in range(11):
         for c in range(4):
             expected = mpu.memory[screen1_vram + r * 40 + c]
-            actual = mpu.memory[action_vram + r * 48 + 44 + c]
+            actual = mpu.memory[action_vram + r * stride + 44 + c]
             assert actual == expected, f"Row {r} margin col {c}: expected {expected}, got {actual}"
+
+    # Verify mirror duplication: columns 48..95 must exactly match columns 0..47 across all 11 rows
+    for r in range(11):
+        for c in range(48):
+            orig = mpu.memory[action_vram + r * stride + c]
+            mirror = mpu.memory[action_vram + r * stride + 48 + c]
+            assert mirror == orig, f"Row {r} col {c} mirror mismatch: orig={orig}, mirror={mirror}"
 
     # Check that dragon blocking columns match cols 4 and 5 of Screen 0
     col8_base = labels["BLOCKING_COL8"]
@@ -184,9 +181,16 @@ def test_init_level_screens_emulation(project_root: Path, labels: Dict[str, int]
         assert mpu.memory[col8_base + r] == mpu.memory[screen0_blk + r * 40 + 4], f"Row {r} col 8 blocking mismatch"
         assert mpu.memory[col9_base + r] == mpu.memory[screen0_blk + r * 40 + 5], f"Row {r} col 9 blocking mismatch"
 
+    # Verify initial Display List LMS pointers match row base addresses
+    dlist_lms = labels["DLIST_GAME_ACTION_LMS"]
+    for r in range(11):
+        expected_addr = action_vram + r * stride
+        actual_addr = mpu.memory[dlist_lms + 3 * r + 1] | (mpu.memory[dlist_lms + 3 * r + 2] << 8)
+        assert actual_addr == expected_addr, f"Row {r} initial LMS mismatch: expected {hex(expected_addr)}, got {hex(actual_addr)}"
+
 
 def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[str, int]):
-    """Test that scroll_playfield_step injects column 4 of screen 1 into column 47 of VRAM and shifts blocking cols."""
+    """Test that scroll_playfield_step injects column 4 of screen 1 into ring buffer and shifts blocking cols."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
@@ -198,17 +202,23 @@ def test_scroll_playfield_step_streams_column(project_root: Path, labels: Dict[s
     run_subroutine(mpu, labels["SCROLL_PLAYFIELD_STEP"])
 
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 5
+    assert mpu.memory[labels["RING_COL_OFFSET"]] == 1
+    write_col = mpu.memory[labels["RING_WRITE_COL"]]
+    assert write_col == 0  # (ring_col_offset - 1) % 48
 
-    # Check that column 47 in each row equals column 4 from screen 1
+    # Check that new column (col 4 of screen 1) is written to write_col and write_col + 48
     screen0_blk = labels["SCREEN_BUF_A_BLK"]
     screen1_vram = labels["SCREEN_BUF_B_VRAM"]
-    # With double buffering, SCROLL_PLAYFIELD_STEP writes to the back buffer (Buffer B when active is 0)
-    dst_vram = labels["GAME_ACTION_VRAM_B"] if mpu.memory[labels["ACTIVE_VRAM_BUF"]] == 0 else labels["GAME_ACTION_VRAM"]
+    action_vram = labels["GAME_ACTION_VRAM"]
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
     for r in range(11):
         expected_char = mpu.memory[screen1_vram + r * 40 + 4]  # col 4 of row r
-        actual_char = mpu.memory[dst_vram + r * 48 + 47]  # col 47 of row r
-        assert actual_char == expected_char, f"Row {r} col 47: expected {expected_char}, got {actual_char}"
+        actual_pri = mpu.memory[action_vram + r * stride + write_col]
+        actual_mir = mpu.memory[action_vram + r * stride + 48 + write_col]
+        assert actual_pri == expected_char, f"Row {r} primary write_col: expected {expected_char}, got {actual_pri}"
+        assert actual_mir == expected_char, f"Row {r} mirror write_col: expected {expected_char}, got {actual_mir}"
 
+    assert mpu.memory[labels["RING_LMS_PENDING"]] == 1
     assert mpu.memory[labels["VRAM_SWAP_PENDING"]] == 1
 
     # Check that dragon blocking columns shifted: col 8 gets col 5, col 9 gets col 6 of Screen 0
@@ -248,11 +258,12 @@ def test_update_world_scrolling_fine_scroll(project_root: Path, labels: Dict[str
     run_subroutine(mpu, labels["UPDATE_WORLD_SCROLLING"])
     assert mpu.memory[labels["HSCROL_NEXT"]] == 3
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 5  # Coarse step advanced col idx from 4 to 5
+    assert mpu.memory[labels["RING_LMS_PENDING"]] == 1
     assert mpu.memory[labels["VRAM_SWAP_PENDING"]] == 1
 
 
 def test_vblank_game_commits_hscrol_and_lms_swap(project_root: Path, labels: Dict[str, int]):
-    """Test that vblank_game atomically commits hscrol_fine = hscrol_next and swaps LMS pointer."""
+    """Test that vblank_game atomically commits hscrol_fine = hscrol_next and updates per-row LMS pointers."""
     xex_path = project_root / "jabberwocky.xex"
     mpu = MPU()
     load_xex(xex_path, mpu.memory)
@@ -264,19 +275,27 @@ def test_vblank_game_commits_hscrol_and_lms_swap(project_root: Path, labels: Dic
     xitvbv_addr = labels.get("XITVBV", 0xE462)
     mpu.memory[xitvbv_addr] = 0x60
 
-    # Set up pending swap and next HSCROL
+    # Set up pending ring LMS update and next HSCROL
     mpu.memory[labels["HSCROL_FINE"]] = 0
     mpu.memory[labels["HSCROL_NEXT"]] = 3
+    mpu.memory[labels["RING_COL_OFFSET"]] = 5
+    mpu.memory[labels["RING_LMS_PENDING"]] = 1
     mpu.memory[labels["VRAM_SWAP_PENDING"]] = 1
-    mpu.memory[labels["ACTIVE_VRAM_BUF"]] = 0
 
     run_subroutine(mpu, labels["VBLANK_GAME"])
 
     assert mpu.memory[labels["HSCROL_FINE"]] == 3
-    assert mpu.memory[labels["ACTIVE_VRAM_BUF"]] == 1
-    lms_addr = labels["DLIST_GAME_ACTION_LMS"]
-    assert mpu.memory[lms_addr + 2] == (labels["GAME_ACTION_VRAM_B"] >> 8)
+    assert mpu.memory[labels["RING_LMS_PENDING"]] == 0
     assert mpu.memory[labels["VRAM_SWAP_PENDING"]] == 0
+
+    # Verify all 11 LMS pointers in dlist_game_action_lms were updated with ring_col_offset=5
+    action_vram = labels["GAME_ACTION_VRAM"]
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    dlist_lms = labels["DLIST_GAME_ACTION_LMS"]
+    for r in range(11):
+        expected_addr = action_vram + r * stride + 5
+        actual_addr = mpu.memory[dlist_lms + 3 * r + 1] | (mpu.memory[dlist_lms + 3 * r + 2] << 8)
+        assert actual_addr == expected_addr, f"Row {r} VBLANK LMS mismatch: expected {hex(expected_addr)}, got {hex(actual_addr)}"
 
 
 def test_level_completion_and_victory_transition(project_root: Path, labels: Dict[str, int]):
@@ -327,7 +346,8 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
 
     # Overwrite VRAM with dirty bytes
     action_vram = labels["GAME_ACTION_VRAM"]
-    for i in range(528):
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
+    for i in range(11 * stride):
         mpu.memory[action_vram + i] = 0xFF
 
     # Execute respawn_dragon
@@ -339,6 +359,7 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
     assert mpu.memory[labels["INCOMING_COL_IDX"]] == 4
     assert mpu.memory[labels["LEVEL_TAIL_COLS"]] == 0
     assert mpu.memory[labels["HSCROL_FINE"]] == 3
+    assert mpu.memory[labels["RING_COL_OFFSET"]] == 0
 
     # Scroll speed reset to base speed
     base_speed = labels["SCROLL_BASE_SPEED"]
@@ -357,7 +378,7 @@ def test_dragon_respawn_restarts_level_from_beginning(project_root: Path, labels
     for r in range(11):
         for c in range(40):
             expected = mpu.memory[screen0_vram + r * 40 + c]
-            actual = mpu.memory[action_vram + r * 48 + 4 + c]
+            actual = mpu.memory[action_vram + r * stride + 4 + c]
             assert actual == expected, f"Row {r} col {c} not reset to screen 0"
 
 

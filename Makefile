@@ -69,7 +69,15 @@ $(DRAGON_ASM): $(SPRITE_JSON) $(SPRITE_SCRIPT)
 	@echo "=== Kompilacja sprajta $(SPRITE_JSON) do $(DRAGON_ASM) ==="
 	$(PYTHON) $(SPRITE_SCRIPT) -i $(SPRITE_JSON) -o $(DRAGON_ASM)
 
-assets: $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM)
+MUSIC_SAP      := music/music.sap
+MUSIC_CMC      := $(GEN_DIR)/music.cmc
+SAP_SCRIPT     := scripts/extract_sap.py
+
+$(MUSIC_CMC): $(MUSIC_SAP) $(SAP_SCRIPT)
+	@echo "=== Ekstrakcja i relokacja muzyki SAP $(MUSIC_SAP) do $(MUSIC_CMC) ==="
+	$(PYTHON) $(SAP_SCRIPT) -i $(MUSIC_SAP) -o $(MUSIC_CMC) --target-address 0x9000
+
+assets: $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(MUSIC_CMC)
 
 PROJECT_YAML    := world/project.yaml
 OBJECTS_YAML    := world/objects.yaml
@@ -103,7 +111,7 @@ $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM): $(PROJECT_YAML) $(OBJECTS_YAML) $(COLORS_
 	@echo "=== Kompilacja swiata $(PROJECT_YAML) do $(WORLD_GEN_ASM) (scripts/labirynt_builder.py) ==="
 	$(PYTHON) $(WORLD_SCRIPT) --project $(PROJECT_YAML) --objects $(OBJECTS_YAML) --colors $(COLORS_YAML) --output $(WORLD_GEN_ASM) --tiles-output $(OBJ_TILES_GEN_ASM)
 
-$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM)
+$(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_DEFAULT) $(FONT_GAME) $(TITLE_BIN) $(DRAGON_ASM) $(TEXT_GEN_ASM) $(WORLD_GEN_ASM) $(OBJ_TILES_GEN_ASM) $(ROT_CHARS_GLOBAL_ASM) $(ROT_CHARS_PROC_ASM) $(ANIM_CHARS_ASM) $(MUSIC_CMC)
 	@echo "=== Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ==="
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 

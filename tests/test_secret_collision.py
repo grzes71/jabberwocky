@@ -224,8 +224,9 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
     # Pre-render a non-zero tile in GAME_ACTION_VRAM at row y, col 8
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
     action_vram = labels["GAME_ACTION_VRAM"]
-    mpu.memory[action_vram + y * 48 + 8] = 0x49
+    mpu.memory[action_vram + y * stride + 8] = 0x49
 
     # Run check_dragon_secret_collision
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
@@ -244,7 +245,7 @@ def test_secret_collection_flow(labels: Dict[str, int], clean_mpu: MPU, project_
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
 
     # Tile in GAME_ACTION_VRAM should be erased to 0
-    assert mpu.memory[action_vram + y * 48 + 8] == 0x00
+    assert mpu.memory[action_vram + y * stride + 8] == 0x00
 
     # Collision in blocking_col8 should be cleared
     assert mpu.memory[labels["BLOCKING_COL8"] + y] == 0x00
@@ -288,9 +289,10 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
     # Secret must STILL BE ERASED in source buffers and active VRAM!
     assert mpu.memory[blk_addr + offset] == 0x00
     assert mpu.memory[vram_addr + offset] == 0x00
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
     action_vram = labels["GAME_ACTION_VRAM"]
     vram_col = 4 + x
-    assert mpu.memory[action_vram + y * 48 + vram_col] == 0x00
+    assert mpu.memory[action_vram + y * stride + vram_col] == 0x00
 
     # Now simulate brand new game: call game_init (stubbing show_level_name_screen with RTS)
     mpu.memory[labels["SHOW_LEVEL_NAME_SCREEN"]] = 0x60
@@ -306,7 +308,7 @@ def test_secret_run_persistence_and_game_init_restoration(labels: Dict[str, int]
 
     # ...AND loaded into active GAME_ACTION_VRAM when level screens are loaded (col 4 + x)!
     action_vram = labels["GAME_ACTION_VRAM"]
-    assert mpu.memory[action_vram + y * 48 + vram_col] == orig_tile
+    assert mpu.memory[action_vram + y * stride + vram_col] == orig_tile
 
 
 def test_add_score_5_bcd_increment(labels: Dict[str, int], clean_mpu: MPU):
@@ -461,8 +463,9 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, pro
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
     # Action VRAM non-zero tile
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
     action_vram = labels["GAME_ACTION_VRAM"]
-    mpu.memory[action_vram + y * 48 + 8] = 0x49
+    mpu.memory[action_vram + y * stride + 8] = 0x49
 
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
 
@@ -483,7 +486,7 @@ def test_interactive_collection_flow(labels: Dict[str, int], clean_mpu: MPU, pro
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
 
     # Erased from VRAM & blocking_col
-    assert mpu.memory[action_vram + y * 48 + 8] == 0x00
+    assert mpu.memory[action_vram + y * stride + 8] == 0x00
     assert mpu.memory[labels["BLOCKING_COL8"] + y] == 0x00
 
 
@@ -524,8 +527,9 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     mpu.memory[labels["GAME_OVER_REASON"]] = 0
 
     # Action VRAM non-zero tile
+    stride = labels.get("ACTION_ROW_STRIDE", 96)
     action_vram = labels["GAME_ACTION_VRAM"]
-    mpu.memory[action_vram + y * 48 + 8] = 0x49
+    mpu.memory[action_vram + y * stride + 8] = 0x49
 
     run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
 
@@ -546,7 +550,7 @@ def test_secret_and_interactive_collection_flow(labels: Dict[str, int], clean_mp
     assert mpu.memory[labels["SECRET_SOUND_TIMER"]] == labels.get("SECRET_CLICK_FRAMES", 3)
 
     # Erased from VRAM & blocking_col
-    assert mpu.memory[action_vram + y * 48 + 8] == 0x00
+    assert mpu.memory[action_vram + y * stride + 8] == 0x00
     assert mpu.memory[labels["BLOCKING_COL8"] + y] == 0x00
 
 
