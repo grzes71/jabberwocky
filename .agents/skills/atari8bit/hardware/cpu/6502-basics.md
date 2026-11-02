@@ -48,3 +48,34 @@ Branches that cross a page take 4 cycles instead of 3 — even including BEQ iss
 
 ANTIC DMA steals CPU cycles; exact per-mode budgets belong to the ANTIC timing
 tables in `hardware/antic/`.
+
+### Losing the Input Across a Loop
+
+A routine documented `Input: A = id` must capture that id **before** any loop that
+clobbers A, otherwise the indexed table read silently uses the wrong index:
+
+```asm
+; WRONG - the clear loop destroys A, so tax indexes id 0's tables
+init            ldx #MAX_ENTRIES-1
+?clr            sta buffer,x        ; A = id on entry, then clobbered
+                dex
+                bpl ?clr
+                tax                 ; A is no longer the id!
+                lda table_lo,x
+```
+
+```asm
+; RIGHT - store the parameter first, index from memory afterwards
+init            sta active_id
+                ldx #MAX_ENTRIES-1
+?clr            lda #0
+                sta buffer,x
+                dex
+                bpl ?clr
+                ldx active_id
+                lda table_lo,x
+```
+
+Symptom: every instance is initialised from the *first* record's tables (e.g. every
+level shows level 0's entities), while single-id tests still pass because only one id
+is ever in play - test such routines with two different ids (`py65/SKILL.md`).

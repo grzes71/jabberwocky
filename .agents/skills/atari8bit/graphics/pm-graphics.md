@@ -212,3 +212,33 @@ Rules:
 For CPU-rendered sprite engines that combine with PMG overlays, keep PMG for
 small high-priority objects and use `graphics/software-sprites.md` for the
 background sprite layer.
+
+## §7 Scanline Coordinate Mapping & Color Table Architecture
+
+### Display List to PMG Memory Offset Formula
+
+When using single-line PMG resolution (`DMACTL` bit 4 = 1), ANTIC DMA fetches from the PMG buffer starting immediately after vertical blank.
+If a custom display list has $B$ blank scanlines at the top (e.g. 3x `DL_BLANK8` = 24 scanlines) before playfield line 0:
+$$\text{PMG Buffer Offset} = \text{TopBlankScanlines} + \text{VBLANK\_End\_Scanline} + (Y \times \text{ScanlinesPerModeLine})$$
+In typical Atari 8-bit setups (VBLANK ending at scanline 8, with 24 top blank scanlines, display line 0 starts at TV scanline 32):
+- Mode D line $Y$ (2 scanlines/line): $\text{Offset} = 32 + (Y \times 2)$.
+- Guard lines and unallocated bands in PMG memory must remain cleared to `$00` to prevent ghost stripes when multiplexing registers.
+
+### Unified Color Table Optimization
+
+If multiple PMG channels share identical per-scanline color profiles (such as 3 players forming a composite multi-segment platform, along with 4 missiles converted to a 5th player via `PRIOR` bit 4):
+- Do **not** generate separate tables for each channel (`pas_c1_sl`, `pas_c2_sl`, etc.).
+- Generate **one single unified color table** (`pas_color_sl0..7`).
+- In the inner DLI scanline loop, perform a single `LDA` from the shared table and write it to all participating channels:
+  ```asm
+  lda dli_pas_color_slN,y   ; [4] Single load for all channels
+  sta COLPM1                ; [4]
+  sta COLPM2                ; [4]
+  sta COLPM3                ; [4]
+  sta COLPF3                ; [4] 5th player / missiles
+  sta WSYNC                 ; [4]
+  ```
+- **Benefits:**
+  - Saves 66% of color table ROM and double-buffer RAM ($24 \to 8$ tables per zone).
+  - Saves 8–12 CPU cycles per scanline in time-critical display kernels.
+

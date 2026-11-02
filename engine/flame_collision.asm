@@ -70,6 +70,7 @@ flame_m_pf              dta 0           ; Latched M0PF..M3PF from DLI 3 (action 
 screen_obj_destroyed    :256 dta 0      ; 256 bytes: 32 screens * 8 bytes bitmask (up to 64 objs/screen)
 
 ; 22-byte spatial grid for dragon collision (dragon is fixed at cols 8..9 in VRAM)
+blocking_col7           :11 dta 0       ; Mode 5 blocking flags for VRAM col 7 (11 rows)
 blocking_col8           :11 dta 0       ; Mode 5 blocking flags for VRAM col 8 (11 rows)
 blocking_col9           :11 dta 0       ; Mode 5 blocking flags for VRAM col 9 (11 rows)
 
@@ -110,10 +111,13 @@ fc_cur_obj_flags        dta 0
 fc_cur_obj_code         dta 0
 fc_cur_dy               dta 0
 fc_cur_r                dta 0
+fc_dx7                  dta 0
 fc_dx8                  dta 0
 fc_dx9                  dta 0
+fc_has_col7             dta 0
 fc_has_col8             dta 0
 fc_has_col9             dta 0
+fc_secret_collected     dta 0
 fc_cur_row_idx          dta 0
 fc_chk_r                dta 0
 fc_chk_r_end            dta 0
@@ -708,6 +712,13 @@ fc_energy_cnt           dta 0
     sta (PTR_DST),y             ; Clear mirror ring cell to $00
 
     lda ZP_TMP                  ; Restore screen column (0..47)
+    cmp #7
+    bne @chk_col8
+    ldx fc_erase_row_idx
+    lda #0
+    sta blocking_col7,x
+    jmp @skip_cell
+@chk_col8
     cmp #8
     bne @chk_col9
     ldx fc_erase_row_idx
@@ -764,9 +775,12 @@ fc_energy_cnt           dta 0
     lda #6
     sta dragon_stream_col
 
-    ; Copy column 4 into blocking_col8 and column 5 into blocking_col9 for all 11 rows
+    ; Copy column 3 into blocking_col7, column 4 into blocking_col8 and column 5 into blocking_col9 for all 11 rows
     ldx #0
 @row_loop
+    ldy #3
+    lda (PTR_SRC),y
+    sta blocking_col7,x
     ldy #4
     lda (PTR_SRC),y
     sta blocking_col8,x
@@ -791,9 +805,11 @@ fc_energy_cnt           dta 0
 ; Shifts col 9 into col 8, and streams 11 rows of column dragon_stream_col into col 9.
 ; Total execution time: ~200 cycles (< 2 scanlines!).
 .proc shift_blocking_cols
-    ; 1. Shift col 9 into col 8 (11 rows)
+    ; 1. Shift col 8 into col 7, and col 9 into col 8 (11 rows)
     ldx #10
 @shift_loop
+    lda blocking_col8,x
+    sta blocking_col7,x
     lda blocking_col9,x
     sta blocking_col8,x
     dex
@@ -1010,6 +1026,9 @@ shift_blocking_vram_left    = shift_blocking_cols
 ; Clobbers: A, X
 ; ==============================================================================
 .proc check_dragon_secret_collision
+    lda #0
+    sta fc_secret_collected
+
     ; Dynamic vertical bounding box based on current animation frame (0..7)
     lda ANIM_PHASE+1
     and #$07
@@ -1053,6 +1072,7 @@ shift_blocking_vram_left    = shift_blocking_cols
 @chk_row
     lda blocking_col8,x
     ora blocking_col9,x
+    ora blocking_col7,x
     and #$06                    ; Bit 1 ($02: interactive) or Bit 2 ($04: secret)
     bne @found_secret
     inx
@@ -1174,7 +1194,13 @@ shift_blocking_vram_left    = shift_blocking_cols
     sta PTR_SRC+1
     pla
     sta PTR_SRC
+
+    lda fc_secret_collected
+    beq @no_secret_hit
     sec
+    rts
+@no_secret_hit
+    clc
     rts
 .endp
 
@@ -1303,16 +1329,15 @@ shift_blocking_vram_left    = shift_blocking_cols
 
 @x_positive
     ; cur_vram_x is positive (0..47)
-    ; Dragon is at cols 8..9. Left edge must be <= 9 (i.e. < 10)
+    ; Dragon spans cols 7..9. Left edge must be <= 9 (i.e. < 10)
     cmp #10
     bcs @skip_to_next
 
-    ; Right edge of object must be > 8
+    ; Right edge of object must reach at least col 8 (cur_vram_x + cur_obj_w >= 8)
     clc
     adc fc_cur_obj_w
     cmp #8
     bcc @skip_to_next
-    beq @skip_to_next
 
 @check_secret_tiles
     ; If object has no empty tiles (bit 7 = 0), any bounding-box overlap is a guaranteed hit!
@@ -1328,7 +1353,23 @@ shift_blocking_vram_left    = shift_blocking_cols
     lda obj_type_tiles_hi,x
     sta PTR_COLL+1
 
+    ; Check column 7 overlap
+    lda #7
+    sec
+    sbc fc_cur_vram_x
+    bmi @col7_out
+    cmp fc_cur_obj_w
+    bcs @col7_out
+    sta fc_dx7
+    lda #1
+    sta fc_has_col7
+    bne @check_col8
+@col7_out
+    lda #0
+    sta fc_has_col7
+
     ; Check column 8 overlap
+@check_col8
     lda #8
     sec
     sbc fc_cur_vram_x
@@ -1360,9 +1401,10 @@ shift_blocking_vram_left    = shift_blocking_cols
     sta fc_has_col9
 
 @cols_checked
-    lda fc_has_col8
+    lda fc_has_col7
+    ora fc_has_col8
     ora fc_has_col9
-    beq @no_tile_hit            ; Neither column overlaps
+    beq @no_tile_hit            ; None of the columns overlap
 
     ; Loop over dragon rows (dc_dragon_row_min .. dc_dragon_row_max_p1 - 1)
     lda dc_dragon_row_min
@@ -1379,6 +1421,22 @@ shift_blocking_vram_left    = shift_blocking_cols
     bcs @advance_row
     sta fc_cur_dy
 
+    ; If col 7 overlaps AND blocking_col7[row] & $06 != 0:
+    lda fc_has_col7
+    beq @test_col8_cell
+    ldx fc_cur_row_idx
+    lda blocking_col7,x
+    and #$06
+    beq @test_col8_cell
+
+    ; Test tile at (dx7, dy)
+    ldx fc_dx7
+    lda fc_cur_dy
+    jsr fc_calc_tile_offset
+    lda (PTR_COLL),y
+    bne @secret_hit             ; Solid tile hit!
+
+@test_col8_cell
     ; If col 8 overlaps AND blocking_col8[row] & $06 != 0:
     lda fc_has_col8
     beq @test_col9_cell
@@ -1419,6 +1477,9 @@ shift_blocking_vram_left    = shift_blocking_cols
     jmp @next_obj
 
 @secret_hit
+    lda #1
+    sta fc_secret_collected
+
     ; 1. Mark as destroyed in bitmask
     ldx fc_screen_id
     lda screen_destroyed_offsets,x

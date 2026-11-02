@@ -50,8 +50,8 @@ The Atari 8-bit has a flat 64 K CPU address space. Which ROM or RAM is visible i
 |---|---|
 | `$0000-$00FF` | Zero page — OS variables, DOS/BASIC work areas, user-reserved bytes if your environment allows them |
 | `$0100-$01FF` | Hardware stack |
-| `$0200-$02FF` | OS page 2 shadows, vectors, timers, color registers, keyboard/display variables |
-| `$0300-$03FF` | OS page 3 tables and work areas (`HATABS`, `IOCB`s, buffers) |
+| `$0200-$02FF` | OS database: page-2 vector/IRQ-NMI dispatch table, shadows, timers, color registers, keyboard/display variables — owned by the OS, never by DOS |
+| `$0300-$03FF` | OS page 3: SIO `DCB` (`$0300-$030F`), `HATABS`, `IOCB`s, work buffers |
 | `$0400-$7FFF` | Main RAM; on 130XE-class machines `$4000-$7FFF` can be replaced by banked extended RAM |
 | `$8000-$9FFF` | Cartridge window (`RD4` / right or lower 8K) |
 | `$A000-$BFFF` | BASIC ROM, cartridge window (`RD5` / left or upper 8K), or RAM depending on machine and banking |
@@ -90,18 +90,33 @@ Use documented free bytes only, or reserve your own workspace according to the D
 | Address | Name | Purpose |
 |---|---|---|
 | `$0200/$0201` | `VDSLST` | DLI vector |
+| `$0202/$0203` | `VPRCED` | Serial bus PROCEED IRQ vector |
+| `$0204/$0205` | `VINTER` | Serial bus INTERRUPT IRQ vector |
+| `$0206/$0207` | `VBREAK` | BRK instruction IRQ vector |
+| `$0216/$0217` | `VIMIRQ` | Immediate IRQ vector |
 | `$0222/$0223` | `VVBLKI` | Immediate VBI vector |
 | `$0224/$0225` | `VVBLKD` | Deferred VBI vector |
 | `$022F` | `SDMCTL` | ANTIC DMA shadow |
 | `$0230/$0231` | `SDLSTL/SDLSTH` | Display list pointer shadow |
 | `$0244` | `COLDST` | Cold-start flag |
+| `$026F` | `GPRIOR` | `PRIOR ($D01B)` shadow |
 | `$02C4-$02C8` | `COLOR0-COLOR4` | OS color shadows |
 | `$02E0/$02E1` | `RUNAD` | Binary load run address |
 | `$02E2/$02E3` | `INITAD` | Binary load init address |
 | `$02E5/$02E6` | `MEMTOP` | Top of usable RAM pointer |
+| `$02EA-$02ED` | `DVSTAT` | Device/disk status buffer (4 bytes) |
 | `$02FC` | `CH` | Keyboard character buffer |
+| `$0300-$030F` | `DCB` | SIO device control block (`DDEVIC`…`DAUX2`) |
 | `$031A` | `HATABS` | Device handler table |
 | `$0340-$03BF` | `IOCB0-IOCB7` | Eight 16-byte I/O control blocks |
+
+Page 2 belongs to the OS, not to DOS: it is the OS database — the NMI/IRQ dispatch
+vectors above, plus display, color, keyboard and editor shadows. DOS and BASIC keep
+their own control blocks in the RAM they allocate and reach the OS through
+`DOSVEC`/`DOSINI` (`$000A-$000D`). Page 3 starts with the SIO `DCB` at `$0300`
+(`DDEVIC` `$0300`, `DUNIT` `$0301`, `DCOMND` `$0302`, `DSTATS` `$0303`,
+`DBUFLO/HI` `$0304/$0305`, `DTIMLO` `$0306`, `DBYTLO/HI` `$0308/$0309`,
+`DAUX1/2` `$030A/$030B`); see `system/storage.md` for the command set.
 
 ### PIA 6520 (Peripheral Interface Adapter)
 

@@ -19,6 +19,7 @@ description: >-
 | Register map ($D200–$D20F) | §5.1 |
 | Clock paths, `+1/+4/+7` divisors | §5.2 |
 | Linked 16-bit channels | §5.2 |
+| SIO overwriting AUDCTL/AUDC during I/O | §5.2.1 |
 | AUDC distortion / volume-only mode | §5.3 |
 | SIO byte-level registers | §5.4 |
 | RMT / TMC2 coexistence rules | §5.5 |
@@ -83,6 +84,41 @@ supplies the low byte (`AUDF1` or `AUDF3`) and the higher-numbered channel
 supplies the high byte (`AUDF2` or `AUDF4`). The audible control/output channel
 is the higher-numbered one (`AUDC2` or `AUDC4`).
 
+### §5.2.1  SIO Reprograms AUDCTL — Re-assert Your Audio Setup After I/O
+
+`SIOV` — and therefore every CIO file/disk call and every `DSKINV` sector call — sets
+POKEY up for the transfer and **does not restore** the caller's audio state:
+
+| Register | What SIO writes | Purpose |
+|---|---|---|
+| `AUDCTL ($D208)` | `$28` — CH3 clocked at 1.79 MHz, CH4 clocked by CH3 | channels 3+4 become the baud-rate divider |
+| `AUDF3/AUDF4` | `$0028` (19200 baud) for devices, `$05CC` (600 baud) for cassette | divisor reloaded per transfer |
+| `AUDC1-AUDC4` | `$A8` for all four, then `$A0` on CH1-CH3; `$00` on all four when the operation completes | silences the voices and leaves the 19200 Hz baud tone on CH4 |
+| `SKCTL ($D20F)` | serial-mode bits 4/5 added on top of the current value | serial clocking; the OS never resets it to `$03` |
+
+The OS contains no code path that writes a saved `AUDCTL` back, so a `$00`/`$50`/`$78`
+setup and any music or PDM playback stop working after the next disk, cassette, or
+RS-232 operation. This is the practical form of the De Re Atari rule "POKEY must be
+initialized after any serial bus operation". Re-write `AUDCTL`, `AUDC3`/`AUDC4` (SIO owns
+those voices) and `SKCTL` after each SIO call, or keep the setup in one routine and run
+it from both cold start and the I/O completion path:
+
+```asm
+        ; re-assert the audio configuration that SIO overwrites
+pokey_init
+        lda #$50                ; example: join 1+2, CH1 clocked at 1.79 MHz
+        sta AUDCTL              ; SIO leaves $28 behind
+        lda #$AF                ; pure tone ($A0) + volume 15
+        sta AUDC3               ; SIO leaves $00 here
+        sta AUDC4
+        lda #$03                ; keyboard scan + debounce (OS default)
+        sta SKCTL
+        rts
+```
+
+Do not rely on `AUDCTL=$28` meaning "CH3 at 1.79 MHz only": bits 3+5 together mean the
+3+4 pair is joined, which is exactly how SIO builds its baud generator.
+
 ---
 
 ## §5.3  Distortion / Waveform Selection (AUDCx bits 4–7)
@@ -115,6 +151,10 @@ bit**. `SKREST` clears the latched serial/keyboard error bits in `SKSTAT`.
 SIO protocol bytes such as ACK/NACK/COMPLETE/ERROR are **protocol-level values
 on top of** these raw serial registers; they are not separate hardware states in
 POKEY itself.
+
+The bit clock for these transfers is POKEY channels 3+4, driven from `AUDCTL=$28`
+(CH3 at 1.79 MHz, CH4 clocked by CH3) with the divisor in `AUDF3/AUDF4` — see §5.2.1
+for what that does to your own audio setup.
 
 ---
 

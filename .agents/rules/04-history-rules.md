@@ -3,8 +3,11 @@ trigger: always_on
 ---
 
 ## Definition of Done (CRITICAL)
-- **History Tracking:** Whenever you successfully implement a feature, fix a bug, or complete a significant refactor, you MUST automatically update the `HISTORY.md` file.
-- **Placement:** Prepend your new entry exactly below the HTML comment `<!-- AGENT INSTRUCTIONS... -->`. Do not put it at the bottom of the file.
-- **Format:** Use the format `## [YYYY-MM-DD] - [Brief Title]`. Underneath, provide a concise bulleted list of the actual technical changes made (e.g., functions added, files modified, registers altered).
-- **Paths in History:** When referencing files in `HISTORY.md`, ALWAYS use relative paths (relative to project root, e.g., `scenes/game.asm` or `[scenes/game.asm](scenes/game.asm)`). NEVER use absolute paths or `file:///` URIs.
-- **Trigger:** Perform this update automatically as the final step before telling the user the task is complete.
+
+- **History tracking:** whenever you successfully implement a feature, fix a bug, or complete a significant refactor, you MUST update `HISTORY.md`.
+- **Placement:** insert the new entry directly below the HTML comment `<!-- AGENT INSTRUCTIONS... -->`, above the previous newest entry. Never append at the bottom, never replace, reorder or delete existing entries.
+- **Format:** `## [YYYY-MM-DD] - [Brief Title]`, followed by grouped bullet lists (`- **Obszar**:`) naming concrete technical changes (files, routines, symbols, addresses).
+- **Language:** write the entry in **Polish**, matching every existing entry in `HISTORY.md`. Paths, symbols and command names stay in English.
+- **Verification line:** close the entry with a `- **Weryfikacja**:` group reporting what actually ran, e.g. ``- `make all`: pomyślna asemblacja `jabberwocky.xex` i walidacja mapy pamięci.`` and ``- `pytest`: N testów zakończonych sukcesem.`` Never invent results; if something failed, say so.
+- **Paths in History:** ALWAYS use paths relative to the project root (e.g. `scenes/game.asm` or `[scenes/game.asm](scenes/game.asm)`). NEVER absolute paths or `file:///` URIs.
+- **Trigger:** perform this update as the final step before telling the user the task is complete — the `done` skill automates exactly this procedure.

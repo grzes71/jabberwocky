@@ -60,3 +60,33 @@ CPU time available on each line.
 
 Display-list instructions cost one DMA fetch per byte. `LMS` and `JMP/JVB`
 instructions therefore consume three display-list bytes instead of one.
+
+### Per-scanline CPU budget (what is left for the 6502)
+
+A scan line is 114 CPU cycles, but the CPU only executes in the slots ANTIC does
+not steal:
+
+| Job | Bytes / line | Notes |
+|---|---|---|
+| DRAM refresh | 9 | every scan line |
+| PMG (players + missiles) | 5 (single-line) / 10 (double-line) | only when `DMACTL` bits 2-3 are set |
+| Display-list fetch | 1..3 | every line; `LMS`/`JMP`/`JVB` cost 3 |
+| Playfield fetch | 20 / 40 / 48 (narrow / normal / wide) | usually only on the mode line's fetch scanline |
+| Character glyph fetch | 40 (40-col) / 20 (20-col) per scanline | text modes; screen codes add the same amount on the first scanline |
+
+Example - Mode D (160x96, 2 scanlines/line), normal width, `SDMCTL = $3E` (PAL):
+
+| Scanline | Stolen | Usable CPU cycles |
+|---|---|---|
+| Mode-line first scanline (playfield fetch) | 9 + 5 + 40 + 3 = 57 | ~57 |
+| Mode-line repeat scanline | 9 + 5 = 14 | ~100 |
+
+A DLI that fires on the *last* scanline of its trigger line only gets the
+remainder of that scanline: ~70 usable cycles on a DMA-light repeat scanline,
+~57 on a DMA-heavy pas scanline (see `dli-wsync.md` §3.9). Measured in this
+project: a 55-cycle setup phase fits, the same phase grown to 79 cycles slips
+the whole kernel one scanline.
+
+**Rule:** with playfield + PMG DMA active, keep one DLI phase at <= ~55 CPU
+cycles, and verify cycle-sensitive splits on hardware or a cycle-accurate
+emulator.

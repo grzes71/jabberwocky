@@ -70,6 +70,39 @@ def load_image(path: Path | str) -> Image.Image:
     return img
 
 
+def detect_image_color_mode(image: Image.Image) -> Tuple[int, str]:
+    """
+    Detect whether an image should default to 2-color or 4-color mode
+    based on indexed palette or unique color count.
+    Returns (color_mode, description).
+    """
+    if image.mode == "1":
+        return 2, "Binary 1-bit (2 colors)"
+
+    if image.mode == "P":
+        colors = image.getcolors(maxcolors=256)
+        if colors is not None:
+            num = len(colors)
+            if num <= 2:
+                return 2, f"Indexed ({num} colors)"
+            elif num <= 4:
+                return 4, f"Indexed ({num} colors)"
+            else:
+                return 4, f"Indexed ({num} colors, >4)"
+        return 4, "Indexed palette"
+
+    # For RGB / RGBA / L: check unique colors
+    colors = image.getcolors(maxcolors=16)
+    if colors is not None:
+        num = len(colors)
+        if num <= 2:
+            return 2, f"Unique ({num} colors)"
+        elif num <= 4:
+            return 4, f"Unique ({num} colors)"
+
+    return 2, f"{image.mode} image (continuous)"
+
+
 def slice_image(image: Image.Image, frame_count: int, direction: str) -> List[Image.Image]:
     """
     Slice an image into `frame_count` frames either horizontally or vertically.
@@ -104,24 +137,24 @@ def prepare_rgb_image(image: Image.Image) -> Image.Image:
         return image.convert("RGB")
 
 
-def convert_frame_to_binary(
+def convert_frame_to_pixels(
     frame_image: Image.Image,
     target_width: int = 8,
     target_height: int = 24,
+    color_mode: int = 2,
     threshold: float = 50.0,
     inverse: bool = False,
     fit_mode: str = "fit",
 ) -> List[str]:
     """
-    Fit `frame_image` into a `target_width` x `target_height` grid, and compute cell average luminance:
-        Y = 0.2126 * R + 0.7152 * G + 0.0722 * B  (0..1)
-        brightness = Y * 100 (0..100)
-    fit_mode:
-        - "fit": preserve aspect ratio, center on canvas. Unused padding is seamless and always yields '0'.
-        - "stretch": stretch to fill the entire target_width x target_height without any margins.
-        - "crop": scale to cover target area and center-crop excess borders without empty margins.
-    Cells with brightness >= threshold are set to '1' (or '0' if inverse=True).
-    Returns list of binary strings of length `target_width`, with total count `target_height`.
+    Convert `frame_image` into a `target_width` x `target_height` sprite frame.
+    Supports both:
+    - color_mode = 2: binary '0' and '1'
+    - color_mode = 4: multi-color '0', '1', '2', '3'
+
+    If frame_image is indexed ('P' or '1') and already matches target dimensions (8 x target_height),
+    pixel values are mapped directly without resampling distortion.
+    Otherwise, luminance is computed across cells and thresholded into 2 or 4 levels.
     """
     if target_width != 8:
         raise ImageImportError(f"Target width must be 8, got {target_width}.")
@@ -129,6 +162,28 @@ def convert_frame_to_binary(
         raise ImageImportError(f"Target height must be between 1 and 255, got {target_height}.")
     if not (0.0 <= threshold <= 100.0):
         raise ImageImportError(f"Threshold must be between 0 and 100, got {threshold}.")
+    if color_mode not in (2, 4):
+        raise ImageImportError(f"color_mode must be 2 or 4, got {color_mode}.")
+
+    # Direct pixel-perfect extraction for exact sized indexed images
+    if frame_image.mode in ("P", "1") and frame_image.size == (target_width, target_height):
+        grid: List[str] = []
+        for r in range(target_height):
+            row_chars = []
+            for c in range(target_width):
+                px = int(frame_image.getpixel((c, r)))
+                if color_mode == 4:
+                    val = px % 4
+                    if inverse:
+                        val = (3 - val) % 4
+                    row_chars.append(str(val))
+                else:
+                    val = 1 if px else 0
+                    if inverse:
+                        val = 1 - val
+                    row_chars.append(str(val))
+            grid.append("".join(row_chars))
+        return grid
 
     src_rgb = prepare_rgb_image(frame_image)
     src_w, src_h = src_rgb.size
@@ -171,7 +226,6 @@ def convert_frame_to_binary(
 
         scaled_img = src_rgb.resize((scaled_w, scaled_h), resample_filter)
 
-        # Detect corner background color to seamlessly blend padding
         corners = [
             src_rgb.getpixel((0, 0)),
             src_rgb.getpixel((src_w - 1, 0)),
@@ -187,8 +241,6 @@ def convert_frame_to_binary(
         canvas = Image.new("RGB", (canvas_w, canvas_h), pad_color)
         canvas.paste(scaled_img, (paste_x, paste_y))
 
-        # Mark which grid cells overlap with the actual image
-        # Padding cells completely outside the image must always produce '0'
         mask_in_bounds = np.zeros((target_height, target_width), dtype=bool)
         for r in range(target_height):
             cell_y0 = r * s
@@ -200,31 +252,68 @@ def convert_frame_to_binary(
                     if cell_x1 > paste_x and cell_x0 < paste_x + scaled_w:
                         mask_in_bounds[r, c] = True
 
-    # Calculate luminance Y = 0.2126*R + 0.7152*G + 0.0722*B in [0, 1]
+    # Calculate luminance Y in [0, 1]
     arr = np.asarray(canvas, dtype=np.float32) / 255.0
     luminance = 0.2126 * arr[:, :, 0] + 0.7152 * arr[:, :, 1] + 0.0722 * arr[:, :, 2]
     brightness = luminance * 100.0
 
-    # Reshape to (target_height, s, target_width, s) and compute cell averages
     reshaped = brightness.reshape(target_height, s, target_width, s)
     cell_avg = reshaped.mean(axis=(1, 3))  # shape: (target_height, target_width)
 
-    # Binarize
-    binary_grid: List[str] = []
+    # Multi-level thresholds for 4-color mode
+    t1 = threshold * 0.5
+    t2 = threshold
+    t3 = threshold + (100.0 - threshold) * 0.5
+
+    result_grid: List[str] = []
     for r in range(target_height):
         row_chars = []
         for c in range(target_width):
             if not mask_in_bounds[r, c]:
-                # Letterbox padding outside content is always empty '0'
                 row_chars.append("0")
             else:
-                if not inverse:
-                    row_chars.append("1" if cell_avg[r, c] >= threshold else "0")
-                else:
-                    row_chars.append("0" if cell_avg[r, c] >= threshold else "1")
-        binary_grid.append("".join(row_chars))
+                val_lum = cell_avg[r, c]
+                if color_mode == 4:
+                    if val_lum < t1:
+                        lvl = 0
+                    elif val_lum < t2:
+                        lvl = 1
+                    elif val_lum < t3:
+                        lvl = 2
+                    else:
+                        lvl = 3
 
-    return binary_grid
+                    if inverse:
+                        lvl = 3 - lvl
+                    row_chars.append(str(lvl))
+                else:
+                    if not inverse:
+                        row_chars.append("1" if val_lum >= threshold else "0")
+                    else:
+                        row_chars.append("0" if val_lum >= threshold else "1")
+        result_grid.append("".join(row_chars))
+
+    return result_grid
+
+
+def convert_frame_to_binary(
+    frame_image: Image.Image,
+    target_width: int = 8,
+    target_height: int = 24,
+    threshold: float = 50.0,
+    inverse: bool = False,
+    fit_mode: str = "fit",
+) -> List[str]:
+    """Backward compatibility wrapper for convert_frame_to_pixels with color_mode=2."""
+    return convert_frame_to_pixels(
+        frame_image=frame_image,
+        target_width=target_width,
+        target_height=target_height,
+        color_mode=2,
+        threshold=threshold,
+        inverse=inverse,
+        fit_mode=fit_mode,
+    )
 
 
 def import_raster_frames(
@@ -232,23 +321,29 @@ def import_raster_frames(
     frame_count: int = 1,
     direction: str = "horizontal",
     target_height: int = 24,
+    color_mode: int | None = 2,
     threshold: float = 50.0,
     inverse: bool = False,
     fit_mode: str = "fit",
 ) -> List[Frame]:
     """
-    Full pipeline: load image, slice into N frames, fit and binarize each frame.
+    Full pipeline: load image, slice into N frames, fit and convert each frame.
+    If color_mode is None, it is auto-detected from image palette / unique colors.
     Returns list of Frame objects with .pixels matching target_height.
     """
     img = load_image(path)
+    if color_mode is None:
+        color_mode, _ = detect_image_color_mode(img)
+
     slices = slice_image(img, frame_count, direction)
 
     frames: List[Frame] = []
     for s_img in slices:
-        pixels = convert_frame_to_binary(
+        pixels = convert_frame_to_pixels(
             frame_image=s_img,
             target_width=8,
             target_height=target_height,
+            color_mode=color_mode,
             threshold=threshold,
             inverse=inverse,
             fit_mode=fit_mode,

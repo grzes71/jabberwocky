@@ -292,39 +292,20 @@ Skrypt `scripts/release_helper.py` automatyzuje proces wersjonowania i wydań w 
 
 ## Mapa pamięci
 
-Projekt zachowuje pełną izolację pamięci OS oraz precyzyjną alokację buforów:
+Projekt zachowuje pełną izolację pamięci OS oraz precyzyjną alokację buforów. Poniżej tylko najważniejsze granice — pełna, zawsze aktualna mapa generowana jest po każdej kompilacji:
 
-| Zakres adresów | Rozmiar | Przeznaczenie |
-| :--- | :--- | :--- |
-| `$80` – `$89` | 10 B | Zmienne strony zerowej (`PTR_SRC`, `PTR_DST`, `ZP_TMP`, `PTR_BLK`, `PTR_COLL`) |
-| `$8A` – `$FF` | 118 B | **Wolna strona zerowa** |
-| `$0800` – `$080A` | 11 B | Wektor skoku inicjalizacyjnego (`CODE`) |
-| `$080B` – `$2009` | 6143 B (~6.0 KB) | Podsystemy silnika (`engine/`: audio, kolizje, animacje kafli, nazwa poziomu) |
-| `$200A` – `$27FF` | 2038 B (~2.0 KB) | **Wolna pamięć RAM** (w tym bufor PMG) |
-| `$2800` – `$3E7F` | 5760 B (~5.8 KB) | Segment głównego kodu i logiki gry (`main.asm`, `scenes/`, fizyka smoka) |
-| `$3E80` – `$3FFF` | 384 B | **Wolna pamięć RAM** |
-| `$4000` – `$5B67` | 7016 B (~7.0 KB) | Bufor grafiki tytułowej VRAM (ANTIC Mode F, 320×175) |
-| `$5B68` – `$5BFF` | 152 B | **Wolna pamięć RAM** |
-| `$5C00` – `$5FFF` | 1024 B | Bufor czcionki tekstowej (`text.fnt`, wyrównany do 1 KB) |
-| `$6000` – `$620F` | 528 B | Główny bufor pola akcji VRAM A (11 linii ANTIC 5 z HSCROL, 48 B/wiersz) |
-| `$6300` – `$634F` | 80 B | Bufor paska statusu w grze (2 linie ANTIC 2) |
-| `$6350` – `$63F7` | 168 B | Bufor siatki kolizji blokujących `BLOCKING_VRAM` (21×8 bajtów) |
-| `$6400` – `$660F` | 528 B | Zapasowy bufor pola akcji VRAM B do podwójnego buforowania (Double Buffering) |
-| `$6610` – `$676D` | 350 B | Segment Display List dla wszystkich scen (wyrównany do granicy 1 KB) |
-| `$676E` – `$67FF` | 146 B | **Wolna pamięć RAM** |
-| `$6800` – `$8946` | 8519 B (~8.3 KB) | Czcionka gry (`game.fnt`), animowane kafle oraz dane świata (`gen/world_data.asm`) i bufory stagingowe |
-| `$8947` – `$AFFF` | 9913 B (~9.7 KB) | **Wolna pamięć RAM** (dostępna na kolejne etapy i poziomy gry) |
-| `$B000` – `$BB25` | 2854 B (~2.8 KB) | Bufor tekstu VRAM (`STUB_VRAM`), segment Top Scores / Name Entry (`scenes/top_scores.asm`) oraz Game Over (`scenes/gameover.asm`) |
-| `$BB26` – `$BFFF` | 1242 B (~1.2 KB) | **Wolna pamięć RAM** (nagłówek przed OS ROM) |
-| `$C000` – `$DFFF` | — | **Naruszenie zabronione** (OS ROM / Rejestry sprzętowe I/O) |
+- **Zero Page:** `$80` – `$89` zajęte przez zmienne użytkownika (`PTR_SRC`, `PTR_DST`, `ZP_TMP`, `PTR_BLK`, `PTR_COLL`); `$8A` – `$FF` wolne. Strona systemowa `$00` – `$7F` pozostaje nietykalna.
+- **RAM użytkownika:** `$0800` – `$BFFF` (kod silnika, VRAM, czcionki, Display Listy, dane świata, muzyka CMC, bufory tekstowe).
+- **OS ROM i rejestry I/O:** `$C000` – `$DFFF` — **naruszenie zabronione**; BASIC ROM jest wyłączany przez `PORTB` (bit 1), co udostępnia `$A000` – `$BFFF`.
+- **Zarezerwowane w czasie działania (tylko equaty, bez `org`):** PMG `$2000` – `$27FF`, bufor kołowy akcji `$6000` – `$641F`, pasek statusu `$6420` – `$646F` — nie umieszczaj tam nowych segmentów, nawet jeśli walidator zgłasza w tych obszarach wolne miejsce.
 
-Szczegółowy i zawsze aktualny raport generowany jest po każdej kompilacji w pliku [docs/memory_map.txt](docs/memory_map.txt).
+Pełny raport (segmenty, luki i pozostały headroom) generuje `scripts/generate_memory_map.py` i zapisuje w [docs/memory_map.txt](docs/memory_map.txt) oraz [docs/memory_map.json](docs/memory_map.json).
 
 ---
 
 ## Testy
 
-Projekt posiada **169 zautomatyzowanych testów** weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
+Projekt posiada rozbudowany zestaw testów automatycznych (aktualną liczbę zwraca `pytest --collect-only -q`) weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
 - Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`compile_sprites`, `compile_texts`, `labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
 - Testy asystenta wydań i reguł semver (`scripts/release_helper.py`).
 - Testy spójności modeli danych, kolorów, walidatorów `world/` oraz edytorów GUI (Studio).

@@ -802,24 +802,24 @@ def test_fire_breathing_invincibility_against_blocking_objects(labels: Dict[str,
     assert mpu.memory[labels["DRAGON_DYING"]] == 0, "Dragon must NOT start dying from wall collision while breathing fire"
 
 
-def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu: MPU):
+def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
     """Verify that while breathing fire (fire_state != 0), dragon still collects secret objects."""
     mpu = clean_mpu
 
-    # Screen 0 FOREST_01 secret at (x=34, y=8)
-    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = 1  # LEVEL_02 (FOREST_01..09)
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1  # screen 0 is left screen
-    mpu.memory[labels["INCOMING_COL_IDX"]] = 34
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
     mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
-    mpu.memory[labels["DRAGON_Y"]] = 162
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
     mpu.memory[labels["ANIM_PHASE"] + 1] = 0
 
     # Put secret flag in blocking_col8
     for r in range(11):
         mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
         mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
-    mpu.memory[labels["BLOCKING_COL8"] + 8] = 0x04
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x04
 
     # Dragon is breathing fire!
     mpu.memory[labels["FIRE_STATE"]] = 2
@@ -831,7 +831,7 @@ def test_fire_breathing_still_collects_secrets(labels: Dict[str, int], clean_mpu
 
     # Verify secret was erased in staging buffer
     blk_addr = labels["SCREEN_BUF_A_BLK"]
-    offset = 8 * 40 + 34
+    offset = y * 40 + x
     assert mpu.memory[blk_addr + offset] == 0x00, "Secret must be collected and cleared even when breathing fire"
 
 
@@ -873,6 +873,76 @@ def test_tail_mode_collects_interactive_object_197(labels: Dict[str, int], clean
     assert mpu.memory[labels["LIVES"]] == 4, "Peasant collection must award +1 life"
     assert mpu.memory[labels["SCORE"] + 3] == 5, "Peasant collection must award +5 score"
 
+def test_fast_scroll_secret_pickup_no_crash(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
+    """Verify that picking up a secret while flying fast clears dragon_hit_pending and does NOT trigger crash."""
+    mpu = clean_mpu
+
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x
+    mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+    mpu.memory[labels["FIRE_STATE"]] = 0
+    mpu.memory[labels["DRAGON_DYING"]] = 0
+
+    # Fast scroll speed
+    mpu.memory[labels["SCROLL_SPEED"] + 0] = 0x00
+    mpu.memory[labels["SCROLL_SPEED"] + 1] = 0x03
+
+    # Suppose dragon_hit_pending already accumulated debounce (e.g. 4, just 1 step away from crash at 5)
+    mpu.memory[labels["DRAGON_HIT_PENDING"]] = 4
+
+    # Setup secret in blocking_col8
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL7"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL8"] + y] = 0x04
+
+    # GTIA P0PF register signals collision between Player 0 and Playfield 0 (secret tile)
+    mpu.memory[labels["P0PF"]] = 0x01
+
+    # Run check_dragon_collisions
+    run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+
+    # Dragon must NOT crash! dragon_hit_pending should be reset to 0
+    assert mpu.memory[labels["DRAGON_DYING"]] == 0, "Dragon must not enter dying state on secret pickup"
+    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 0, "dragon_hit_pending must be reset on secret pickup"
 
 
+def test_secret_pickup_in_col7(labels: Dict[str, int], clean_mpu: MPU, project_root: Path):
+    """Verify that secret in column 7 is detected and collected by check_dragon_secret_collision."""
+    mpu = clean_mpu
+
+    level_idx, code, x, y = find_secret_on_screen0(project_root)
+    mpu.memory[labels["CURRENT_LEVEL_IDX"]] = level_idx
+    run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
+    mpu.memory[labels["LEVEL_SCREEN_POS"]] = 1
+    # When incoming_col_idx = x + 1:
+    # vram_col0 = 8 - incoming_col_idx = 8 - (x + 1) = 7 - x.
+    # cur_vram_x = x + (7 - x) = 7.
+    mpu.memory[labels["INCOMING_COL_IDX"]] = x + 1
+    mpu.memory[labels["LEVEL_TAIL_COLS"]] = 0
+    mpu.memory[labels["DRAGON_Y"]] = 34 + y * 16
+    mpu.memory[labels["ANIM_PHASE"] + 1] = 0
+    mpu.memory[labels["FIRE_STATE"]] = 0
+
+    for r in range(11):
+        mpu.memory[labels["BLOCKING_COL7"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL8"] + r] = 0x00
+        mpu.memory[labels["BLOCKING_COL9"] + r] = 0x00
+    mpu.memory[labels["BLOCKING_COL7"] + y] = 0x04
+
+    run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
+    # Note: INIT_FLAME_COLLISION clears screen_obj_destroyed, which is desired.
+    # Ensure blocking_col7+y is still 0x04:
+    mpu.memory[labels["BLOCKING_COL7"] + y] = 0x04
+
+    run_subroutine(mpu, labels["CHECK_DRAGON_SECRET_COLLISION"])
+
+    assert (mpu.p & 0x01) == 0x01, "Secret in Column 7 must be collected with Carry SET"
+    assert mpu.memory[labels["BLOCKING_COL7"] + y] == 0x00, "blocking_col7 must be cleared"
 
