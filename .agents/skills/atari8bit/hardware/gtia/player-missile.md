@@ -133,3 +133,42 @@ Good practice:
 - keep DLI work to loads/stores
 - use `WSYNC` when a change must take effect cleanly on the next scan line
 - centralize ownership if more than one subsystem wants to install DLIs
+
+### When a PMG Register Write Takes Effect
+
+ANTIC fetches an object's PMG data for scanline $N$ during the horizontal blank
+*before* line $N$, so a write to `HPOSP*`, `HPOSM*`, `SIZEP*`, `SIZEM`, `COLPM*` or
+`COLPF3` **during scanline $N$ only shows up from scanline $N+1$**. Writes never land
+on the line they are executed in.
+
+Consequences when a DLI reprograms objects per band/row:
+
+- To make a value active exactly on line $L$, write it during line $L-1$.
+- If a sprite standing *above* line $L$ shares the channel being reprogrammed, its tail
+  rows must keep the old value: commit the row's state as **late as possible** in
+  $L-1$ - never on the DLI trigger line, which is 2-3 scanlines earlier.
+- Symptom of committing too early: the last scanline(s) of the sprite above are drawn
+  with the row's `HPOS`/`SIZEP`, e.g. a single 4x-wide line at its feet (`SIZEP=3`)
+  spanning the band/platform width - sometimes extending past it.
+- Symptom of committing too late: the *first* scanline of the row keeps the previous
+  `HPOS`/`SIZEP` (the band's top line appears displaced).
+
+Typical safe split for a Mode D band (DLI triggered on line $2L-2$):
+
+```asm
+        sta WSYNC       ; end of trigger line (2L-2, scanline 1)
+        sta WSYNC       ; end of pre-line scanline 0
+        ; --- last pre-line scanline: everything that must be live on 2L ---
+        lda #3
+        sta SIZEP1
+        sta SIZEP2
+        sta SIZEP3
+        lda row_hpos1
+        sta HPOSP1
+        ; ...
+        sta WSYNC       ; CPU resumes on cycle 0 of scanline 2L
+```
+
+Keep that batch inside the DMA-aware per-scanline budget (see
+`../../antic/dma-timing.md`); moving work one scanline earlier "to save cycles" changes
+*when* the values appear, which is usually the bug, not the fix.

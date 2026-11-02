@@ -59,6 +59,15 @@ If the `LENGTH` value is not specified, the binary file will be read until the e
 
 The `ICL` pseudo-command allows including an additional source file and assembling it. The included file does not have to be in the same directory as the main assembly file. It is enough to have specified the search paths for **MADS** using the `/i` switch (see [Assembler Switches](../usage.md#assembler-options)).
 
+**Gotcha - the opcode field matters:** the classic pseudo-commands (`ICL`, `INS`, `ORG`, `DTA`) are recognised only in the **opcode field**. Flush left, the first token is parsed as a label and the rest as an instruction, so a column-0 `icl` fails with `ERROR: Illegal instruction` reported *at the `ICL` line* - which makes it look like the included file is broken even though it assembles fine on its own. Always indent them (or give them a label):
+
+```asm
+    icl 'engine/sfx_secret.asm'   ; OK - pseudo-command in the opcode field
+icl 'engine/sfx_secret.asm'       ; ERROR: Illegal instruction (icl parsed as a label)
+```
+
+The dot-directives (`.proc`, `.byte`, `.endp`, ...) are accepted anywhere, which is why both `label .byte 0` and a flush-left `.proc` work.
+
 ### DTA
 
 The `DTA` pseudo-command is used to define data of a specific type. If no type is specified, the `BYTE` (b) type is set by default.

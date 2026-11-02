@@ -385,13 +385,13 @@ def test_dragon_single_frame_glance_forgiven(clean_mpu: MPU, labels: Dict[str, i
     assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 0
 
 
-def test_dragon_no_crash_on_non_blocking_object(clean_mpu: MPU, labels: Dict[str, int]):
-    """Verify that colliding with playfield does NOT trigger crash when object has blocking=false (cell is 0)."""
+def test_dragon_crash_on_any_playfield_object(clean_mpu: MPU, labels: Dict[str, int]):
+    """Verify that colliding with any playfield object triggers crash on 5th frame, as non-blocking objects are removed."""
     mpu = clean_mpu
     run_subroutine(mpu, labels["INIT_LEVEL_SCREENS"])
     run_subroutine(mpu, labels["INIT_FLAME_COLLISION"])
 
-    # Clear cells under dragon in blocking_col8 and blocking_col9 (rows 0..1) simulating non-blocking decor
+    # Even if blocking columns are 0, playfield object collision now triggers crash on 5th frame
     col8_base = labels["BLOCKING_COL8"]
     col9_base = labels["BLOCKING_COL9"]
     for r in range(11):
@@ -401,12 +401,18 @@ def test_dragon_no_crash_on_non_blocking_object(clean_mpu: MPU, labels: Dict[str
     # Dragon at row 0 (y=40)
     mpu.memory[labels["DRAGON_Y"]] = 40
     mpu.memory[labels["DRAGON_DYING"]] = 0
-    mpu.memory[labels["DRAGON_P0PF"]] = 0x01          # PF0 collision with non-blocking decor
 
+    for frame in range(1, 5):
+        mpu.memory[labels["DRAGON_P0PF"]] = 0x01
+        run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
+        assert mpu.memory[labels["DRAGON_DYING"]] == 0
+        assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == frame
+
+    # 5th frame triggers crash
+    mpu.memory[labels["DRAGON_P0PF"]] = 0x01
     run_subroutine(mpu, labels["CHECK_DRAGON_COLLISIONS"])
-
-    # Dragon must NOT crash! (remains 0, alive)
-    assert mpu.memory[labels["DRAGON_DYING"]] == 0
+    assert mpu.memory[labels["DRAGON_DYING"]] == 3
+    assert mpu.memory[labels["DRAGON_HIT_PENDING"]] == 0
 
 
 def test_dragon_no_crash_on_destroyed_blocking_object(clean_mpu: MPU, labels: Dict[str, int], project_root: Path):

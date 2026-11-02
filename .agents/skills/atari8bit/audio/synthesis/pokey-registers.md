@@ -83,6 +83,11 @@ $78   both pairs joined, both at 1.789 77 MHz
 $60   CH1 + CH3 at 1.789 77 MHz (dual-channel PDM / filter tricks)
 ```
 
+`SIOV` / disk / cassette / RS-232 activity overwrites `AUDCTL` with `$28` and silences
+every voice, and the OS never restores the previous value. Re-assert presets such as
+`$50`, `$78` or `$60` (plus `AUDC3`/`AUDC4`) after any serial-bus operation — see
+`hardware/pokey.md` §5.2.1.
+
 ---
 
 ## Timer and Synch Registers

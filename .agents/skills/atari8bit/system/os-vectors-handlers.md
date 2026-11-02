@@ -64,6 +64,7 @@ Use immediate VBI only for short hardware-critical work. Put ordinary frame upda
 
 | Entry | Address | Use |
 |---|---|---|
+| `DSKINV` | `$E453` | Resident disk handler: fills `DDEVIC`/`DTIMLO`/`DSTATS`/`DBYT`, then calls `SIOV` |
 | `CIOV` | `$E456` | OS ROM entry for CIO command dispatch |
 | `SIOV` | `$E459` | OS ROM entry for Serial I/O via the DCB |
 | `SETVBV` | `$E45C` | Install immediate or deferred VBI vector |

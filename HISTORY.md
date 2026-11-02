@@ -2,6 +2,53 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-11-02] - Usunięcie false positive kolizji z przeszkodami przy zbieraniu przedmiotów podczas szybkiego lotu
+- **Silnik gry i detekcja kolizji**:
+  - [engine/flame_collision.asm](engine/flame_collision.asm):
+    - Rozszerzono detekcję kolizji ze znajdźkami (sekrety i obiekty interaktywne) o kolumnę 7 (`blocking_col7`, `fc_dx7`, `fc_has_col7`), ponieważ przy przesunięciu `HSCROL > 0` (np. przy dynamicznym i szybkim przewijaniu) sprite smoka (kolory zegarowe 64..71) nakłada się na kolumnę 7 (zegary 61..66) w rejestrze sprzętowym `P0PF`.
+    - Zainicjalizowano i włączono buforowanie kolumny 7 w `init_blocking_cols`, `shift_blocking_cols` oraz czyszczenie w `erase_cur_object`.
+    - Naprawiono kontrakt zwracania flagi Carry w `check_dragon_secret_collision`: flaga Carry jest ustawiana (`SEC`) wyłącznie wtedy, gdy faktycznie zebrano i skasowano obiekt (`fc_secret_collected != 0`), a w przeciwnym razie jest czyszczona (`CLC`).
+  - [scenes/game.asm](scenes/game.asm):
+    - W procedurze `check_dragon_collisions` dodano sprawdzanie flagi Carry po wywołaniu `check_dragon_secret_collision`: przy udanym zebraniu przedmiotu następuje wyzerowanie licznika debounce `dragon_hit_pending = 0` i natychmiastowe przejście do `@check_pf3`, eliminując fałszywą rejestrację kolizji ze ścianą/przeszkodą i niepożądaną śmierć smoka przy szybkim locie.
+- **Narzędzia pomocnicze i testy**:
+  - [sprite_studio/image_import.py](sprite_studio/image_import.py): Ustawiono domyślny `color_mode: int | None = 2` w `import_raster_frames`, przywracając zgodność z testami importu obrazów rastrowych w trybie monochromatycznym.
+  - [tests/test_secret_collision.py](tests/test_secret_collision.py): Zaktualizowano `test_fire_breathing_still_collects_secrets` o dynamiczne pobieranie współrzędnych sekretu przez `find_secret_on_screen0`, dodano test szybkiego lotu smoka `test_fast_scroll_secret_pickup_no_crash` oraz test zbierania sekretów w kolumnie 7 `test_secret_pickup_in_col7`.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` oraz generowanie i walidacja mapy pamięci bez nakładania segmentów.
+  - `pytest`: 213 testów zakończonych sukcesem (100% passed).
+
+## [2026-11-02] - Uporządkowanie reguł agenta (.agents) względem rzeczywistego projektu
+- **Kontekst i architektura**:
+  - [.agents/AGENTS.md](.agents/AGENTS.md): Przepisano dokument — usunięto nieistniejące odwołania (`ARCHITECTURE.md`, `MEMORY_USAGE.md`, katalogi `lib/`, `assets/`, `data/`, skrypt `check_memory.py`), dodano faktyczny graf celów `make` (`all` = `xex` + `check_memory`, testy osobno przez `make test`), realne drzewo katalogów (m.in. `world/`, `chars/`, `sprites/`, `texts/`, `fonts/`, `music/`, trzy edytory PySide6), tabelę generatorów SSOT → `gen/`, rzeczywistą pętlę główną (`RTCLOK+2` → `Audio_Update` → `update_input` → `dispatch_state`), obsługę przerwań (`VDSLST`, `SETVBV` typ 7, `NMIEN`) oraz rzeczywisty wzorzec testów py65 (`load_xex` + `gen/jabberwocky.lab`).
+  - [.agents/AGENTS.md](.agents/AGENTS.md): Uzupełniono tabelę umiejętności do ośmiu pozycji (`altirra-bridge`, `py65`, `done`, `git-push` obok wcześniejszych) wraz z informacją, że `done`/`git-push` zastąpiły usunięte `.agents/workflows/*.md`.
+- **Reguły**:
+  - [.agents/rules/01-global-rules.md](.agents/rules/01-global-rules.md): Poprawiono nazwę binarki (`jabberwocky.xex` zamiast `call_of_the_wintermon.xex`), zastąpiono nieegzekwowalną regułę „manifestu” jawną listą plików SSOT, dodano zakaz edycji artefaktów (`gen/`, `*.xex`, `docs/memory_map.*`) oraz wymóg weryfikacji `make all` + `make test`.
+  - [.agents/rules/02-asm-6502-rules.md](.agents/rules/02-asm-6502-rules.md): Dopisano reguły projektu (equaty wyłącznie z `hardware.asm`, deklaracje ZP w `zeropage.asm`, kolejność `org` z wyjątkiem stubów `INITAD`/`RUNAD`, obszary rezerwowane w runtime: PMG `$2000-$27FF`, bufor kołowy `$6000-$641F`, pasek statusu `$6420-$646F`) i złagodzono wymóg liczenia cykli do budżetu cyklowego dla procedur krytycznych.
+  - [.agents/rules/03-python-tools-rules.md](.agents/rules/03-python-tools-rules.md): Uszczegółowiono stos (pydantic v2, `argparse`, deterministyczne wyjście `gen/` z nagłówkiem AUTO-GENERATED), dodano sekcję o edytorach `*_studio/` i testach GUI bez `pytest-qt`.
+  - [.agents/rules/04-history-rules.md](.agents/rules/04-history-rules.md): Doprecyzowano język wpisów (polski), wymóg sekcji `**Weryfikacja**` z realnymi wynikami oraz powiązanie z umiejętnością `done`.
+  - [.agents/rules/05-tests.md](.agents/rules/05-tests.md): Zastąpiono nieistniejące pliki (`manifest.yaml`, `manifest.json`, `scenes/*.json`, `definitions.json`) rzeczywistymi źródłami SSOT i dodano kontrakt harnessu py65 (`parse_labels`, `load_xex`, `clean_mpu`, `run_subroutine`).
+  - [.agents/rules/06-altirra-sdl-rules.md](.agents/rules/06-altirra-sdl-rules.md): Poprawiono nazwę binarki, dodano wymagany `PYTHONPATH` do SDK (`AltirraBridge/sdk/python` — pakiet nie jest instalowany w `.venv`), potwierdzone wobec `client.py` wywołania (`from_token_file`, `boot`, `frame`, `regs`, `peek`, `joy`, `key`, `screenshot`) i wskazanie umiejętności `altirra-bridge` jako źródła protokołu.
+  - [.agents/rules/render.asm](.agents/rules/render.asm): Usunięto plik — nie jest regułą (brak frontmattera), a wszystkie jego symbole (`GAME_VRAM`, `tileset_*`, `flip_byte_2bpp`) nie występują w projekcie.
+- **Porządki towarzyszące**:
+  - [.geminiignore](.geminiignore): Poprawiono nagłówek (`.geminiignore — Jabberwocky` zamiast `.antigravityignore — Dziki Zgon`).
+  - [README.md](README.md): Usunięto nieaktualną tabelę mapy pamięci (m.in. `$080B-$2009`, `$6000-$620F`, `$6300-$634F`, `$6400-$660F`, `$B000-$BB25`) na rzecz zwięzłych granic i odwołania do generowanego `docs/memory_map.txt`; usunięto zaszyty licznik testów.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` oraz walidacja mapy pamięci.
+  - `pytest`: 209 testów zakończonych sukcesem; 2 testy `tests/test_image_import.py` (fit-mode) pozostają czerwone — niezwiązane z tą zmianą, wynikające z nieukończonych modyfikacji `sprite_studio/`.
+  - Wszystkie 55 ścieżek przywoływanych w `AGENTS.md` i regułach zweryfikowano jako istniejące.
+
+## [2026-11-02] - Usunięcie obiektów nieblokujących ze screenów oraz obsługa kolizji jako katastrofy
+- **Narzędzia i prekompilacja danych**:
+  - Utworzono narzędzie [scripts/remove_non_blocking_objects.py](scripts/remove_non_blocking_objects.py) do automatycznego usuwania wszystkich obiektów dekoracyjnych/nieblokujących (`flags.blocking == False`, `interactive == False`, `secret == False`) ze wszystkich 35 plansz gry w [world/project.yaml](world/project.yaml). Usunięto łącznie 400 instancji obiektów tła (krzaki, woda, bagna, krzyże, pomosty).
+  - Zachowano obiekty typu sekret oraz interaktywne NPC (144 instancje).
+- **Silnik gry i mechanika kolizji**:
+  - [scenes/game.asm](scenes/game.asm): W procedurze `check_dragon_collisions` usunięto warunek `jsr check_dragon_blocking_collision` i odgałęzienie `bcc @check_pf3` zezwalające na bezkolizyjny przelot przez obiekty nieblokujące. Odtąd każde potwierdzone zderzenie z obiektem lub ścianą na warstwach PF0–PF2 (po upływie 5 klatek debouncingu, przy braku ziania ogniem) bezpośrednio wywołuje `start_dragon_crash`.
+- **Testy automatyczne**:
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py): Zaktualizowano test `test_dragon_no_crash_on_non_blocking_object` do `test_dragon_crash_on_any_playfield_object`, weryfikujący kraksę w 5. klatce przy kontakcie z dowolnym obiektem playfield.
+- **Weryfikacja**:
+  - `make all`: pomyślna kompilacja zasobów, asemblacja `jabberwocky.xex` oraz walidacja mapy pamięci.
+  - `pytest`: 211 testów zakończonych sukcesem (100% passed).
+
 ## [2026-10-18] - Usprawnienia dopasowania i wysokości klatek przy imporcie obrazów
 - **Moduł importu i binaryzacji**:
   - [sprite_studio/image_import.py](sprite_studio/image_import.py): Dodano obsługę trybów dopasowania `fit_mode` (`"fit"` - zachowanie proporcji z czystym marginesem, `"stretch"` - rozciągnięcie do pełnego $8 \times H$ bez marginesów, `"crop"` - zoom i obcięcie marginesów bocznych). Naprawiono wypełnienie letterboxu (komórki poza faktycznym obszarem obrazu bezwzględnie otrzymują `'0'`, eliminując niepożądane pasy po inwersji).

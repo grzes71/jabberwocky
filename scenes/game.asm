@@ -1511,7 +1511,14 @@ update_energy_bar
 @pf_hit_detected
     ; Check for secret object collection first! (immediate collection on touch)
     jsr check_dragon_secret_collision
+    bcc @not_secret_pickup
 
+    ; Secret object collected! Reset collision debounce counter and bypass crash test
+    lda #0
+    sta dragon_hit_pending
+    jmp @check_pf3
+
+@not_secret_pickup
     ; Only check blocking collision if collision persists for at least 5 consecutive frames
     lda dragon_hit_pending
     cmp #DRAGON_COLLISION_DEBOUNCE_FRAMES
@@ -1523,11 +1530,12 @@ update_energy_bar
     bcc @check_pf3
 
 @check_blocking_obstacle
-    ; Only crash if collision was with an active BLOCKING object (blocking == true)
-    jsr check_dragon_blocking_collision
-    bcc @check_pf3              ; Non-blocking object (or clear air) -> do not crash!
+    ; If dragon is breathing fire (fire_state != 0), dragon is invincible to obstacle collision
+    lda fire_state
+    bne @check_pf3
 
-    ; Wall/obstacle collision confirmed on 5th consecutive frame: crash sound and death!
+    ; Object/wall collision confirmed on 5th consecutive frame: crash sound and death!
+    ; All objects are now blocking obstacles; collision with any object ends in catastrophe.
     lda #0
     sta dragon_hit_pending
     sta dragon_recharging

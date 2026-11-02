@@ -2,7 +2,7 @@
 
 ## §2  Shadow-vs-Hardware Register Gotcha
 
-The OS maintains shadow registers in page 2 (e.g. `PCOLR0=$02C0`, `COLOR0=$02C4`, `GPRIOR=$022E`). Every VBI the OS copies every shadow register to its corresponding hardware register. Changes to shadow registers *during a DLI* are NOT reflected in hardware until the next VBI.
+The OS maintains shadow registers in page 2 (e.g. `PCOLR0=$02C0`, `COLOR0=$02C4`, `GPRIOR=$026F`). Every VBI the OS copies every shadow register to its corresponding hardware register. Changes to shadow registers *during a DLI* are NOT reflected in hardware until the next VBI.
 
 **Rule:** write to `$D0xx` hardware registers in DLI; write to `$02xx` shadow registers only in VBI or main code.
 
@@ -49,6 +49,6 @@ Use this for MCP/HIP/RIP-style colour timing where a normal DLI cannot hit the e
 | `COLOR2 = $02C6` | `COLPF2 = $D018` | |
 | `COLOR3 = $02C7` | `COLPF3 = $D019` | |
 | `COLOR4 = $02C8` | `COLBK = $D01A` | background / border |
-| `GPRIOR = $022E` | `PRIOR = $D01B` | P/M priority bits |
+| `GPRIOR = $026F` | `PRIOR = $D01B` | P/M priority bits |
 | `CHACT = $02F3` | `CHACTL = $D401` | character mode control |
 | `CHBAS = $02F4` | `CHBASE = $D409` | character set base |

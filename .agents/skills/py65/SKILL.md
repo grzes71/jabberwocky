@@ -94,6 +94,9 @@ mpu = MPU(memory=om)
 - Compare against a Python reference model for the same inputs; parametrize over edge values (0, 1, 127, 128, 255, wraparound, page-cross).
 - Assert both outputs **and** non-clobbered memory/registers (guard bytes around buffers).
 - Always bound execution (`max_steps`) and report PC in failure messages.
+- Cycle-budget a DLI phase by stepping until the next `STA WSYNC` and measuring `processorCycles` (see `test_dli_faza_a_cycle_budget_and_faza_b_iter0`). Assert **each** phase separately against the mode/DMA budget and assert that the expected `WSYNC`s are still present, in order: a phase that grew silently is exactly what slips the whole kernel by one scanline.
+- When a routine's contract is "Input: A = id", assert the id actually reached the tables: run it for two different ids and compare against each id's own data. A routine that always loads id 0 (e.g. because a loop clobbered A) still passes a single-id test.
+
 - Don't test generated data content in `gen/` by hand-edited values — read labels from the `.lab` so tests survive relayout.
 - Missing symbol ⇒ build is stale: keep a "symbols exist" test (see `test_flame_collision_symbols_exist`).
 

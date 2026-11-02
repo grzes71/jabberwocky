@@ -1,6 +1,9 @@
 ---
-description: Create or checkout branch (optional), stage, commit using Conventional Commits in English, and push to remote repository
+name: git-push
+description: Create or checkout branch (optional), stage, commit using Conventional Commits in English, and push to remote repository.
 ---
+
+# Git Push Procedure
 
 Execute the procedure to commit and push changes to the remote repository:
 
@@ -44,3 +47,4 @@ Execute the procedure to commit and push changes to the remote repository:
 
 6. **Confirmation**:
    Confirm successful execution to the user, specifying the target branch, commit hash, and commit message.
+

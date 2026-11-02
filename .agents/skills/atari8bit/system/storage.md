@@ -6,7 +6,7 @@ description: >-
 
 # 07 — Disk Drives & File I/O
 
-> **Key items:** SIO DCB fields; Status byte C/E/A/N; DDEVIC/DUNIT/DCMD; IOCB $0340
+> **Key items:** SIO DCB fields; Status byte C/E/A/N; DDEVIC/DUNIT/DCOMND; IOCB $0340
 > **Scope:** SIO frame format, disk drive commands, XEX/ATR binary formats, IOCB, SpartaDOS X relocatable, xBIOS
 
 ---
@@ -256,12 +256,12 @@ boot_hdr
         sta $d301               ; disable BASIC / map RAM on XL/XE
         lda #1
         sta $0301               ; DUNIT = drive 1
-        lda #'R'
-        sta $0302               ; DCMD = read
+        lda #$52                ; DCOMND = GET SECTOR
+        sta $0302
         mwa #main_start $0304   ; DBUF
         mwa #main_sector $030a  ; DAUX sector number
 
-load    jsr $e453               ; DSKINV ($E459 = SIOV)
+load    jsr $e453              ; DSKINV — resident disk handler (SIOV is $E459)
         bmi error               ; negative status in Y
         adw $0304 #$80          ; next 128-byte buffer
         inw $030a               ; next sector
@@ -273,6 +273,16 @@ error   jmp $e477               ; COLDSV — cold start (reboot)
 Use this only for ATR/boot-disk workflows. DOS file APIs are not active yet,
 and the first three boot sectors are normally 128 bytes even on
 enhanced-density disks.
+
+**`DSKINV` vs `SIOV` — different contracts.** `DSKINV` (`$E453`) is the resident disk
+handler: it sets `DDEVIC` (`$31`), `DTIMLO` (7 s, or `DSKTIM` for FORMAT), `DSTATS` and
+`DBYTLO/HI` (from `DSCTLN`) itself, then calls `SIOV`. The caller only supplies
+`DUNIT`, `DCOMND`, `DBUFLO/H` and `DAUX1/2`. `SIOV` (`$E459`) is the raw serial-bus
+layer: it needs the complete DCB, including `DDEVIC`, `DTIMLO`, `DSTATS` (`$40` = computer
+reads, `$80` = computer writes) and `DBYTLO/HI`. Both return the status byte in
+`DSTATS ($0303)` and in `Y`; a negative value (`N=1`) is an error. Do not mix the two — a
+`SIOV` call given a DCB prepared for `DSKINV` transfers nothing, because `SIOV` never
+fills in `DDEVIC`, `DSTATS` or `DBYT`.
 
 Dual-address loader stub:
 
@@ -323,9 +333,10 @@ conservative software delays, not proof that all devices can collapse timing.
 
 ## §7.11 DSKINV Disk-Driver Entry
 
-`DSKINV` is the OS disk-driver entry at `$E453`. It fills standard DCB fields
-for basic disk operations and then uses `SIOV ($E459)`. Status is returned in
-`DSTATS ($0303)` and in `Y`; negative status (`N=1`) means error.
+`DSKINV` is the OS disk-driver entry at `$E453`. It sets `DDEVIC` (`$31`), `DTIMLO`
+and `DSTATS`, copies the sector size from `DSCTLN` into `DBYTLO/HI`, then calls
+`SIOV ($E459)`. The caller supplies `DUNIT`, `DCOMND`, `DBUFLO/H` and `DAUX1/2`.
+Status is returned in `DSTATS ($0303)` and in `Y`; negative status (`N=1`) means error.
 
 The disk driver uses:
 
