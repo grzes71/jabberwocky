@@ -1,0 +1,71 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<footer class="bg-fantasy-surface border-t border-fantasy-border mt-16 text-fantasy-muted text-xs">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      
+      <!-- Brand & Carroll Quote -->
+      <div class="md:col-span-2 space-y-4">
+        <div class="flex items-center space-x-2">
+          <span class="font-cinzel text-lg font-bold text-fantasy-gold tracking-widest">JABBERWOCKY</span>
+          <span class="text-fantasy-flame text-xs">[ATARI 8-BIT]</span>
+        </div>
+        <p class="text-sm italic text-fantasy-text/80 font-serif border-l-2 border-fantasy-gold/40 pl-3">
+          &ldquo;'Twas brillig, and the slithy toves<br />
+          Did gyre and gimble in the wabe;<br />
+          All mimsy were the borogoves,<br />
+          And the mome raths outgrabe.&rdquo;
+        </p>
+        <p class="text-xs text-fantasy-muted">
+          A retro Atari 800XL / 65XE action game written in MOS 6502 assembly with ANTIC Mode 5 multicolor scrolling and 4-channel POKEY audio.
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h4 class="font-cinzel text-sm font-semibold uppercase text-fantasy-gold mb-3 tracking-wider">Exploration</h4>
+        <ul class="space-y-1.5">
+          <li><a href={`${base}/game`} class="hover:text-fantasy-gold transition-colors">Game Mechanics & Physics</a></li>
+          <li><a href={`${base}/world`} class="hover:text-fantasy-gold transition-colors">Interactive World Explorer</a></li>
+          <li><a href={`${base}/objects`} class="hover:text-fantasy-gold transition-colors">Catalog of 168 Objects</a></li>
+          <li><a href={`${base}/gallery`} class="hover:text-fantasy-gold transition-colors">Dragon Sprites & Art</a></li>
+          <li><a href={`${base}/music`} class="hover:text-fantasy-gold transition-colors">POKEY & CMC Music</a></li>
+        </ul>
+      </div>
+
+      <!-- Engineering & Technical -->
+      <div>
+        <h4 class="font-cinzel text-sm font-semibold uppercase text-fantasy-gold mb-3 tracking-wider">Engineering</h4>
+        <ul class="space-y-1.5">
+          <li><a href={`${base}/memory`} class="hover:text-fantasy-gold transition-colors">Memory Map & Banking</a></li>
+          <li><a href={`${base}/technical`} class="hover:text-fantasy-gold transition-colors">ANTIC 5 & Ring Buffer</a></li>
+          <li><a href={`${base}/releases`} class="hover:text-fantasy-gold transition-colors">Releases & Downloads</a></li>
+          <li><a href={`${base}/history`} class="hover:text-fantasy-gold transition-colors">Changelog & Architecture</a></li>
+          <li>
+            <a href="https://github.com/grzes71/jabberwocky" target="_blank" rel="noopener noreferrer" class="text-fantasy-flame hover:underline flex items-center space-x-1">
+              <span>GitHub Repository</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bottom Credits -->
+    <div class="border-t border-fantasy-border/60 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs space-y-2 sm:space-y-0">
+      <div>
+        &copy; {new Date().getFullYear()} Jabberwocky Project. Music by <strong>Andrzej "Andy" Kidaj</strong> (2003). Code & Art by <strong>grzes71</strong>.
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-fantasy-phosphor">MOS 6502 PAL 50Hz</span>
+        <span class="text-fantasy-border">•</span>
+        <span>Static Site by Astro & Tailwind</span>
+      </div>
+    </div>
+
+  </div>
+</footer>
+

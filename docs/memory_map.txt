@@ -46,11 +46,11 @@ $9000 - $9921       2338   MUSIC_DATA_ADDR      code
 [ FREE SPACE: $9922 - $99FF (222 bytes) ]
 $9A00 - $A155       1878   CMC_PLAYER_ADDR      code
 [ FREE SPACE: $A156 - $AFFF (3754 bytes) ]
-$B000 - $BEB4       3765   VRAM                 data
-[ FREE SPACE: $BEB5 - $BFFF (331 bytes) ]
+$B000 - $BEB5       3766   VRAM                 data
+[ FREE SPACE: $BEB6 - $BFFF (330 bytes) ]
 ================================================================================
-Total RAM Used:   35297 bytes
-Total Free RAM:   11807 bytes (25.1% free headroom)
+Total RAM Used:   35298 bytes
+Total Free RAM:   11806 bytes (25.1% free headroom)
 RAM Boundaries:  $0800 - $BFFF (47104 bytes total)
 ================================================================================
 Status: VALIDATION PASSED (No overlaps detected, ZP boundary respected)

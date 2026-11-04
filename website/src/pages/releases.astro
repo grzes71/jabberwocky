@@ -1,0 +1,140 @@
+---
+import Layout from '../layouts/Layout.astro';
+import releasesData from '../data/releases.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const latest = releasesData.releases[0];
+const olderReleases = releasesData.releases.slice(1);
+---
+
+<Layout title="Releases & Downloads — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Releases</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Official Releases & Binaries
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        Download verified Atari 8-bit executables (<code class="text-fantasy-gold">jabberwocky.xex</code>) 
+        and review release notes. All releases are tracked in real Git tags and published on GitHub Releases.
+      </p>
+    </div>
+
+    <!-- Latest Release Featured Banner -->
+    {latest && (
+      <section class="p-6 sm:p-8 rounded-2xl bg-fantasy-surface border-2 border-fantasy-gold/60 shadow-fantasy-gold space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 text-xs font-bold uppercase rounded bg-fantasy-flame text-black">
+                LATEST RELEASE
+              </span>
+              <span class="text-xs font-mono text-fantasy-gold">
+                Published on {latest.published_at.slice(0, 10)}
+              </span>
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-bold font-cinzel text-white">
+              {latest.name}
+            </h2>
+          </div>
+
+          <!-- Download Button -->
+          <div class="flex items-center space-x-3">
+            <a
+              href={latest.download_url}
+              class="inline-flex items-center space-x-3 px-6 py-3.5 text-sm font-bold uppercase tracking-wider rounded bg-fantasy-flame text-black hover:bg-yellow-400 transition-all shadow-fantasy-flame transform hover:-translate-y-0.5"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              <span>Download {latest.asset_name} ({(latest.asset_size / 1024).toFixed(1)} KB)</span>
+            </a>
+            <a
+              href={latest.html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="px-4 py-3 text-xs font-bold uppercase rounded bg-fantasy-surfaceLight text-fantasy-muted hover:text-white border border-fantasy-border hover:border-fantasy-gold transition-colors"
+            >
+              View on GitHub &rarr;
+            </a>
+          </div>
+        </div>
+
+        <!-- Latest Changelog -->
+        <div class="pt-4 border-t border-fantasy-border/60">
+          <h3 class="text-xs font-mono font-bold uppercase text-fantasy-gold mb-3">Changelog & Notes:</h3>
+          <div class="bg-black/60 p-4 rounded-lg border border-fantasy-border font-mono text-xs text-fantasy-text/90 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
+            {latest.changelog || 'No detailed changelog body provided for this release.'}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Release Archive (All previous releases) -->
+    <section class="space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-3 flex items-center justify-between">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Release Archive</h2>
+        <span class="text-xs font-mono text-fantasy-gold">{releasesData.total_releases} Total Versions</span>
+      </div>
+
+      <div class="space-y-4">
+        {olderReleases.map((rel) => (
+          <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border hover:border-fantasy-borderLight transition-all space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center space-x-2">
+                  <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono text-xs font-bold border border-fantasy-border">
+                    {rel.tag_name}
+                  </span>
+                  <span class="text-xs text-fantasy-muted font-mono">
+                    {rel.published_at.slice(0, 10)}
+                  </span>
+                </div>
+                <h3 class="text-lg font-bold font-cinzel text-white">{rel.name}</h3>
+              </div>
+
+              <!-- Download Button -->
+              <div class="flex items-center space-x-2">
+                <a
+                  href={rel.download_url}
+                  class="px-3.5 py-1.5 rounded bg-fantasy-surfaceLight text-fantasy-gold hover:bg-fantasy-gold/20 text-xs font-mono font-bold border border-fantasy-gold/40 transition-colors flex items-center space-x-1.5"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                  <span>{rel.asset_name} ({(rel.asset_size / 1024).toFixed(1)} KB)</span>
+                </a>
+                <a
+                  href={rel.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="p-1.5 text-fantasy-muted hover:text-white"
+                  title="View GitHub Release"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Changelog Body -->
+            {rel.changelog && (
+              <div class="p-3 bg-black/40 rounded border border-fantasy-border/40 font-mono text-[11px] text-fantasy-muted whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto">
+                {rel.changelog}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+  </div>
+</Layout>
+

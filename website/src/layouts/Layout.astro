@@ -1,0 +1,94 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Jabberwocky — Official Atari 8-bit Game Portal",
+  description = "Official portal for Jabberwocky, a dark fantasy action-adventure game for Atari 800XL / 65XE inspired by Lewis Carroll."
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href={`${base}/cover.png`} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${base}/cover.png`} />
+    <meta property="og:type" content="website" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style is:global>
+      :root {
+        --color-bg: #070a08;
+        --color-surface: #0d130f;
+        --color-gold: #d4af37;
+        --color-flame: #ff7700;
+        --color-phosphor: #00e676;
+      }
+      body {
+        background-color: #070a08;
+        color: #e8efe9;
+        font-family: 'Share Tech Mono', ui-monospace, monospace;
+        background-image: 
+          radial-gradient(ellipse at 50% 0%, rgba(20, 40, 28, 0.3) 0%, transparent 60%),
+          radial-gradient(circle at 80% 20%, rgba(255, 119, 0, 0.05) 0%, transparent 40%),
+          radial-gradient(circle at 20% 80%, rgba(179, 102, 255, 0.04) 0%, transparent 40%);
+        background-attachment: fixed;
+      }
+      h1, h2, h3, .font-cinzel {
+        font-family: 'Cinzel', Georgia, serif;
+      }
+      /* Subtle scanline overlay */
+      .scanlines {
+        background: linear-gradient(
+          to bottom,
+          rgba(255,255,255,0),
+          rgba(255,255,255,0) 50%,
+          rgba(0, 0, 0, 0.25) 50%,
+          rgba(0, 0, 0, 0.25)
+        );
+        background-size: 100% 4px;
+      }
+      /* Custom scrollbars */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0a0e0c;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1c2c22;
+        border-radius: 4px;
+        border: 1px solid #284032;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #d4af37;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col bg-fantasy-bg text-fantasy-text selection:bg-fantasy-flame selection:text-black">
+    <div class="fixed inset-0 pointer-events-none scanlines z-50 opacity-40"></div>
+    <Header />
+    <main class="flex-grow">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+

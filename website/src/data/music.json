@@ -1,0 +1,72 @@
+{
+  "sap_metadata": {
+    "author": "Andrzej Kidaj (Andy)",
+    "name": "Yamaha",
+    "year": "2003",
+    "type": "C",
+    "total_songs": 3,
+    "time_str": "02:47.86",
+    "sap_music_addr": "$8400",
+    "sap_player_addr": "$0500",
+    "file_size_bytes": 4520,
+    "payload_offset": 161
+  },
+  "subsongs": [
+    {
+      "id": 0,
+      "name": "Game Over / Reserve",
+      "duration": "02:34",
+      "symbol": "MUSIC_GAME_OVER",
+      "description": "Melancholic theme played during Game Over and High Score display"
+    },
+    {
+      "id": 1,
+      "name": "Gameplay",
+      "duration": "04:45",
+      "symbol": "MUSIC_GAMEPLAY",
+      "description": "Fast, driving action soundtrack during labyrinth dragon flight"
+    },
+    {
+      "id": 2,
+      "name": "Title Screen",
+      "duration": "02:47",
+      "symbol": "MUSIC_TITLE",
+      "description": "Atmospheric intro theme accompanying the title screen and Lewis Carroll poem"
+    }
+  ],
+  "engine_architecture": {
+    "sound_generator": "POKEY (4 audio channels)",
+    "music_engine": "Chaos Music Composer (CMC) relocated driver",
+    "music_data_address": "$9000–$9921",
+    "cmc_player_address": "$9A00–$A155",
+    "update_frequency": "50 Hz PAL (called every VBLANK tick via Audio_Update)",
+    "sfx_coexistence": "Procedural SFX state machine on POKEY channels 3 and 4 smoothly priority-mixes with background CMC music"
+  },
+  "sfx_catalog": [
+    {
+      "symbol": "SFX_FIRE",
+      "description": "Continuous flame hiss while breathing fire",
+      "channel": "POKEY Ch 4"
+    },
+    {
+      "symbol": "SFX_CRASH",
+      "description": "Deep concussive noise on obstacle or wall crash",
+      "channel": "POKEY Ch 3 & 4"
+    },
+    {
+      "symbol": "SFX_SECRET",
+      "description": "Two-tone bright chime when collecting a secret item",
+      "channel": "POKEY Ch 3"
+    },
+    {
+      "symbol": "SFX_BONUS",
+      "description": "Rapid rhythmic click tallying energy bonus score",
+      "channel": "POKEY Ch 4"
+    },
+    {
+      "symbol": "SFX_DEATH",
+      "description": "Short descending melodic fanfare upon losing a life",
+      "channel": "POKEY Ch 3 & 4"
+    }
+  ]
+}

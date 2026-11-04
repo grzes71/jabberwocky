@@ -1,0 +1,390 @@
+---
+import Layout from '../layouts/Layout.astro';
+import worldData from '../data/world.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="World Explorer — Jabberwocky Labyrinths & Screens">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>World Explorer</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        World Explorer
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        Interactive visualization of all 5 labyrinths and 35 screens compiled directly from 
+        <code class="text-fantasy-gold">world/project.yaml</code> and <code class="text-fantasy-gold">world/colors.yaml</code>. 
+        Inspect actual 40×11 ANTIC 5 tile placements, packed coordinates, solid collision boundaries, and secret locations.
+      </p>
+    </div>
+
+    <!-- Palette Bar -->
+    <div class="bg-fantasy-surface p-4 rounded-xl border border-fantasy-border flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div class="flex items-center space-x-2">
+        <span class="text-fantasy-gold font-bold uppercase tracking-wider">ANTIC 5 Playfield Palette:</span>
+        <span class="text-fantasy-muted">(from colors.yaml)</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        {Object.entries(worldData.palette).map(([name, col]) => (
+          <div class="flex items-center space-x-2 px-2.5 py-1 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+            <span class="w-3.5 h-3.5 rounded border border-white/20 shadow-sm" style={`background-color: ${col.hex};`}></span>
+            <span class="font-mono text-fantasy-text">{name}</span>
+            <span class="text-fantasy-muted text-[10px] font-mono">(${col.atari.toString(16).toUpperCase().padStart(2, '0')})</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Explorer App Container -->
+    <div class="space-y-6" id="world-explorer-root">
+      
+      <!-- Labyrinth Selection Tabs -->
+      <div class="flex flex-wrap gap-2 border-b border-fantasy-border pb-4">
+        {worldData.labyrinths.map((lab, idx) => (
+          <button
+            type="button"
+            data-lab-id={lab.id}
+            class={`lab-tab px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${
+              idx === 0
+                ? 'bg-fantasy-gold/20 text-fantasy-gold border-fantasy-gold shadow-fantasy-gold'
+                : 'bg-fantasy-surface text-fantasy-muted border-fantasy-border hover:text-white hover:bg-fantasy-surfaceLight'
+            }`}
+          >
+            {lab.name}
+          </button>
+        ))}
+      </div>
+
+      <!-- Screen Selector Strip -->
+      <div class="bg-fantasy-surface p-4 rounded-xl border border-fantasy-border space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-fantasy-gold uppercase font-bold tracking-wider">Labyrinth Screens Sequence:</span>
+          <span id="current-screen-badge" class="text-fantasy-phosphor font-mono">Screen: FOREST_01 (1 / 9)</span>
+        </div>
+        <div id="screen-buttons-container" class="flex flex-wrap gap-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Main Playfield Grid & Inspector -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Screen Grid View (40 cols x 11 rows) -->
+        <div class="lg:col-span-8 bg-fantasy-surface p-4 sm:p-6 rounded-xl border border-fantasy-border space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-white uppercase tracking-wider" id="screen-title">FOREST_01</span>
+              <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-muted" id="screen-obj-count">18 Objects</span>
+            </div>
+            
+            <!-- Filter Layer Toggles -->
+            <div class="flex items-center space-x-1.5 bg-fantasy-surfaceLight p-1 rounded-lg border border-fantasy-border">
+              <button type="button" data-layer="all" class="layer-btn px-2.5 py-1 rounded text-[11px] font-bold bg-fantasy-gold text-black">
+                All
+              </button>
+              <button type="button" data-layer="blocking" class="layer-btn px-2.5 py-1 rounded text-[11px] text-fantasy-muted hover:text-white">
+                Solid Barriers
+              </button>
+              <button type="button" data-layer="secrets" class="layer-btn px-2.5 py-1 rounded text-[11px] text-fantasy-muted hover:text-white">
+                Secrets
+              </button>
+              <button type="button" data-layer="interactive" class="layer-btn px-2.5 py-1 rounded text-[11px] text-fantasy-muted hover:text-white">
+                Interactive
+              </button>
+            </div>
+          </div>
+
+          <!-- The 40x11 Grid Canvas Wrapper -->
+          <div class="relative overflow-x-auto border border-fantasy-border rounded-lg bg-black p-2">
+            <div
+              id="playfield-grid"
+              class="grid select-none"
+              style="grid-template-columns: repeat(40, minmax(14px, 1fr)); width: 100%; min-width: 600px; aspect-ratio: 40/11;"
+            >
+              <!-- 440 grid cells populated by JS -->
+            </div>
+          </div>
+
+          <!-- Coordinate Readout & Hint -->
+          <div class="flex items-center justify-between text-[11px] text-fantasy-muted font-mono border-t border-fantasy-border/60 pt-3">
+            <div>
+              Hover / tap cell: <span id="cell-coord-display" class="text-fantasy-gold font-bold">X: --, Y: --</span>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 bg-red-600/80 rounded-sm"></span><span>Solid Barrier</span></span>
+              <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 bg-yellow-400/80 rounded-sm"></span><span>Secret</span></span>
+              <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 bg-purple-500/80 rounded-sm"></span><span>Interactive</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspector Sidebar -->
+        <div class="lg:col-span-4 bg-fantasy-surface p-6 rounded-xl border border-fantasy-border space-y-4">
+          <h3 class="text-lg font-bold font-cinzel text-white border-b border-fantasy-border/60 pb-3">
+            Screen Inspector
+          </h3>
+
+          <!-- Selected Cell / Object Info Card -->
+          <div id="inspector-card" class="space-y-3 text-xs">
+            <div class="p-3 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-1.5">
+              <div class="text-fantasy-gold font-bold uppercase text-[11px]">Selected Target</div>
+              <div class="text-sm font-bold text-white" id="insp-name">Point to a playfield tile</div>
+              <div class="text-fantasy-muted font-mono" id="insp-coords">X: -- | Y: -- | Packed: --</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+                <span class="block text-fantasy-muted text-[10px] uppercase">Solid Wall / Obstacle</span>
+                <span class="font-bold text-sm" id="insp-solid">—</span>
+              </div>
+              <div class="p-2.5 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+                <span class="block text-fantasy-muted text-[10px] uppercase">Secret Pickup</span>
+                <span class="font-bold text-sm" id="insp-secret">—</span>
+              </div>
+            </div>
+
+            <!-- Placed Objects on Screen Table -->
+            <div class="pt-3 border-t border-fantasy-border/60">
+              <div class="font-bold uppercase tracking-wider text-fantasy-gold mb-2 text-[11px]">
+                Screen Objects List:
+              </div>
+              <div id="screen-objects-list" class="max-h-60 overflow-y-auto space-y-1.5 pr-1 divide-y divide-fantasy-border/40">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</Layout>
+
+<!-- Client-side World Explorer Data and Logic -->
+<script define:vars={{ worldData }}>
+  let currentLabId = worldData.labyrinths[0].id;
+  let currentScreenId = worldData.labyrinths[0].screen_ids[0];
+  let currentLayer = 'all';
+
+  const screensMap = {};
+  worldData.screens.forEach(s => {
+    screensMap[s.id] = s;
+  });
+
+  const labMap = {};
+  worldData.labyrinths.forEach(l => {
+    labMap[l.id] = l;
+  });
+
+  const labTabs = document.querySelectorAll('.lab-tab');
+  const screenButtonsContainer = document.getElementById('screen-buttons-container');
+  const playfieldGrid = document.getElementById('playfield-grid');
+  const screenTitle = document.getElementById('screen-title');
+  const screenObjCount = document.getElementById('screen-obj-count');
+  const currentScreenBadge = document.getElementById('current-screen-badge');
+  const cellCoordDisplay = document.getElementById('cell-coord-display');
+  const layerBtns = document.querySelectorAll('.layer-btn');
+
+  // Inspector elements
+  const inspName = document.getElementById('insp-name');
+  const inspCoords = document.getElementById('insp-coords');
+  const inspSolid = document.getElementById('insp-solid');
+  const inspSecret = document.getElementById('insp-secret');
+  const screenObjectsList = document.getElementById('screen-objects-list');
+
+  function renderScreenButtons() {
+    const lab = labMap[currentLabId];
+    if (!lab) return;
+
+    screenButtonsContainer.innerHTML = '';
+    lab.screen_ids.forEach((sid, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `px-3 py-1.5 text-xs font-mono font-bold rounded border transition-colors ${
+        sid === currentScreenId
+          ? 'bg-fantasy-gold text-black border-fantasy-gold'
+          : 'bg-fantasy-surfaceLight text-fantasy-muted border-fantasy-border hover:text-white'
+      }`;
+      btn.textContent = `${idx + 1}: ${sid}`;
+      btn.addEventListener('click', () => {
+        currentScreenId = sid;
+        renderScreenButtons();
+        renderPlayfield();
+      });
+      screenButtonsContainer.appendChild(btn);
+    });
+
+    const screenIdx = lab.screen_ids.indexOf(currentScreenId);
+    currentScreenBadge.textContent = `Screen: ${currentScreenId} (${screenIdx + 1} / ${lab.screen_ids.length})`;
+  }
+
+  function renderPlayfield() {
+    const screen = screensMap[currentScreenId];
+    if (!screen) return;
+
+    screenTitle.textContent = screen.id;
+    screenObjCount.textContent = `${screen.objects_count} Objects (${screen.blocking_tiles_count} solid, ${screen.secret_tiles_count} secrets)`;
+
+    playfieldGrid.innerHTML = '';
+
+    // Build object tile index map: cell_idx -> object instance
+    const cellObjectMap = {};
+    screen.objects.forEach(obj => {
+      for (let dy = 0; dy < obj.height; dy++) {
+        for (let dx = 0; dx < obj.width; dx++) {
+          const cy = obj.y + dy;
+          const cx = obj.x + dx;
+          if (cx < 40 && cy < 11) {
+            const idx = cy * 40 + cx;
+            cellObjectMap[idx] = obj;
+          }
+        }
+      }
+    });
+
+    for (let i = 0; i < 440; i++) {
+      const cell = document.createElement('div');
+      const cx = i % 40;
+      const cy = Math.floor(i / 40);
+      const vramChar = screen.baked_vram[i];
+      const blockingFlag = screen.baked_blocking[i];
+      const isSolid = (blockingFlag & 0x01) !== 0;
+      const isInteractive = (blockingFlag & 0x02) !== 0;
+      const isSecret = (blockingFlag & 0x04) !== 0;
+      const obj = cellObjectMap[i];
+
+      cell.className = 'w-full h-full border border-fantasy-border/20 transition-all flex items-center justify-center cursor-pointer text-[9px] font-mono';
+      cell.dataset.x = cx;
+      cell.dataset.y = cy;
+      cell.dataset.idx = i;
+
+      // Layer color rendering
+      let bg = '#070a08';
+      let border = 'rgba(28, 44, 34, 0.4)';
+
+      if (vramChar > 0) {
+        bg = '#141d18';
+      }
+
+      if (currentLayer === 'all' || currentLayer === 'blocking') {
+        if (isSolid) {
+          bg = '#7f1d1d'; // Red solid
+          border = '#ef4444';
+        }
+      }
+      if (currentLayer === 'all' || currentLayer === 'secrets') {
+        if (isSecret) {
+          bg = '#713f12'; // Yellow/gold secret
+          border = '#eab308';
+        }
+      }
+      if (currentLayer === 'all' || currentLayer === 'interactive') {
+        if (isInteractive) {
+          bg = '#3b0764'; // Purple interactive
+          border = '#a855f7';
+        }
+      }
+
+      cell.style.backgroundColor = bg;
+      cell.style.borderColor = border;
+
+      cell.addEventListener('mouseenter', () => {
+        cellCoordDisplay.textContent = `X: ${cx}, Y: ${cy} (Cell ${i})`;
+        showInspectorInfo(cx, cy, i, vramChar, isSolid, isSecret, isInteractive, obj);
+      });
+
+      cell.addEventListener('click', () => {
+        showInspectorInfo(cx, cy, i, vramChar, isSolid, isSecret, isInteractive, obj);
+      });
+
+      playfieldGrid.appendChild(cell);
+    }
+
+    renderObjectsList(screen);
+  }
+
+  function showInspectorInfo(x, y, _idx, charCode, isSolid, isSecret, isInteractive, obj) {
+    inspCoords.textContent = `Grid (X:${x}, Y:${y}) | Tile Code: ${charCode} | Packed: 0x${((y/2) << 5 | (x/2)).toString(16).toUpperCase()}`;
+
+    inspSolid.textContent = isSolid ? 'YES (Solid Barrier)' : 'NO (Open Sky/Pass)';
+    inspSolid.className = isSolid ? 'font-bold text-sm text-red-400' : 'font-bold text-sm text-fantasy-muted';
+
+    inspSecret.textContent = isSecret ? 'YES (Secret Item)' : (isInteractive ? 'YES (Interactive)' : 'NO');
+    inspSecret.className = (isSecret || isInteractive) ? 'font-bold text-sm text-yellow-400' : 'font-bold text-sm text-fantasy-muted';
+
+    if (obj) {
+      inspName.textContent = `${obj.object_id} (Code ${obj.code})`;
+    } else if (charCode > 0) {
+      inspName.textContent = `Tile Character #${charCode}`;
+    } else {
+      inspName.textContent = `Empty Sky / Open Space`;
+    }
+  }
+
+  function renderObjectsList(screen) {
+    screenObjectsList.innerHTML = '';
+    if (screen.objects.length === 0) {
+      screenObjectsList.innerHTML = '<div class="text-fantasy-muted text-[11px] py-2">No objects on this screen.</div>';
+      return;
+    }
+
+    screen.objects.forEach(obj => {
+      const row = document.createElement('div');
+      row.className = 'py-1.5 flex items-center justify-between text-[11px] text-fantasy-text hover:bg-fantasy-surfaceLight/80 px-1 rounded transition-colors';
+      row.innerHTML = `
+        <div>
+          <span class="font-bold ${obj.secret ? 'text-yellow-400' : (obj.blocking ? 'text-red-400' : 'text-fantasy-gold')}">${obj.object_id}</span>
+          <span class="text-fantasy-muted ml-1 font-mono">(${obj.width}×${obj.height})</span>
+        </div>
+        <div class="font-mono text-fantasy-muted text-[10px]">
+          X:${obj.x} Y:${obj.y}
+        </div>
+      `;
+      screenObjectsList.appendChild(row);
+    });
+  }
+
+  // Handle Labyrinth Tabs
+  labTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      labTabs.forEach(t => {
+        t.className = 'lab-tab px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all bg-fantasy-surface text-fantasy-muted border-fantasy-border hover:text-white hover:bg-fantasy-surfaceLight';
+      });
+      tab.className = 'lab-tab px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all bg-fantasy-gold/20 text-fantasy-gold border-fantasy-gold shadow-fantasy-gold';
+
+      currentLabId = tab.dataset.labId;
+      const lab = labMap[currentLabId];
+      if (lab && lab.screen_ids.length > 0) {
+        currentScreenId = lab.screen_ids[0];
+      }
+      renderScreenButtons();
+      renderPlayfield();
+    });
+  });
+
+  // Handle Layer Buttons
+  layerBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      layerBtns.forEach(b => {
+        b.className = 'layer-btn px-2.5 py-1 rounded text-[11px] text-fantasy-muted hover:text-white';
+      });
+      btn.className = 'layer-btn px-2.5 py-1 rounded text-[11px] font-bold bg-fantasy-gold text-black';
+      currentLayer = btn.dataset.layer;
+      renderPlayfield();
+    });
+  });
+
+  // Initialize view
+  renderScreenButtons();
+  renderPlayfield();
+</script>

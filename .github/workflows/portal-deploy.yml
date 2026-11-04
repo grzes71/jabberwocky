@@ -1,0 +1,116 @@
+name: Deploy Game Portal to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - published
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Minimal workflow-level permissions
+permissions:
+  contents: read
+
+# Concurrency to prevent overlapping Pages deployments
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  build:
+    name: Build Binary, Data & Static Portal
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install GNU Make
+        run: choco install make -y
+
+      - name: Install Mad-Assembler (MADS)
+        run: |
+          $madsDir = "C:\Apps\Mad-Assembler-2.1.6\bin\windows_x86_64"
+          New-Item -ItemType Directory -Force -Path $madsDir | Out-Null
+          curl.exe -L -f -s -S "https://raw.githubusercontent.com/tebe6502/Mad-Assembler/2.1.6/bin/windows_x86_64/mads.exe" -o "$madsDir\mads.exe"
+          if (!(Test-Path "$madsDir\mads.exe")) { throw "MADS download failed" }
+
+      - name: Build Atari XEX & Memory Map
+        run: |
+          make all
+          if (!(Test-Path "jabberwocky.xex")) {
+            Write-Error "Build failed: jabberwocky.xex was not generated!"
+            exit 1
+          }
+
+      - name: Generate Portal JSON Data
+        run: make portal_data
+
+      - name: Validate Portal Data & Schemas
+        run: python -m pytest tests/test_portal_data.py -v
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'website/package-lock.json'
+
+      - name: Install Node dependencies
+        working-directory: website
+        run: npm ci
+
+      - name: Run Astro Type Diagnostics
+        working-directory: website
+        run: npm run check
+
+      - name: Build Static Site with Astro
+        working-directory: website
+        run: npm run build
+        env:
+          ASTRO_BASE_URL: '/jabberwocky'
+
+      - name: Upload Pages Artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

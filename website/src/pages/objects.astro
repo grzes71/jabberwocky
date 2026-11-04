@@ -1,0 +1,253 @@
+---
+import Layout from '../layouts/Layout.astro';
+import objectsData from '../data/objects.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Objects & Creatures Catalog — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Catalog</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Objects & Entities Catalog
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        Complete reference of all {objectsData.total_count} object definitions from 
+        <code class="text-fantasy-gold">world/objects.yaml</code>. 
+        Browse dimensions, solid collision properties, interactive triggers, tile matrices, and screen occurrences.
+      </p>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="bg-fantasy-surface p-6 rounded-xl border border-fantasy-border space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        
+        <!-- Search Input -->
+        <div class="md:col-span-6 relative">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search by object ID, code (e.g. 95), or tag..."
+            class="w-full bg-fantasy-surfaceLight border border-fantasy-border rounded-lg px-4 py-2.5 text-xs text-white placeholder-fantasy-muted focus:outline-none focus:border-fantasy-gold transition-colors font-mono"
+          />
+        </div>
+
+        <!-- Flag Filter Buttons -->
+        <div class="md:col-span-6 flex flex-wrap gap-2 justify-start md:justify-end">
+          <button type="button" data-filter="all" class="flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-gold text-black border border-fantasy-gold">
+            All ({objectsData.total_count})
+          </button>
+          <button type="button" data-filter="used" class="flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white">
+            Used in World ({objectsData.used_count})
+          </button>
+          <button type="button" data-filter="blocking" class="flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white">
+            Solid Obstacles
+          </button>
+          <button type="button" data-filter="secret" class="flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white">
+            Secrets
+          </button>
+          <button type="button" data-filter="interactive" class="flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white">
+            Interactive
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Tag Filter Pills -->
+      <div class="pt-2 border-t border-fantasy-border/60 flex flex-wrap items-center gap-1.5">
+        <span class="text-[11px] text-fantasy-muted uppercase mr-2 font-mono">Filter by Tag:</span>
+        <button type="button" data-tag="" class="tag-filter-btn px-2 py-0.5 rounded text-[10px] font-mono bg-fantasy-gold/20 text-fantasy-gold border border-fantasy-gold/40">
+          ALL TAGS
+        </button>
+        {objectsData.all_tags.map((tag) => (
+          <button type="button" data-tag={tag} class="tag-filter-btn px-2 py-0.5 rounded text-[10px] font-mono bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white hover:border-fantasy-gold/50 transition-colors">
+            #{tag}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Results Counter -->
+    <div class="flex items-center justify-between text-xs text-fantasy-muted font-mono">
+      <span>Showing <span id="visible-count" class="text-fantasy-gold font-bold">{objectsData.total_count}</span> objects</span>
+    </div>
+
+    <!-- Objects Grid -->
+    <div id="objects-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {objectsData.objects.map((obj) => (
+        <div
+          class="object-card bg-fantasy-surface p-4 rounded-xl border border-fantasy-border hover:border-fantasy-gold/60 transition-all hover:-translate-y-1 flex flex-col justify-between space-y-4"
+          data-id={obj.id.toLowerCase()}
+          data-code={obj.code.toString()}
+          data-tags={obj.tags.join(',')}
+          data-blocking={obj.flags.blocking ? 'true' : 'false'}
+          data-secret={obj.flags.secret ? 'true' : 'false'}
+          data-interactive={obj.flags.interactive ? 'true' : 'false'}
+          data-used={obj.is_used_in_world ? 'true' : 'false'}
+        >
+          <!-- Card Header -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono text-[11px] font-bold border border-fantasy-border">
+                #{obj.code} <span class="text-fantasy-muted text-[10px]">(0x{obj.code.toString(16).toUpperCase().padStart(2, '0')})</span>
+              </span>
+              <span class={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                obj.instances_count > 0 ? 'bg-fantasy-surfaceLight text-fantasy-phosphor border border-fantasy-phosphor/30' : 'bg-fantasy-surfaceLight text-fantasy-muted'
+              }`}>
+                {obj.instances_count} in world
+              </span>
+            </div>
+
+            <h3 class="font-cinzel text-base font-bold text-white tracking-wide truncate" title={obj.id}>
+              {obj.id}
+            </h3>
+
+            <!-- Flags Badges -->
+            <div class="flex flex-wrap gap-1.5 text-[10px] font-mono">
+              {obj.flags.blocking && (
+                <span class="px-1.5 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-800">SOLID</span>
+              )}
+              {obj.flags.secret && (
+                <span class="px-1.5 py-0.5 rounded bg-yellow-950/80 text-yellow-300 border border-yellow-800">SECRET</span>
+              )}
+              {obj.flags.interactive && (
+                <span class="px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800">INTERACTIVE</span>
+              )}
+              {!obj.flags.blocking && !obj.flags.secret && !obj.flags.interactive && (
+                <span class="px-1.5 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-muted">PASSABLE</span>
+              )}
+            </div>
+          </div>
+
+          <!-- Visual Tile Grid Composition Preview -->
+          <div class="bg-black/60 p-2 rounded border border-fantasy-border/60">
+            <div class="text-[10px] text-fantasy-muted font-mono mb-1.5 flex justify-between">
+              <span>Grid: {obj.size.width}×{obj.size.height} chars</span>
+              <span>{obj.tiles.length} tiles</span>
+            </div>
+            <div
+              class="grid gap-1 max-w-[160px] mx-auto py-1"
+              style={`grid-template-columns: repeat(${obj.size.width}, 1fr);`}
+            >
+              {obj.tiles.map((t) => (
+                <div
+                  class="aspect-square rounded-sm bg-fantasy-surfaceLight border border-fantasy-border/60 flex items-center justify-center text-[9px] font-mono text-fantasy-text/80"
+                  title={`Tile #${t}`}
+                >
+                  {t > 0 ? t : '·'}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- Card Footer (Tags & Screens) -->
+          <div class="space-y-1.5 pt-2 border-t border-fantasy-border/60 text-xs">
+            <div class="flex flex-wrap gap-1">
+              {obj.tags.map((tg) => (
+                <span class="text-[10px] text-fantasy-gold/80 font-mono">#{tg}</span>
+              ))}
+            </div>
+            {obj.screens_used_in.length > 0 && (
+              <div class="text-[10px] text-fantasy-muted truncate font-mono" title={obj.screens_used_in.join(', ')}>
+                Used: {obj.screens_used_in.slice(0, 3).join(', ')}{obj.screens_used_in.length > 3 ? ` +${obj.screens_used_in.length - 3} more` : ''}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</Layout>
+
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+  const flagBtns = document.querySelectorAll('.flag-filter-btn');
+  const tagBtns = document.querySelectorAll('.tag-filter-btn');
+  const cards = document.querySelectorAll('.object-card') as NodeListOf<HTMLElement>;
+  const visibleCount = document.getElementById('visible-count');
+
+  let currentSearch = '';
+  let currentFlag = 'all';
+  let currentTag = '';
+
+  function filterCards() {
+    let count = 0;
+    const term = currentSearch.trim().toLowerCase();
+
+    cards.forEach((card) => {
+      const id = card.dataset.id || '';
+      const code = card.dataset.code || '';
+      const tags = (card.dataset.tags || '').split(',');
+      const isBlocking = card.dataset.blocking === 'true';
+      const isSecret = card.dataset.secret === 'true';
+      const isInteractive = card.dataset.interactive === 'true';
+      const isUsed = card.dataset.used === 'true';
+
+      // Search match
+      const matchSearch = !term || id.includes(term) || code === term || tags.some(t => t.toLowerCase().includes(term));
+
+      // Flag match
+      let matchFlag = true;
+      if (currentFlag === 'used') matchFlag = isUsed;
+      else if (currentFlag === 'blocking') matchFlag = isBlocking;
+      else if (currentFlag === 'secret') matchFlag = isSecret;
+      else if (currentFlag === 'interactive') matchFlag = isInteractive;
+
+      // Tag match
+      let matchTag = true;
+      if (currentTag) {
+        matchTag = tags.includes(currentTag);
+      }
+
+      const visible = matchSearch && matchFlag && matchTag;
+      if (visible) {
+        card.classList.remove('hidden');
+        count++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    if (visibleCount) {
+      visibleCount.textContent = count.toString();
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
+      filterCards();
+    });
+  }
+
+  flagBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      flagBtns.forEach(b => {
+        b.className = 'flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white';
+      });
+      btn.className = 'flag-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-fantasy-gold text-black border border-fantasy-gold';
+      currentFlag = (btn as HTMLElement).dataset.filter || 'all';
+      filterCards();
+    });
+  });
+
+  tagBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tagBtns.forEach(b => {
+        b.className = 'tag-filter-btn px-2 py-0.5 rounded text-[10px] font-mono bg-fantasy-surfaceLight text-fantasy-muted border border-fantasy-border hover:text-white hover:border-fantasy-gold/50 transition-colors';
+      });
+      btn.className = 'tag-filter-btn px-2 py-0.5 rounded text-[10px] font-mono bg-fantasy-gold/20 text-fantasy-gold border border-fantasy-gold/40 font-bold';
+      currentTag = (btn as HTMLElement).dataset.tag || '';
+      filterCards();
+    });
+  });
+</script>
+

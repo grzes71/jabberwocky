@@ -1,0 +1,24 @@
+{
+  "name": "jabberwocky-portal",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Jabberwocky — Official Atari 8-bit Game Portal",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "check": "astro check",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/tailwind": "^5.1.5",
+    "astro": "^4.16.18",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7"
+  }
+}
+

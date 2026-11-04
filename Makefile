@@ -41,7 +41,11 @@ DRAGON_ASM     := $(GEN_DIR)/dragon_sprite.asm
 SPRITE_SCRIPT  := scripts/compile_sprites.py
 
 # ---- Cele ----
-.PHONY: all xex assets data check_memory clean run test help
+PORTAL_SCRIPT  := scripts/export_portal_data.py
+REPORTS_DIR    := reports/portal
+WEBSITE_DATA   := website/src/data
+
+.PHONY: all xex assets data check_memory portal_data clean run test help
 
 all: $(XEX_OUT) check_memory
 
@@ -115,6 +119,10 @@ $(XEX_OUT): $(ASM_MAIN) $(ASM_HW) $(ASM_ZP) $(ASM_SCENES) $(ASM_ENGINE) $(FONT_D
 	@echo "=== Asemblacja $(ASM_MAIN) do $(XEX_OUT) (MADS) ==="
 	$(MADS) $(ASM_MAIN) -o:$(XEX_OUT) -l:$(GEN_DIR)/jabberwocky.lst -t:$(GEN_DIR)/jabberwocky.lab
 
+portal_data: check_memory $(PORTAL_SCRIPT)
+	@echo "=== Generowanie raportow JSON portalu (scripts/export_portal_data.py) ==="
+	$(PYTHON) $(PORTAL_SCRIPT) --out-dir $(REPORTS_DIR) --astro-data-dir $(WEBSITE_DATA)
+
 check_memory: $(XEX_OUT) $(MAP_SCRIPT)
 	@echo "=== Weryfikacja i generowanie mapy pamieci ==="
 	$(PYTHON) $(MAP_SCRIPT) --input $(GEN_DIR)/jabberwocky.lab --out-text $(MAP_TXT) --out-json $(MAP_JSON)
@@ -143,6 +151,7 @@ help:
 	@echo "  make assets       - konwertuje grafiki, sprajty i teksty"
 	@echo "  make data         - kompiluje swiat, obiekty i zestawy znakow"
 	@echo "  make check_memory - generuje i weryfikuje docs/memory_map.txt i json"
+	@echo "  make portal_data  - generuje i waliduje raporty JSON portalu"
 	@echo "  make test         - uruchamia testy jednostkowe (pytest)"
 	@echo "  make clean        - usuwa wygenerowane pliki ($(XEX_OUT), $(GEN_DIR)/)"
 	@echo "  make run          - uruchamia $(XEX_OUT) w Altirra"

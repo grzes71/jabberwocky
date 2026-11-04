@@ -135,15 +135,15 @@
   {
     "name": "VRAM",
     "start_address": "$B000",
-    "end_address": "$BEB4",
-    "size": 3765,
+    "end_address": "$BEB5",
+    "size": 3766,
     "type": "data"
   },
   {
     "name": "FREE_SPACE",
-    "start_address": "$BEB5",
+    "start_address": "$BEB6",
     "end_address": "$BFFF",
-    "size": 331,
+    "size": 330,
     "type": "free"
   }
 ]
