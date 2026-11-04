@@ -1,0 +1,290 @@
+---
+import Layout from '../layouts/Layout.astro';
+import gameData from '../data/game.json';
+import latestData from '../data/latest.json';
+import worldData from '../data/world.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Jabberwocky — Official Atari 8-bit Game Portal">
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden pt-12 pb-20 border-b border-fantasy-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Column: Title & Intro -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded bg-fantasy-gold/20 text-fantasy-gold border border-fantasy-gold/50 shadow-fantasy-gold">
+              Atari 800XL / 65XE / 130XE
+            </span>
+            <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded bg-fantasy-surfaceLight text-fantasy-phosphor border border-fantasy-phosphor/30">
+              Version {latestData.version}
+            </span>
+            <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded bg-fantasy-surfaceLight text-fantasy-flame border border-fantasy-flame/30">
+              PAL 50 Hz / 64 KB RAM
+            </span>
+          </div>
+
+          <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white font-cinzel leading-none drop-shadow-md">
+            JABBERWOCKY
+          </h1>
+          <p class="text-xl sm:text-2xl text-fantasy-gold font-serif italic">
+            &ldquo;Beware the Jabberwock, my son! The jaws that bite, the claws that catch!&rdquo;
+          </p>
+
+          <p class="text-base text-fantasy-muted leading-relaxed max-w-2xl">
+            Take command of the fearsome Jabberwock in this high-octane 6502 assembly action-adventure. 
+            Soar through 5 treacherous labyrinths, incinerate obstacles with 5th-player composite flame breath, 
+            discover hidden secrets, and conquer the dreaded Tulgey Wood.
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="pt-4 flex flex-wrap gap-4 items-center">
+            <a
+              href={latestData.download_url}
+              class="inline-flex items-center space-x-3 px-6 py-3.5 text-sm font-bold uppercase tracking-wider rounded bg-fantasy-flame text-black hover:bg-yellow-400 transition-all shadow-fantasy-flame transform hover:-translate-y-0.5"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              <span>Download jabberwocky.xex ({latestData.binary_size ? (latestData.binary_size / 1024).toFixed(1) : '35.3'} KB)</span>
+            </a>
+
+            <a
+              href={`${base}/world`}
+              class="inline-flex items-center space-x-2 px-6 py-3.5 text-sm font-bold uppercase tracking-wider rounded bg-fantasy-surfaceLight text-fantasy-gold border border-fantasy-gold/50 hover:bg-fantasy-gold/20 hover:border-fantasy-gold transition-all"
+            >
+              <span>World Explorer</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+
+            <a
+              href={`${base}/technical`}
+              class="inline-flex items-center space-x-2 px-4 py-3 text-sm text-fantasy-muted hover:text-white transition-colors"
+            >
+              <span>Engine Specs &rarr;</span>
+            </a>
+          </div>
+
+          <!-- Quick Specs List -->
+          <div class="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 border-t border-fantasy-border/60 text-xs text-fantasy-muted">
+            <div>
+              <span class="block text-fantasy-gold uppercase text-[10px]">Graphics Mode</span>
+              <span class="text-fantasy-text font-mono">ANTIC 5 (160×176)</span>
+            </div>
+            <div>
+              <span class="block text-fantasy-gold uppercase text-[10px]">Scroll Buffer</span>
+              <span class="text-fantasy-text font-mono">Mirror Ring (1056 B)</span>
+            </div>
+            <div>
+              <span class="block text-fantasy-gold uppercase text-[10px]">Soundtrack</span>
+              <span class="text-fantasy-text font-mono">CMC 4-ch POKEY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Artwork & Pixel Frame -->
+        <div class="lg:col-span-5 flex flex-col items-center">
+          <div class="relative w-full max-w-md rounded-xl overflow-hidden border-2 border-fantasy-gold/40 shadow-2xl bg-fantasy-surfaceLight/50 p-2 group">
+            <div class="relative rounded-lg overflow-hidden border border-fantasy-border">
+              <img
+                src={`${base}/img/title.png`}
+                alt="Jabberwocky Title Screen"
+                class="w-full object-cover rounded shadow-inner"
+              />
+              <div class="absolute bottom-2 left-2 px-2 py-1 bg-black/80 rounded border border-fantasy-gold/40 text-[10px] text-fantasy-gold font-mono">
+                ANTIC F High-Res Bitmap (320×175)
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Telemetry Stats Bar -->
+  <section class="bg-fantasy-surface/80 border-b border-fantasy-border py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-2xl sm:text-3xl font-black text-fantasy-gold font-cinzel">{latestData.stats.labyrinths}</div>
+          <div class="text-[11px] uppercase tracking-wider text-fantasy-muted">Labyrinths</div>
+        </div>
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-2xl sm:text-3xl font-black text-fantasy-phosphor font-cinzel">{latestData.stats.screens}</div>
+          <div class="text-[11px] uppercase tracking-wider text-fantasy-muted">Unique Screens</div>
+        </div>
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-2xl sm:text-3xl font-black text-fantasy-flame font-cinzel">{latestData.stats.catalog_objects}</div>
+          <div class="text-[11px] uppercase tracking-wider text-fantasy-muted">Object Types</div>
+        </div>
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-2xl sm:text-3xl font-black text-yellow-400 font-cinzel">{latestData.stats.total_placed_objects}</div>
+          <div class="text-[11px] uppercase tracking-wider text-fantasy-muted">Placed Objects</div>
+        </div>
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-2xl sm:text-3xl font-black text-fantasy-vorpal font-cinzel">{latestData.stats.sprite_frames}</div>
+          <div class="text-[11px] uppercase tracking-wider text-fantasy-muted">Sprite Frames</div>
+        </div>
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-2xl sm:text-3xl font-black text-teal-400 font-cinzel">{(latestData.stats.allocated_memory_bytes / 1024).toFixed(1)} KB</div>
+          <div class="text-[11px] uppercase tracking-wider text-fantasy-muted">RAM Footprint</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lore & Tale Section -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      
+      <div class="lg:col-span-5 bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border relative">
+        <div class="absolute -top-3 left-6 px-3 py-0.5 bg-fantasy-gold text-black text-xs font-bold uppercase rounded">
+          Lewis Carroll's Legend
+        </div>
+        <div class="font-serif italic text-fantasy-text/90 space-y-4 text-base sm:text-lg leading-relaxed pt-2">
+          <p>
+            &ldquo;'Twas brillig, and the slithy toves<br />
+            Did gyre and gimble in the wabe;<br />
+            All mimsy were the borogoves,<br />
+            And the mome raths outgrabe.&rdquo;
+          </p>
+          <p class="text-xs text-fantasy-muted font-mono not-italic border-t border-fantasy-border pt-3">
+            Extracted from <code class="text-fantasy-gold">texts/title.txt</code> — displayed on the Atari 8-bit title sequence with hardware color fade transitions.
+          </p>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 space-y-4">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white font-cinzel">
+          The Mythical Flight of the Jabberwock
+        </h2>
+        <p class="text-fantasy-text text-sm sm:text-base leading-relaxed">
+          {gameData.lore.narrative}
+        </p>
+        <p class="text-fantasy-muted text-xs leading-relaxed">
+          In this dark, gothic reimagining, the dragon is not merely a monster waiting for the hero's blade — 
+          you <em>are</em> the Jabberwock. Maneuver through narrow stone passages, evade impenetrable ancient barriers, 
+          and unleash devastating flames to clear a path through the five realms of the Carrollian labyrinth.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Labyrinths Overview -->
+  <section class="bg-fantasy-surface/50 border-t border-b border-fantasy-border py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <h2 class="text-3xl font-bold text-white font-cinzel">The Five Labyrinths</h2>
+        <p class="text-fantasy-muted text-sm mt-2">
+          All 5 levels and 35 interconnected screens compiled directly from <code class="text-fantasy-gold">world/project.yaml</code>.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {worldData.labyrinths.map((lab, idx) => (
+          <div class="p-5 rounded-lg bg-fantasy-surface border border-fantasy-border hover:border-fantasy-gold/60 transition-all hover:-translate-y-1 group">
+            <div class="flex items-center justify-between text-xs text-fantasy-gold mb-2 font-mono">
+              <span>LEVEL 0{idx + 1}</span>
+              <span class="px-1.5 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-phosphor">{lab.screens_count} Screens</span>
+            </div>
+            <h3 class="font-cinzel text-base font-bold text-white group-hover:text-fantasy-gold transition-colors mb-3">
+              {lab.name.replace(/^LEVEL \d+ : /, '')}
+            </h3>
+            <div class="space-y-1.5 text-xs text-fantasy-muted">
+              <div class="flex justify-between">
+                <span>Total Objects:</span>
+                <span class="text-fantasy-text font-mono">{lab.total_objects}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Secret Pickups:</span>
+                <span class="text-fantasy-phosphor font-mono">{lab.total_secrets}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Solid Obstacles:</span>
+                <span class="text-fantasy-flame font-mono">{lab.total_blocking}</span>
+              </div>
+            </div>
+            <a
+              href={`${base}/world#${lab.id}`}
+              class="mt-4 block text-center text-xs font-bold uppercase py-1.5 rounded bg-fantasy-surfaceLight text-fantasy-gold hover:bg-fantasy-gold hover:text-black transition-colors"
+            >
+              Explore Labyrinth &rarr;
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Pillars Grid -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <h2 class="text-3xl font-bold text-white font-cinzel">Technical & Gameplay Highlights</h2>
+      <p class="text-fantasy-muted text-sm mt-2">
+        Engineered specifically for the hardware limits and capabilities of the 1.77 MHz MOS 6502.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Card 1 -->
+      <div class="p-6 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-3">
+        <div class="w-10 h-10 rounded bg-fantasy-surfaceLight border border-fantasy-flame/40 flex items-center justify-center text-fantasy-flame">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <h3 class="font-cinzel text-lg font-bold text-white">8.8 Fixed-Point Sub-Pixel Flight</h3>
+        <p class="text-xs text-fantasy-muted leading-relaxed">
+          Smooth, weightful dragon flight driven by fractional velocity math. Upward lift counteracts gravity, 
+          with debounced collision forgiveness ensuring player control never feels sluggish.
+        </p>
+        <a href={`${base}/game`} class="inline-block text-xs text-fantasy-gold hover:underline font-bold">
+          Read Physics Model &rarr;
+        </a>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="p-6 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-3">
+        <div class="w-10 h-10 rounded bg-fantasy-surfaceLight border border-fantasy-gold/40 flex items-center justify-center text-fantasy-gold">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+          </svg>
+        </div>
+        <h3 class="font-cinzel text-lg font-bold text-white">Mirror Ring Buffer & HSCROL</h3>
+        <p class="text-xs text-fantasy-muted leading-relaxed">
+          11 rows × 96 bytes action buffer ($6000–$641F) with per-row LMS pointers enables glitch-free 
+          50 FPS horizontal scrolling, while deferred screen column baking executes in idle frames.
+        </p>
+        <a href={`${base}/technical`} class="inline-block text-xs text-fantasy-gold hover:underline font-bold">
+          Read Render Pipeline &rarr;
+        </a>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="p-6 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-3">
+        <div class="w-10 h-10 rounded bg-fantasy-surfaceLight border border-fantasy-phosphor/40 flex items-center justify-center text-fantasy-phosphor">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+          </svg>
+        </div>
+        <h3 class="font-cinzel text-lg font-bold text-white">CMC Music + Procedural SFX</h3>
+        <p class="text-xs text-fantasy-muted leading-relaxed">
+          Soundtrack composed by Andrzej "Andy" Kidaj in 2003 relocated to $9000, 
+          harmoniously coexisting with dynamic POKEY SFX channels for fire, crashes, and secret chimes.
+        </p>
+        <a href={`${base}/music`} class="inline-block text-xs text-fantasy-gold hover:underline font-bold">
+          Explore Soundtrack &rarr;
+        </a>
+      </div>
+
+    </div>
+  </section>
+</Layout>

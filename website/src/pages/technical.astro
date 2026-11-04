@@ -1,0 +1,200 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Technical Architecture & Engine Specs — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Engineering</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Engine Architecture & Hardware
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        Exhaustive technical documentation of the 6502 assembly engine: ANTIC Mode 5 display lists, 
+        per-row LMS mirror ring buffers, GTIA 5th-player composite missiles, and Python asset compilation pipelines.
+      </p>
+    </div>
+
+    <!-- Section 1: ANTIC Mode 5 & Display List -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-6">
+      <div class="flex items-center space-x-3 text-fantasy-gold border-b border-fantasy-border/60 pb-3">
+        <span class="w-3 h-3 rounded-full bg-fantasy-gold"></span>
+        <h2 class="text-2xl font-bold font-cinzel text-white">ANTIC Mode 5 Multicolor Action Playfield</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-7 space-y-4 text-xs sm:text-sm text-fantasy-muted leading-relaxed">
+          <p>
+            The main action gameplay in Jabberwocky takes place in <strong>ANTIC Mode 5</strong>. 
+            This character-based multicolor mode displays 40 columns across 11 visible lines, with each character cell 
+            occupying 16 physical scanlines (twice the vertical height of standard ANTIC Mode 4).
+          </p>
+          <p>
+            In ANTIC Mode 5, each character byte in VRAM selects an 8×8 glyph from the custom font (<code class="text-fantasy-gold">fonts/game.fnt</code> at <code class="text-fantasy-gold">$6800</code>). 
+            Each pair of bits represents a pixel:
+          </p>
+          <ul class="list-disc list-inside space-y-1 font-mono text-fantasy-text text-xs pl-2">
+            <li><code class="text-fantasy-gold">00</code>: Background color (COLOR4 / BAK = $00)</li>
+            <li><code class="text-fantasy-gold">01</code>: Playfield 0 (COLOR0 / COLPF0 = $14)</li>
+            <li><code class="text-fantasy-gold">10</code>: Playfield 1 (COLOR1 / COLPF1 = $18)</li>
+            <li><code class="text-fantasy-gold">11</code>: Playfield 2 (COLOR2 / COLPF2 = $C2)</li>
+          </ul>
+          <p>
+            If a character code has its high bit set (<code class="text-fantasy-gold">bit 7 = 1</code>, characters 128..255), 
+            ANTIC substitutes Playfield 3 (<code class="text-fantasy-gold">COLPF3</code>), providing a 5th simultaneous color 
+            used for special labyrinth landmarks and secret portals.
+          </p>
+        </div>
+
+        <div class="lg:col-span-5 bg-black/60 p-5 rounded-lg border border-fantasy-border space-y-3 font-mono text-xs">
+          <div class="text-fantasy-gold font-bold uppercase text-[11px]">Display List Structure ($6610)</div>
+          <div class="p-3 bg-fantasy-surface rounded text-[11px] text-fantasy-text space-y-1 overflow-x-auto">
+            <div>; 24 blank scanlines (overhang)</div>
+            <div>dta DL_BLANK8, DL_BLANK8, DL_BLANK8</div>
+            <div>; Top Status Bar (ANTIC 2) with DLI</div>
+            <div>dta DL_MODE_2 | DL_LMS | DL_DLI, a(GAME_STATUS_VRAM)</div>
+            <div>dta DL_MODE_2 | DL_LMS, a(GAME_STATUS_VRAM + 40)</div>
+            <div>; Action Playfield (11 lines ANTIC 5)</div>
+            <div>dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(RING + 0*96)</div>
+            <div>dta DL_MODE_5 | DL_LMS | DL_HSCROL, a(RING + 1*96)</div>
+            <div>... (9 more lines with per-row LMS)</div>
+            <div>; Jump back to top on vertical blank</div>
+            <div>dta DL_JVB, a(DISPLAY_LIST)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Mirror Ring Buffer & HSCROL -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-6">
+      <div class="flex items-center space-x-3 text-fantasy-flame border-b border-fantasy-border/60 pb-3">
+        <span class="w-3 h-3 rounded-full bg-fantasy-flame"></span>
+        <h2 class="text-2xl font-bold font-cinzel text-white">Mirror Ring Buffer & Per-Row LMS Scrolling</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-xs sm:text-sm text-fantasy-muted leading-relaxed">
+        <div class="space-y-4">
+          <h3 class="text-base font-bold font-cinzel text-white">The Challenge of 50 FPS Horizontal Scrolling</h3>
+          <p>
+            Shifting an entire 440-byte VRAM screen every frame in 6502 assembly at 50 Hz consumes substantial CPU time, 
+            leaving precious few cycles for dragon physics, flame animations, collision detection, and audio updates.
+          </p>
+          <p>
+            Jabberwocky overcomes this through an ingenious <strong>Mirror Action Ring Buffer</strong>:
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-fantasy-text pl-1">
+            <li>Buffer size: 11 lines × 96 bytes = 1,056 bytes at <code class="text-fantasy-gold">$6000–$641F</code>.</li>
+            <li>Each row in the display list contains its own independent <code class="text-fantasy-gold">LMS</code> (Load Memory Scan) pointer.</li>
+            <li>Fine scrolling is driven by ANTIC hardware register <code class="text-fantasy-gold">HSCROL</code> ($D404) across 4 clock steps (3 &rarr; 2 &rarr; 1 &rarr; 0).</li>
+            <li>When HSCROL wraps from 0 to 3, the LMS pointers advance horizontally by 1 character, costing only <strong>O(1)</strong> pointer updates instead of bulk memory copying!</li>
+          </ul>
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="text-base font-bold font-cinzel text-white">Deferred Screen Column Baking</h3>
+          <p>
+            To populate upcoming labyrinth screens seamlessly, new tile columns must be injected into the off-screen section of the ring buffer:
+          </p>
+          <div class="p-4 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-2 font-mono text-xs">
+            <div class="text-fantasy-gold font-bold">Mailbox Pattern:</div>
+            <p class="text-fantasy-text">
+              Coarse-scroll frames only mark the <code class="text-fantasy-phosphor">bake_pending</code> flag. 
+              The actual column decompression and tile injection executes during idle frames via <code class="text-fantasy-phosphor">execute_pending_bake</code>.
+            </p>
+          </div>
+          <p>
+            This guarantees zero frame drops, maintaining a stable 50.0 FPS on PAL hardware.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: GTIA PMG & 5th Player Flame -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-6">
+      <div class="flex items-center space-x-3 text-fantasy-phosphor border-b border-fantasy-border/60 pb-3">
+        <span class="w-3 h-3 rounded-full bg-fantasy-phosphor"></span>
+        <h2 class="text-2xl font-bold font-cinzel text-white">GTIA Player-Missile Graphics & 5th Player</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs text-fantasy-muted">
+        <div class="p-5 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-3">
+          <div class="font-bold text-white font-cinzel text-sm">Player 0: The Dragon</div>
+          <p class="leading-relaxed">
+            The dragon sprite uses <strong>Player 0</strong> with single-line resolution ($2000–$27FF). 
+            Animated across 8 precalculated frames, its color is governed by <code class="text-fantasy-gold">COLP0</code> ($D012).
+          </p>
+        </div>
+
+        <div class="p-5 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-3">
+          <div class="font-bold text-white font-cinzel text-sm">Missiles M0–M3 as 5th Player</div>
+          <p class="leading-relaxed">
+            GTIA priority register <code class="text-fantasy-gold">GPRIOR</code> ($D01B / shadow $0269) bit 4 enables 5th-player mode: 
+            the four 2-bit missile channels combine into an 8-bit wide 5th player sprite, colored by <code class="text-fantasy-gold">COLPF3</code> ($D019) to create the searing flame breath.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-3">
+          <div class="font-bold text-white font-cinzel text-sm">Hardware Collision Latching</div>
+          <p class="leading-relaxed">
+            Contact between the dragon flame and playfield objects is instantly latched by GTIA hardware register <code class="text-fantasy-gold">P0PF</code> ($D004), 
+            allowing O(1) flame hit detection before clearing via <code class="text-fantasy-gold">HITCLR</code> ($D01E).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: 6502 Assembly Design Patterns -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-6">
+      <div class="flex items-center space-x-3 text-fantasy-vorpal border-b border-fantasy-border/60 pb-3">
+        <span class="w-3 h-3 rounded-full bg-fantasy-vorpal"></span>
+        <h2 class="text-2xl font-bold font-cinzel text-white">Assembly Optimization Paradigms</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-mono">
+        
+        <div class="p-4 rounded-lg bg-black/60 border border-fantasy-border space-y-2">
+          <div class="text-fantasy-gold font-bold">Structure-of-Arrays (SoA) Layout</div>
+          <p class="text-fantasy-muted text-[11px] leading-relaxed">
+            Multi-attribute entities are never packed as array-of-structures records. Instead, parallel tables 
+            (<code class="text-fantasy-text">screens_coords_lo</code>, <code class="text-fantasy-text">screens_coords_hi</code>, etc.) 
+            allow 6502 code to load attributes in 4 cycles using indexed addressing:
+          </p>
+          <div class="p-2 bg-fantasy-surfaceLight rounded text-fantasy-phosphor text-[11px]">
+            ldx screen_id<br />
+            lda screens_coords_lo,x<br />
+            sta PTR_SRC<br />
+            lda screens_coords_hi,x<br />
+            sta PTR_SRC+1
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-black/60 border border-fantasy-border space-y-2">
+          <div class="text-fantasy-gold font-bold">Decimal BCD Score Accumulation</div>
+          <p class="text-fantasy-muted text-[11px] leading-relaxed">
+            Scores use 6502 binary-coded decimal (<code class="text-fantasy-text">SED</code> / <code class="text-fantasy-text">CLD</code>) instructions. 
+            This avoids expensive binary-to-decimal conversion routines when updating the ANTIC 2 status bar:
+          </p>
+          <div class="p-2 bg-fantasy-surfaceLight rounded text-fantasy-phosphor text-[11px]">
+            sed<br />
+            clc<br />
+            lda score_lo<br />
+            adc #$50      ; add 50 points<br />
+            sta score_lo<br />
+            cld
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</Layout>
+

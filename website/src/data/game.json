@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "title": "Jabberwocky",
+    "subtitle": "Atari 8-bit Action-Adventure & Labyrinth Flight",
+    "genre": "Action / Retro Fantasy",
+    "platform": "Atari 800XL / 65XE / 130XE (64 KB RAM)",
+    "media": "Atari Executable (XEX)",
+    "tv_system": "PAL 50 Hz (recommended) / NTSC 60 Hz",
+    "current_version": "0.10.0",
+    "repository": "https://github.com/grzes71/jabberwocky",
+    "author": "Grzegorz 'grzes71' Kraszewski",
+    "music_author": "Andrzej 'Andy' Kidaj"
+  },
+  "lore": {
+    "inspiration": "Inspired by Lewis Carroll's timeless nonsense poem 'Jabberwocky' from Through the Looking-Glass (1871).",
+    "prologue": "'Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe;\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.",
+    "scroll_banner": "JABBERWOCKY - ATARI 8-bit GAME - https://github.com/grzes71/jabberwocky - version 0.10.0 - MUSIC BY Andrzej \"Andy\" Kidaj - PRESS FIRE TO START...",
+    "defeat_poem": "Twas brillig, the beast fell,\nThe vorpal blade bit deep,\nNo more the flames swell,\nThe Jabberwock shall sleep.",
+    "victory_poem": "The vorpal blade shatters,\nThe frabjous sun sets red,\nThe foe lies in tatters,\nThe Jabberwock is spread!",
+    "narrative": "Take flight as the mythical Jabberwock through eerie ancient realms. Guide the dragon through the twisted Tulgey Wood, past the stone huts of Brillig Village, across the haunted Borogove Vale and mysterious Wabe, toward The Frabjous End. Avoid lethal monolithic obstacles, breathe incinerating flames, collect arcane secrets, and escape the vorpal blade that seeks to lay you low."
+  },
+  "mechanics": [
+    {
+      "name": "Fixed-Point Sub-Pixel Flight Physics",
+      "description": "Vertical flight simulation uses an 8.8 fixed-point velocity accumulator. Inertia and constant gravitational pull gently draw the dragon down, counteracted by upward lift impulses when steering up. Velocity is clamped to ensure responsive handling."
+    },
+    {
+      "name": "Fiery Breath (5th-Player PMG Composite)",
+      "description": "Holding FIRE ignites a stream of dragon flame, rendered via GTIA 5th-player composite missile mode (M0–M3 combined in COLPF3). Flame immediately demolishes destructible barriers and hostile entities upon contact."
+    },
+    {
+      "name": "Energy Depletion & Conversion",
+      "description": "The dragon has 3 lives and an energy gauge (0–100%). Sustaining flight and breathing fire drain energy, while collisions rapidly deplete it. Reaching the end of a labyrinth screen sequence converts remaining energy into bonus score points."
+    },
+    {
+      "name": "1-Frame Grace Collision Debounce",
+      "description": "A 1-frame grace debounce filter prevents instant catastrophic death on glancing contact during high-speed horizontal scrolling."
+    },
+    {
+      "name": "Ancient Secrets & Interactive Collectibles",
+      "description": "Special objects marked with secret flags grant large score awards and replenish energy. Secret collision checks cover column 7 to ensure seamless collection even at top scrolling velocity."
+    }
+  ],
+  "controls": [
+    {
+      "key": "Joystick Up",
+      "action": "Fly upward / ascend against gravity"
+    },
+    {
+      "key": "Joystick Down",
+      "action": "Dive downward / accelerate descent"
+    },
+    {
+      "key": "Joystick Left",
+      "action": "Decelerate horizontal scroll / retreat left"
+    },
+    {
+      "key": "Joystick Right",
+      "action": "Thrust forward / push rightward"
+    },
+    {
+      "key": "Fire (Hold)",
+      "action": "Breathe flame to destroy obstacles"
+    },
+    {
+      "key": "Fire (Tap)",
+      "action": "Skip title slide-up / start game"
+    },
+    {
+      "key": "Space / Option",
+      "action": "Skip intro poem / pause"
+    }
+  ],
+  "engine_specs": {
+    "display_engine": "ANTIC Mode 5 action playfield (40×11 chars, 16 scanlines/cell, 5 colors including inverted PF3), ANTIC 2 status bar, ANTIC F high-resolution bitmap title.",
+    "screen_resolution": "160×176 action playfield pixels + 40×8 status bar pixels.",
+    "scroll_architecture": "Mirror ring buffer ($6000–$641F, 11 rows × 96 B) with per-row LMS pointers and hardware HSCROL fine-scrolling for 50 FPS PAL performance.",
+    "audio_engine": "4-channel POKEY audio with relocated Chaos Music Composer (CMC) at $9A00 and interleaved SFX state machine.",
+    "sprite_system": "Single-line Player-Missile Graphics at $2000–$27FF; 26 scanline dragon sprite with 8 animated frames."
+  }
+}

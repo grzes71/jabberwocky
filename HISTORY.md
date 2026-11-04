@@ -2,6 +2,46 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-11-04] - Implementacja oficjalnego portalu gry Jabberwocky (Astro, Tailwind CSS, pipeline JSON i GitHub Pages)
+- **Eksporter danych i potok raportów**:
+  - [scripts/export_portal_data.py](scripts/export_portal_data.py): Utworzono modułowy eksporter danych portalu z kompletną walidacją modeli Pydantic v2, generujący 9 ustrukturyzowanych raportów JSON w [reports/portal/](reports/portal/) oraz [website/src/data/](website/src/data/):
+    - `game.json`: metadane, poezja Lewisa Carrolla, fizyka lotu sub-pixel 8.8, mechanika ziania ogniem, debounce, sterowanie.
+    - `world.json`: 5 labiryntów, 35 ekranów, pre-renderowane matryce VRAM (440 B) i kolizji, rozpakowane współrzędne obiektów, paleta kolorów ANTIC 5 z `colors.yaml`.
+    - `objects.json`: pełny katalog 168 obiektów z `objects.yaml`, wymiary, flagi, matryce kafelków, tagi, statystyki wystąpień w świecie.
+    - `sprites.json`: sprajt PMG smoka Jabberwocka (8 klatek, 8×26 pikseli), bity wierszy, metadane sprzętowe.
+    - `assets.json`: grafiki (`title.png` ANTIC F 320×175, `cover.png`), zestawy znaków (`game.fnt`, `text.fnt`), 6 znaków animowanych i 2 obracane.
+    - `music.json`: kontener SAP Type C (Andrzej "Andy" Kidaj, 2003), 3 podutwory (Game Over, Gameplay, Title), relokacja do $9000/$9A00, koegzystencja POKEY SFX.
+    - `memory.json`: segmenty z `docs/memory_map.json`, bufor PMG ($2000–$27FF), mirror ring buffer HSCROL ($6000–$641F), pasek statusu ($6420–$646F), zmienne Zero Page ($80–$89), bankowanie ROM (BASIC wyłączony w $A000, OS kernel w $C000), proweniencja binarnej i commit SHA.
+    - `releases.json`: lista wydań z Git tags / GitHub Releases API (v0.10.0–v0.1.0) z linkami do `jabberwocky.xex`.
+    - `latest.json`: szybkie podsumowanie najnowszej wersji, sumy kontrolne SHA-256 i kluczowa telemetria.
+- **Automatyzacja budowania i testy**:
+  - [Makefile](Makefile): Dodano cel `make portal_data` generujący i walidujący raporty JSON portalu oraz zaktualizowano cel `help`.
+  - [tests/test_portal_data.py](tests/test_portal_data.py): Dodano 9 testów jednostkowych i integracyjnych weryfikujących generowanie plików, zgodność ze schematami Pydantic, spójność liczników ze źródłami YAML, metadane sprajtów, nienakładanie się segmentów pamięci, brak kolizji wolnej pamięci i bezpieczną obsługę braku binarki.
+- **Statyczny portal WWW (website/)**:
+  - [website/package.json](website/package.json), [website/astro.config.mjs](website/astro.config.mjs), [website/tailwind.config.mjs](website/tailwind.config.mjs), [website/tsconfig.json](website/tsconfig.json): Skonfigurowano stos Astro 4.16 + Tailwind CSS + TypeScript pod bazowy adres `site: 'https://grzes71.github.io'` i podścieżkę `base: '/jabberwocky'`.
+  - [website/src/layouts/Layout.astro](website/src/layouts/Layout.astro): Układ bazowy z subtelnym efektem CRT scanlines, paletą dark fantasy i typografią Cinzel.
+  - [website/src/components/Header.astro](website/src/components/Header.astro), [website/src/components/Footer.astro](website/src/components/Footer.astro): Responsywna nawigacja po 10 podstronach, etykieta najnowszej wersji, cytaty Carrolla i metadane platformy.
+  - Zaimplementowano 10 stron portalu:
+    - [website/src/pages/index.astro](website/src/pages/index.astro): Strona główna z prezentacją gry, grafiką ANTIC F, telemetrią na żywo i przyciskami pobierania.
+    - [website/src/pages/game.astro](website/src/pages/game.astro): Mechanika gry, fizyka lotu 8.8, debounce, zianie ogniem, tabela sterowania joystickiem, maszyna stanów.
+    - [website/src/pages/world.astro](website/src/pages/world.astro): Interaktywny World Explorer dla 5 labiryntów i 35 ekranów z siatką 40×11, filtrami warstw kolizji/sekretów oraz inspektorem kafelków.
+    - [website/src/pages/objects.astro](website/src/pages/objects.astro): Katalog 168 obiektów z wyszukiwarką, filtrami tagów i flag oraz wizualną matrycą kafelków.
+    - [website/src/pages/gallery.astro](website/src/pages/gallery.astro): Interaktywny odtwarzacz 8-klatkowej animacji smoka z filmstripem, galeria grafik i zestawy znaków.
+    - [website/src/pages/music.astro](website/src/pages/music.astro): Architektura audio POKEY, lista utworów CMC i koegzystencja procedur SFX.
+    - [website/src/pages/memory.astro](website/src/pages/memory.astro): Wizualizacja 64 KB przestrzeni adresowej, tabela segmentów, bufor kołowy HSCROL, Zero Page i proweniencja SHA-256.
+    - [website/src/pages/technical.astro](website/src/pages/technical.astro): Szczegóły techniczne ANTIC Mode 5, display list, rejestry LMS na wiersz, 5. gracz GTIA i optymalizacje SoA w asemblerze 6502.
+    - [website/src/pages/releases.astro](website/src/pages/releases.astro): Archiwum 10 wydań z changelogami i bezpośrednim pobieraniem `jabberwocky.xex`.
+    - [website/src/pages/history.astro](website/src/pages/history.astro): Kamienie milowe rozwoju projektu, ekosystem trzech edytorów PySide6 i standardy testowania py65.
+- **Wdrożenie GitHub Actions i repozytorium**:
+  - [.github/workflows/portal-deploy.yml](.github/workflows/portal-deploy.yml): Zbudowano dedykowany przepływ CI/CD (triggery: push main, release published, workflow_dispatch, pull_request w trybie walidacji) instalujący MADS i Make, budujący binarkę i telemetrię, walidujący testy i wdrażający portal na GitHub Pages (wyłącznie poza PR).
+  - [.gitignore](.gitignore): Dodano reguły wykluczające artefakty budowania portalu (`website/node_modules/`, `website/dist/`, `website/.astro/`).
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` i walidacja mapy pamięci (kod wyjścia 0).
+  - `make portal_data`: pomyślne wygenerowanie 9 raportów JSON w `reports/portal/` i `website/src/data/` (kod wyjścia 0).
+  - `pytest`: 222 testy zakończone sukcesem (100% passed w 20.33s).
+  - `npm ci && npm run check && npm run build`: pomyślna walidacja typów (0 błędów, 0 ostrzeżeń) i zbudowanie 10 statycznych stron w `website/dist` (kod wyjścia 0).
+
+
 ## [2026-11-02] - Usunięcie false positive kolizji z przeszkodami przy zbieraniu przedmiotów podczas szybkiego lotu
 - **Silnik gry i detekcja kolizji**:
   - [engine/flame_collision.asm](engine/flame_collision.asm):

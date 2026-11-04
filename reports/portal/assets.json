@@ -1,0 +1,164 @@
+{
+  "images": {
+    "title": {
+      "file": "img/title.png",
+      "width": 320,
+      "height": 175,
+      "format": "PNG",
+      "antic_mode": "F",
+      "target_bin": "gen/title.bin",
+      "file_size_bytes": 5388
+    },
+    "cover": {
+      "file": "cover.png",
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "antic_mode": null,
+      "target_bin": null,
+      "file_size_bytes": 2843464
+    }
+  },
+  "fonts": {
+    "game_fnt": {
+      "file": "fonts/game.fnt",
+      "file_size_bytes": 1024,
+      "characters_count": 128,
+      "base_address": "$6800",
+      "description": "Playfield graphics font for ANTIC 5 labyrinth tiles"
+    },
+    "text_fnt": {
+      "file": "fonts/text.fnt",
+      "file_size_bytes": 1024,
+      "characters_count": 128,
+      "base_address": "$5C00",
+      "description": "Text font with custom Polish diacritics for status bar and UI screens"
+    }
+  },
+  "animated_characters": [
+    {
+      "index": 112,
+      "repeat": 2,
+      "total_frames": 9,
+      "frame_duration": 5,
+      "frames_hex": [
+        "00 00 00 00 00 00 00 00",
+        "00 3C C3 83 C3 00 3C 2C",
+        "3C C3 83 C3 00 3C 2C 00",
+        "C3 83 C3 00 3C 2C 00 3C",
+        "83 C3 00 3C 2C 00 3C C3",
+        "C3 00 3C 2C 00 3C C3 83",
+        "00 3C 2C 00 3C C3 83 C3",
+        "3C 2C 00 3C C3 83 C3 00",
+        "2C 00 3C C3 83 C3 00 3C"
+      ]
+    },
+    {
+      "index": 78,
+      "repeat": 10,
+      "total_frames": 13,
+      "frame_duration": 50,
+      "frames_hex": [
+        "00 00 00 00 00 00 00 00",
+        "00 00 00 00 00 00 00 00",
+        "00 00 00 00 00 00 00 88",
+        "00 00 00 00 00 00 88 00",
+        "00 00 00 00 00 88 00 CC",
+        "00 00 00 00 88 00 CC CC",
+        "00 00 00 00 88 00 CC CC",
+        "00 00 00 00 88 00 CC CC",
+        "00 00 00 00 00 88 00 CC",
+        "00 00 00 00 00 00 88 00",
+        "00 00 00 00 00 00 00 88",
+        "00 00 00 00 00 00 00 00",
+        "00 00 00 00 00 00 00 00"
+      ]
+    },
+    {
+      "index": 113,
+      "repeat": 2,
+      "total_frames": 9,
+      "frame_duration": 5,
+      "frames_hex": [
+        "00 00 00 00 00 00 00 00",
+        "00 0C 3B 0C 00 30 EC 30",
+        "0C 3B 0C 00 30 EC 30 00",
+        "3B 0C 00 30 EC 30 00 0C",
+        "0C 00 30 EC 30 00 0C 3B",
+        "00 30 EC 30 00 0C 3B 0C",
+        "30 EC 30 00 0C 3B 0C 00",
+        "EC 30 00 0C 3B 0C 00 30",
+        "30 00 0C 3B 0C 00 30 EC"
+      ]
+    },
+    {
+      "index": 25,
+      "repeat": 0,
+      "total_frames": 8,
+      "frame_duration": 5,
+      "frames_hex": [
+        "FF F3 3C FF FF CF 3C FF",
+        "FF FF F3 3C FF FF CF 3C",
+        "3C FF FF F3 3C FF FF CF",
+        "CF 3C FF FF F3 3C FF FF",
+        "FF CF 3C FF FF F3 3C FF",
+        "FF FF CF 3C FF FF F3 3C",
+        "3C FF FF CF 3C FF FF F3",
+        "F3 3C FF FF CF 3C FF FF"
+      ]
+    },
+    {
+      "index": 124,
+      "repeat": 0,
+      "total_frames": 2,
+      "frame_duration": 20,
+      "frames_hex": [
+        "0C 30 33 0C CC 30 10 10",
+        "C0 30 0C CC CC 30 10 10"
+      ]
+    },
+    {
+      "index": 75,
+      "repeat": 5,
+      "total_frames": 19,
+      "frame_duration": 50,
+      "frames_hex": [
+        "00 00 00 00 00 00 00 00",
+        "00 00 00 00 30 00 00 00",
+        "00 00 00 00 F0 00 00 00",
+        "00 00 00 00 F3 00 00 00",
+        "00 00 00 00 F3 00 03 00",
+        "00 00 00 00 F3 00 0F 30",
+        "00 00 0C 00 F3 00 0F 30",
+        "00 00 3C 00 F3 00 0F 30",
+        "00 03 3C 00 F3 00 0F 30",
+        "00 03 3C 00 F3 00 0F 30",
+        "00 03 3C 00 F3 00 0F 30",
+        "00 00 3C 00 F3 00 0F 30",
+        "00 00 0C 00 F3 00 0F 30",
+        "00 00 00 00 F3 00 0F 30",
+        "00 00 00 00 F3 00 03 00",
+        "00 00 00 00 F3 00 00 00",
+        "00 00 00 00 F0 00 00 00",
+        "00 00 00 00 30 00 00 00",
+        "00 00 00 00 00 00 00 00"
+      ]
+    }
+  ],
+  "rotated_characters": [
+    {
+      "index": 5,
+      "duration": 10
+    },
+    {
+      "index": 115,
+      "duration": 5
+    }
+  ],
+  "story_texts": {
+    "title": "'Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe;\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.",
+    "scroll": "JABBERWOCKY - ATARI 8-bit GAME - https://github.com/grzes71/jabberwocky - version 0.10.0 - MUSIC BY Andrzej \"Andy\" Kidaj - PRESS FIRE TO START...",
+    "game_over_fail": "Twas brillig, the beast fell,\nThe vorpal blade bit deep,\nNo more the flames swell,\nThe Jabberwock shall sleep.",
+    "game_over_success": "The vorpal blade shatters,\nThe frabjous sun sets red,\nThe foe lies in tatters,\nThe Jabberwock is spread!"
+  }
+}

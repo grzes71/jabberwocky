@@ -1,0 +1,125 @@
+{
+  "total_releases": 10,
+  "releases": [
+    {
+      "version": "0.10.0",
+      "tag_name": "v0.10.0",
+      "name": "Jabberwocky v0.10.0",
+      "published_at": "2026-11-02T20:36:26Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **collision:** remove non-blockable objects and prevent false obsta…\r\n- **collision:** remove non-blockable objects and prevent false obstacle hits during fast flight\r\n\r\n\r\n*Pull Request: [#22](https://github.com/grzes71/jabberwocky/pull/22) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.10.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.10.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 35352,
+      "is_latest": true
+    },
+    {
+      "version": "0.9.0",
+      "tag_name": "v0.9.0",
+      "name": "Jabberwocky v0.9.0",
+      "published_at": "2026-10-18T19:38:14Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **sprite-studio:** add raster image import and frame inverse/clear …\r\n- **sprite-studio:** add raster image import and frame inverse/clear operations\r\n\r\n\r\n*Pull Request: [#21](https://github.com/grzes71/jabberwocky/pull/21) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.9.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.9.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 36022,
+      "is_latest": false
+    },
+    {
+      "version": "0.8.0",
+      "tag_name": "v0.8.0",
+      "name": "Jabberwocky v0.8.0",
+      "published_at": "2026-09-30T14:49:55Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **render:** implement mirror ring buffer with per-row LMS and incre…\r\n- **render:** implement mirror ring buffer with per-row LMS and increase scroll speed\r\n\r\n\r\n*Pull Request: [#19](https://github.com/grzes71/jabberwocky/pull/19) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.8.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.8.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 36022,
+      "is_latest": false
+    },
+    {
+      "version": "0.7.0",
+      "tag_name": "v0.7.0",
+      "name": "Jabberwocky v0.7.0",
+      "published_at": "2026-09-29T19:33:21Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **audio:** integrate relocated CMC music player with SFX coexistence\r\n\r\n\r\n*Pull Request: [#18](https://github.com/grzes71/jabberwocky/pull/18) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.7.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.7.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 36284,
+      "is_latest": false
+    },
+    {
+      "version": "0.6.0",
+      "tag_name": "v0.6.0",
+      "name": "Jabberwocky v0.6.0",
+      "published_at": "2026-09-21T07:16:33Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **world:** update object placements across village labyrinth screens\r\n- **world:** update object placements across forest labyrinth screens\r\n\r\n\r\n*Pull Request: [#15](https://github.com/grzes71/jabberwocky/pull/15) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.6.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.6.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 31521,
+      "is_latest": false
+    },
+    {
+      "version": "0.5.0",
+      "tag_name": "v0.5.0",
+      "name": "Jabberwocky v0.5.0",
+      "published_at": "2026-09-20T11:16:23Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **map:** optimize object placement and screen layouts across labyri…\r\n- **map:** optimize object placement and screen layouts across labyrinths\r\n\r\n\r\n*Pull Request: [#14](https://github.com/grzes71/jabberwocky/pull/14) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.5.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.5.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 31493,
+      "is_latest": false
+    },
+    {
+      "version": "0.4.0",
+      "tag_name": "v0.4.0",
+      "name": "Jabberwocky v0.4.0",
+      "published_at": "2026-09-20T08:40:09Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **score:** add energy bonus countdown on level completion with clic…\r\n- **score:** add energy bonus countdown on level completion with click sound\r\n\r\n\r\n*Pull Request: [#13](https://github.com/grzes71/jabberwocky/pull/13) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.4.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.4.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 31475,
+      "is_latest": false
+    },
+    {
+      "version": "0.3.0",
+      "tag_name": "v0.3.0",
+      "name": "Jabberwocky v0.3.0",
+      "published_at": "2026-09-20T08:07:54Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- add Brillig Village level and engine gameplay improvements\r\n\r\n\r\n*Pull Request: [#12](https://github.com/grzes71/jabberwocky/pull/12) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.3.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.3.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 31232,
+      "is_latest": false
+    },
+    {
+      "version": "0.2.0",
+      "tag_name": "v0.2.0",
+      "name": "Jabberwocky v0.2.0",
+      "published_at": "2026-09-19T05:35:58Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **collision:** add 1-frame grace debounce for obstacle and wall col…\r\n- **collision:** add 1-frame grace debounce for obstacle and wall collisions\r\n\r\n\r\n*Pull Request: [#11](https://github.com/grzes71/jabberwocky/pull/11) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.2.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.2.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 30616,
+      "is_latest": false
+    },
+    {
+      "version": "0.1.0",
+      "tag_name": "v0.1.0",
+      "name": "Jabberwocky v0.1.0",
+      "published_at": "2026-09-18T11:21:55Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- **gameover:** fine-tune game over sequence and adjust screen layout\r\n\r\n\r\n*Pull Request: [#10](https://github.com/grzes71/jabberwocky/pull/10) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.1.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.1.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 30595,
+      "is_latest": false
+    }
+  ]
+}

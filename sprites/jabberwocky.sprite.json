@@ -6,9 +6,9 @@
       "description": "",
       "width": 8,
       "height": 20,
-      "color": 37,
+      "color": 246,
       "color_mode": 4,
-      "color2": 24,
+      "color2": 248,
       "animation": {
         "frame_duration": 4,
         "loop": true

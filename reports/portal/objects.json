@@ -1,0 +1,5923 @@
+{
+  "total_count": 168,
+  "used_count": 93,
+  "all_tags": [
+    "animacja",
+    "dom",
+    "drzewo",
+    "infrastruktura",
+    "interakcja",
+    "sekret",
+    "skarb",
+    "skała",
+    "tło",
+    "woda"
+  ],
+  "objects": [
+    {
+      "code": 3,
+      "id": "WAVES_UP",
+      "object": "WAVES_UP",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        230,
+        243,
+        243
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 4,
+      "id": "TREE_2",
+      "object": "TREE_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        51,
+        52,
+        83,
+        84
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 34,
+      "screens_used_in": [
+        "CITY_04",
+        "CITY_05",
+        "CITY_06",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_03",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_04",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_01",
+        "VILLAGE_02",
+        "VILLAGE_03",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 5,
+      "id": "WAVES_DOWN",
+      "object": "WAVES_DOWN",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        243,
+        243,
+        229,
+        229
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 6,
+      "id": "PALM_SWAMP",
+      "object": "PALM_SWAMP",
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        79,
+        114,
+        0,
+        203,
+        110,
+        111,
+        203,
+        0,
+        203,
+        203,
+        0
+      ],
+      "tags": [
+        "drzewo",
+        "animacja"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "TOLEM_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 7,
+      "id": "TREE_1",
+      "object": "TREE_1",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        53,
+        54,
+        85,
+        86
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 41,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_03",
+        "CITY_05",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_05",
+        "TOLEM_06",
+        "VILLAGE_01",
+        "VILLAGE_02",
+        "VILLAGE_03",
+        "VILLAGE_06",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 8,
+      "id": "BUSH_2_DOWN",
+      "object": "BUSH_2_DOWN",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        71,
+        72
+      ],
+      "tags": [
+        "drzewo",
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 9,
+      "id": "TREE_3",
+      "object": "TREE_3",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        7,
+        8,
+        39,
+        40
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 37,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_04",
+        "CITY_05",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_03",
+        "TOLEM_05",
+        "TOLEM_06",
+        "TOLEM_07",
+        "VILLAGE_06"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 10,
+      "id": "RIVER_HORIZONTAL",
+      "object": "RIVER_HORIZONTAL",
+      "size": {
+        "width": 2,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        230,
+        243,
+        243,
+        243,
+        243,
+        229,
+        229
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 11,
+      "id": "BUSH_1_DOWN",
+      "object": "BUSH_1_DOWN",
+      "size": {
+        "width": 1,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        68
+      ],
+      "tags": [
+        "drzewo",
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 14,
+      "id": "SWAMP_BLOCK_2",
+      "object": "SWAMP_BLOCK_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        124,
+        203,
+        203,
+        124
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 15,
+      "id": "SWAMP_BLOCK",
+      "object": "SWAMP_BLOCK",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        203,
+        124,
+        124,
+        203
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 17,
+      "id": "RIVER_VERTICAL",
+      "object": "RIVER_VERTICAL",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        208,
+        153,
+        153,
+        210,
+        208,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 18,
+      "id": "PALM_TREE",
+      "object": "PALM_TREE",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        79,
+        114,
+        110,
+        111
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 11,
+      "screens_used_in": [
+        "TOLEM_01",
+        "TOLEM_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 19,
+      "id": "SWAMP",
+      "object": "SWAMP",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        203
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 20,
+      "id": "REED_2",
+      "object": "REED_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        124,
+        124
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 21,
+      "id": "REED_2V",
+      "object": "REED_2V",
+      "size": {
+        "width": 1,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        124,
+        124
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 22,
+      "id": "CROSS_1",
+      "object": "CROSS_1",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        43,
+        44
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 23,
+      "id": "CROSS_1_COPY",
+      "object": "CROSS_1_COPY",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        43,
+        44
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 24,
+      "id": "CROSS_2",
+      "object": "CROSS_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        46,
+        47
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 25,
+      "id": "WATER_UP",
+      "object": "WATER_UP",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        160
+      ],
+      "tags": [
+        "woda",
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 26,
+      "id": "REED",
+      "object": "REED",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        124
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 29,
+      "id": "SWAMP_2_WEED",
+      "object": "SWAMP_2_WEED",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        203,
+        203,
+        124,
+        124
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 31,
+      "id": "BARREL_2_2",
+      "object": "BARREL_2_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": true
+      },
+      "tiles": [
+        0,
+        0,
+        100,
+        228
+      ],
+      "tags": [
+        "sekret"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_05",
+        "FOREST_03",
+        "TOLEM_06",
+        "TOLEM_07",
+        "VILLAGE_01",
+        "VILLAGE_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 32,
+      "id": "CHAIN_1_2",
+      "object": "CHAIN_1_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        240,
+        240,
+        240,
+        240
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 12,
+      "screens_used_in": [
+        "CITY_02",
+        "CITY_08",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 37,
+      "id": "WATER_ANIM",
+      "object": "WATER_ANIM",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        243,
+        243
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 38,
+      "id": "CHAIN_3_2",
+      "object": "CHAIN_3_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        113,
+        113,
+        113,
+        113
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 40,
+      "id": "CLAW_2",
+      "object": "CLAW_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        206,
+        206
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 45,
+      "id": "RIVER_BR_2",
+      "object": "RIVER_BR_2",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        247,
+        153,
+        153,
+        210,
+        243,
+        153,
+        153,
+        210,
+        243,
+        153,
+        153,
+        210,
+        229,
+        229,
+        229,
+        235
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 46,
+      "id": "RIVER_TL_2",
+      "object": "RIVER_TL_2",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        236,
+        230,
+        230,
+        230,
+        208,
+        153,
+        153,
+        243,
+        208,
+        153,
+        153,
+        243,
+        208,
+        153,
+        153,
+        246
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 47,
+      "id": "BRIDGE",
+      "object": "BRIDGE",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        23,
+        24,
+        24,
+        26,
+        208,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 48,
+      "id": "BUSH_2",
+      "object": "BUSH_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        71,
+        72
+      ],
+      "tags": [
+        "drzewo",
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 49,
+      "id": "REED_3",
+      "object": "REED_3",
+      "size": {
+        "width": 3,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        124,
+        0,
+        124
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 51,
+      "id": "TREE_2_DOWN",
+      "object": "TREE_2_DOWN",
+      "size": {
+        "width": 2,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        51,
+        52,
+        83,
+        84
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 54,
+      "screens_used_in": [
+        "CITY_03",
+        "CITY_04",
+        "CITY_05",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_06",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_02",
+        "VILLAGE_04",
+        "VILLAGE_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 52,
+      "id": "BARREL_1_2",
+      "object": "BARREL_1_2",
+      "size": {
+        "width": 1,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": true
+      },
+      "tiles": [
+        0,
+        100
+      ],
+      "tags": [
+        "sekret"
+      ],
+      "instances_count": 11,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_04",
+        "CITY_06",
+        "TOLEM_02",
+        "TOLEM_05",
+        "TOLEM_07",
+        "VILLAGE_04",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 53,
+      "id": "BARREL_2",
+      "object": "BARREL_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": true
+      },
+      "tiles": [
+        100,
+        228
+      ],
+      "tags": [
+        "sekret"
+      ],
+      "instances_count": 24,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_03",
+        "CITY_04",
+        "CITY_05",
+        "CITY_06",
+        "CITY_07",
+        "FOREST_02",
+        "FOREST_05",
+        "TOLEM_05",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 54,
+      "id": "CLAW_2_2",
+      "object": "CLAW_2_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        206,
+        206
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 16,
+      "screens_used_in": [
+        "CITY_03",
+        "TOLEM_07",
+        "VILLAGE_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 55,
+      "id": "HOUSE_MEDIUM_GREEN",
+      "object": "HOUSE_MEDIUM_GREEN",
+      "size": {
+        "width": 5,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        3,
+        2,
+        3,
+        4,
+        195,
+        65,
+        66,
+        163,
+        164
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 56,
+      "id": "ROCK_GREEN",
+      "object": "ROCK_GREEN",
+      "size": {
+        "width": 3,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        13,
+        14,
+        15
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 19,
+      "screens_used_in": [
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_04",
+        "FOREST_07",
+        "FOREST_09",
+        "TOLEM_05",
+        "TOLEM_07",
+        "VILLAGE_01",
+        "VILLAGE_02",
+        "VILLAGE_03",
+        "VILLAGE_04",
+        "VILLAGE_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 60,
+      "id": "HOUSE_SMALL_BLUE",
+      "object": "HOUSE_SMALL_BLUE",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        130,
+        131,
+        132,
+        65,
+        66,
+        163,
+        164
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "VILLAGE_01"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 61,
+      "id": "RIVER_BL_2",
+      "object": "RIVER_BL_2",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        208,
+        153,
+        153,
+        249,
+        208,
+        153,
+        153,
+        243,
+        208,
+        153,
+        153,
+        243,
+        237,
+        229,
+        229,
+        229
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 62,
+      "id": "ROCK_2",
+      "object": "ROCK_2",
+      "size": {
+        "width": 3,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        10,
+        11,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 13,
+      "screens_used_in": [
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_07",
+        "FOREST_08",
+        "TOLEM_02",
+        "TOLEM_04",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 65,
+      "id": "TREE_3_DOWN",
+      "object": "TREE_3_DOWN",
+      "size": {
+        "width": 2,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        7,
+        8,
+        39,
+        40
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 36,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_05",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_03",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_09",
+        "TOLEM_01",
+        "TOLEM_04",
+        "TOLEM_06",
+        "TOLEM_08",
+        "VILLAGE_01",
+        "VILLAGE_04",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 66,
+      "id": "WATER_BL",
+      "object": "WATER_BL",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        208,
+        243,
+        237,
+        229
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 67,
+      "id": "WATER_BR",
+      "object": "WATER_BR",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        243,
+        210,
+        229,
+        235
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 69,
+      "id": "CHAIN_1",
+      "object": "CHAIN_1",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        240
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 72,
+      "id": "HOUSE_BIG",
+      "object": "HOUSE_BIG",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        3,
+        2,
+        4,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        218,
+        161,
+        116,
+        116,
+        116,
+        116
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 73,
+      "id": "HOUSE_SMALL",
+      "object": "HOUSE_SMALL",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        2,
+        3,
+        4,
+        65,
+        66,
+        163,
+        164
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_02",
+        "VILLAGE_03",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 74,
+      "id": "OUTHOUSE",
+      "object": "OUTHOUSE",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        224,
+        225,
+        65,
+        66
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "TOLEM_05",
+        "VILLAGE_01",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 76,
+      "id": "SHED",
+      "object": "SHED",
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        3,
+        4,
+        33,
+        65,
+        66
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 8,
+      "screens_used_in": [
+        "CITY_01",
+        "VILLAGE_01",
+        "VILLAGE_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 78,
+      "id": "WATERFALL_0",
+      "object": "WATERFALL_0",
+      "size": {
+        "width": 6,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        10,
+        230,
+        230,
+        12,
+        0,
+        10,
+        11,
+        153,
+        153,
+        9,
+        12
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_02",
+        "FOREST_03",
+        "TOLEM_03",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 79,
+      "id": "WATERFALL_GREEN",
+      "object": "WATERFALL_GREEN",
+      "size": {
+        "width": 6,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        13,
+        230,
+        230,
+        15,
+        0,
+        13,
+        14,
+        153,
+        153,
+        121,
+        15
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 80,
+      "id": "WATER_TR",
+      "object": "WATER_TR",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        148,
+        243,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 81,
+      "id": "WAVE_UP",
+      "object": "WAVE_UP",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        153,
+        153,
+        153,
+        153
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 82,
+      "id": "WELL",
+      "object": "WELL",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        30,
+        31
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_04",
+        "CITY_06"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 83,
+      "id": "CROSS_2_COPY",
+      "object": "CROSS_2_COPY",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        46,
+        47
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 85,
+      "id": "HOUSE_MEDIUM",
+      "object": "HOUSE_MEDIUM",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        131,
+        130,
+        132,
+        163,
+        164,
+        163,
+        164,
+        65,
+        66,
+        163,
+        164,
+        116,
+        116,
+        116,
+        116
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 7,
+      "screens_used_in": [
+        "CITY_02",
+        "VILLAGE_03",
+        "VILLAGE_04",
+        "VILLAGE_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 86,
+      "id": "HOUSE_MEDIUM_2",
+      "object": "HOUSE_MEDIUM_2",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        131,
+        130,
+        132,
+        33,
+        33,
+        33,
+        33,
+        33,
+        90,
+        33,
+        33,
+        116,
+        116,
+        116,
+        116
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 87,
+      "id": "HOUSE_MEDIUM_BLUE",
+      "object": "HOUSE_MEDIUM_BLUE",
+      "size": {
+        "width": 5,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        131,
+        130,
+        131,
+        132,
+        33,
+        65,
+        66,
+        163,
+        164
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_02",
+        "CITY_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 88,
+      "id": "OUTHOUSE_3",
+      "object": "OUTHOUSE_3",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        224,
+        131,
+        131,
+        225,
+        122,
+        155,
+        156,
+        123
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_04",
+        "VILLAGE_02",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 89,
+      "id": "PALM_SWAMP_DOWN",
+      "object": "PALM_SWAMP_DOWN",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        79,
+        114,
+        0,
+        203,
+        110,
+        111,
+        203,
+        0,
+        203,
+        203,
+        0
+      ],
+      "tags": [
+        "drzewo",
+        "animacja"
+      ],
+      "instances_count": 5,
+      "screens_used_in": [
+        "TOLEM_01",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 90,
+      "id": "RIVER_RIGHT_END",
+      "object": "RIVER_RIGHT_END",
+      "size": {
+        "width": 2,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        148,
+        243,
+        210,
+        243,
+        210,
+        229,
+        235
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 91,
+      "id": "RIVER_TR_2",
+      "object": "RIVER_TR_2",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        230,
+        230,
+        148,
+        243,
+        153,
+        243,
+        210,
+        243,
+        153,
+        153,
+        210,
+        248,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 92,
+      "id": "ROCK_1",
+      "object": "ROCK_1",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        10,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 11,
+      "screens_used_in": [
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_06",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 94,
+      "id": "STONE_BIG_DOWN",
+      "object": "STONE_BIG_DOWN",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        10,
+        11,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 95,
+      "id": "TREE_1_DOWN",
+      "object": "TREE_1_DOWN",
+      "size": {
+        "width": 2,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        53,
+        54,
+        85,
+        86
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 60,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_03",
+        "CITY_04",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_03",
+        "TOLEM_04",
+        "TOLEM_05",
+        "TOLEM_06",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_02",
+        "VILLAGE_04",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 96,
+      "id": "WATERFALL_2_DOWN",
+      "object": "WATERFALL_2_DOWN",
+      "size": {
+        "width": 8,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        13,
+        230,
+        230,
+        15,
+        0,
+        0,
+        0,
+        13,
+        14,
+        153,
+        153,
+        121,
+        15,
+        0,
+        13,
+        14,
+        74,
+        153,
+        153,
+        74,
+        121,
+        15
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 97,
+      "id": "WATER_TL",
+      "object": "WATER_TL",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        236,
+        230,
+        208,
+        243
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 98,
+      "id": "WAVE_UP_2",
+      "object": "WAVE_UP_2",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        153,
+        153,
+        230,
+        243,
+        243,
+        243,
+        243
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 99,
+      "id": "BARN_4",
+      "object": "BARN_4",
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        224,
+        131,
+        225,
+        122,
+        90,
+        123
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_01",
+        "TOLEM_05",
+        "VILLAGE_02",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 101,
+      "id": "CASTLE_SMALL",
+      "object": "CASTLE_SMALL",
+      "size": {
+        "width": 8,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        59,
+        60,
+        55,
+        55,
+        55,
+        55,
+        59,
+        60,
+        91,
+        92,
+        33,
+        155,
+        156,
+        33,
+        91,
+        92
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "VILLAGE_02",
+        "VILLAGE_06"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 102,
+      "id": "CHURCH",
+      "object": "CHURCH",
+      "size": {
+        "width": 4,
+        "height": 7
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        46,
+        47,
+        0,
+        0,
+        103,
+        106,
+        0,
+        0,
+        185,
+        56,
+        0,
+        0,
+        61,
+        189,
+        0,
+        1,
+        33,
+        33,
+        4,
+        33,
+        163,
+        164,
+        33,
+        33,
+        27,
+        28,
+        33
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_05",
+        "TOLEM_07",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 103,
+      "id": "CHURCH_SMALL",
+      "object": "CHURCH_SMALL",
+      "size": {
+        "width": 4,
+        "height": 6
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        46,
+        47,
+        0,
+        0,
+        231,
+        234,
+        0,
+        0,
+        57,
+        56,
+        0,
+        104,
+        61,
+        61,
+        105,
+        33,
+        193,
+        194,
+        33,
+        116,
+        116,
+        116,
+        116
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_01",
+        "VILLAGE_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 104,
+      "id": "CROSS_3",
+      "object": "CROSS_3",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        171,
+        172
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 16,
+      "screens_used_in": [
+        "CITY_09",
+        "CITY_10",
+        "TOLEM_01"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 106,
+      "id": "HOME_NEW",
+      "object": "HOME_NEW",
+      "size": {
+        "width": 6,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        96,
+        3,
+        2,
+        3,
+        3,
+        97,
+        250,
+        163,
+        164,
+        65,
+        66,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 5,
+      "screens_used_in": [
+        "CITY_05",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 107,
+      "id": "HOME_NEW_2",
+      "object": "HOME_NEW_2",
+      "size": {
+        "width": 6,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        224,
+        131,
+        130,
+        131,
+        131,
+        225,
+        250,
+        81,
+        6,
+        163,
+        164,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 108,
+      "id": "HOME_SMALL_2",
+      "object": "HOME_SMALL_2",
+      "size": {
+        "width": 5,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        131,
+        130,
+        131,
+        132,
+        250,
+        33,
+        65,
+        66,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 109,
+      "id": "HOUSE_SMALL_2",
+      "object": "HOUSE_SMALL_2",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        131,
+        130,
+        132,
+        65,
+        66,
+        161,
+        161
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 110,
+      "id": "HOUSE_TALLEST",
+      "object": "HOUSE_TALLEST",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        131,
+        130,
+        132,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        33,
+        90,
+        33,
+        33
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 111,
+      "id": "LAKE",
+      "object": "LAKE",
+      "size": {
+        "width": 8,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        236,
+        230,
+        230,
+        230,
+        230,
+        230,
+        230,
+        148,
+        208,
+        243,
+        243,
+        243,
+        243,
+        243,
+        243,
+        210,
+        208,
+        243,
+        243,
+        243,
+        243,
+        243,
+        243,
+        210,
+        237,
+        229,
+        229,
+        229,
+        229,
+        229,
+        229,
+        235
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 112,
+      "id": "PORT",
+      "object": "PORT",
+      "size": {
+        "width": 10,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        3,
+        4,
+        250,
+        34,
+        163,
+        164,
+        33,
+        33,
+        163,
+        164,
+        34,
+        251,
+        250,
+        29,
+        29,
+        29,
+        27,
+        28,
+        29,
+        29,
+        29,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_04",
+        "CITY_06",
+        "VILLAGE_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 113,
+      "id": "PORT_2",
+      "object": "PORT_2",
+      "size": {
+        "width": 10,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        129,
+        130,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        132,
+        250,
+        33,
+        33,
+        33,
+        33,
+        33,
+        33,
+        33,
+        33,
+        251,
+        250,
+        255,
+        255,
+        255,
+        27,
+        28,
+        255,
+        255,
+        255,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_02",
+        "CITY_06",
+        "VILLAGE_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 114,
+      "id": "RIVER_LEFT_END",
+      "object": "RIVER_LEFT_END",
+      "size": {
+        "width": 2,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        236,
+        230,
+        208,
+        243,
+        208,
+        243,
+        237,
+        229
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 115,
+      "id": "ROCK_GREEN_LARGE",
+      "object": "ROCK_GREEN_LARGE",
+      "size": {
+        "width": 7,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        13,
+        14,
+        15,
+        0,
+        0,
+        0,
+        13,
+        14,
+        74,
+        74,
+        15,
+        0,
+        13,
+        14,
+        74,
+        74,
+        74,
+        74,
+        15
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 8,
+      "screens_used_in": [
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_07",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 116,
+      "id": "ROCK_BIG_2_DOWN",
+      "object": "ROCK_BIG_2_DOWN",
+      "size": {
+        "width": 7,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        11,
+        12,
+        0,
+        0,
+        0,
+        10,
+        11,
+        34,
+        9,
+        12,
+        0,
+        10,
+        11,
+        34,
+        34,
+        34,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 117,
+      "id": "ROCK_GREEN_DOWN",
+      "object": "ROCK_GREEN_DOWN",
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        13,
+        14,
+        15
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 7,
+      "screens_used_in": [
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_06",
+        "TOLEM_04",
+        "VILLAGE_05",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 118,
+      "id": "SECRET1",
+      "object": "SECRET1",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": true
+      },
+      "tiles": [
+        73
+      ],
+      "tags": [
+        "sekret"
+      ],
+      "instances_count": 32,
+      "screens_used_in": [
+        "CITY_04",
+        "CITY_07",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_01",
+        "TOLEM_02",
+        "TOLEM_03",
+        "TOLEM_04",
+        "TOLEM_06",
+        "TOLEM_07",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 120,
+      "id": "SWAMP_2",
+      "object": "SWAMP_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        203,
+        203,
+        203,
+        203
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 121,
+      "id": "THE_TAVERN",
+      "object": "THE_TAVERN",
+      "size": {
+        "width": 12,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        3,
+        4,
+        250,
+        163,
+        164,
+        163,
+        164,
+        27,
+        28,
+        163,
+        164,
+        163,
+        164,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_04",
+        "TOLEM_06",
+        "VILLAGE_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 122,
+      "id": "WATER_ANIM_2",
+      "object": "WATER_ANIM_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        243,
+        243,
+        243,
+        243
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 123,
+      "id": "WATER_INNER_TL",
+      "object": "WATER_INNER_TL",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        243,
+        153,
+        153,
+        210,
+        248,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 125,
+      "id": "BARREL",
+      "object": "BARREL",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": true
+      },
+      "tiles": [
+        100
+      ],
+      "tags": [
+        "sekret"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_02",
+        "FOREST_05",
+        "TOLEM_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 126,
+      "id": "BRICKS_2",
+      "object": "BRICKS_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        95,
+        95,
+        95,
+        95
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 36,
+      "screens_used_in": [
+        "CITY_03",
+        "CITY_09",
+        "CITY_10",
+        "TOLEM_03",
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 127,
+      "id": "BRICKS_2_3",
+      "object": "BRICKS_2_3",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        95,
+        95
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 8,
+      "screens_used_in": [
+        "CITY_02",
+        "VILLAGE_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 128,
+      "id": "BRICK_WALL",
+      "object": "BRICK_WALL",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        29
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 129,
+      "id": "BRICK_WALL_2",
+      "object": "BRICK_WALL_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        29,
+        29
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 21,
+      "screens_used_in": [
+        "CITY_03",
+        "CITY_09",
+        "CITY_10",
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 130,
+      "id": "BRIDGE_2",
+      "object": "BRIDGE_2",
+      "size": {
+        "width": 5,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        23,
+        24,
+        24,
+        26,
+        0,
+        208,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 132,
+      "id": "CASTLE_BIG",
+      "object": "CASTLE_BIG",
+      "size": {
+        "width": 8,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        96,
+        97,
+        0,
+        0,
+        0,
+        59,
+        60,
+        55,
+        58,
+        58,
+        55,
+        59,
+        60,
+        91,
+        92,
+        33,
+        33,
+        33,
+        33,
+        91,
+        92,
+        91,
+        92,
+        34,
+        27,
+        28,
+        34,
+        91,
+        92
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 133,
+      "id": "CASTLE_BIGGER",
+      "object": "CASTLE_BIGGER",
+      "size": {
+        "width": 8,
+        "height": 5
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        104,
+        105,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        33,
+        33,
+        0,
+        0,
+        0,
+        59,
+        60,
+        55,
+        61,
+        61,
+        55,
+        59,
+        60,
+        91,
+        92,
+        33,
+        33,
+        33,
+        33,
+        91,
+        92,
+        91,
+        92,
+        34,
+        27,
+        28,
+        34,
+        91,
+        92
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 134,
+      "id": "CASTLE_BIGGEST",
+      "object": "CASTLE_BIGGEST",
+      "size": {
+        "width": 12,
+        "height": 5
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        224,
+        225,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        96,
+        97,
+        0,
+        33,
+        33,
+        0,
+        96,
+        97,
+        0,
+        0,
+        0,
+        0,
+        58,
+        58,
+        55,
+        58,
+        58,
+        55,
+        58,
+        58,
+        0,
+        0,
+        59,
+        60,
+        29,
+        34,
+        33,
+        57,
+        56,
+        33,
+        34,
+        127,
+        59,
+        60,
+        91,
+        92,
+        29,
+        34,
+        34,
+        27,
+        28,
+        34,
+        34,
+        127,
+        91,
+        92
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_05",
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 135,
+      "id": "CASTLE_MID",
+      "object": "CASTLE_MID",
+      "size": {
+        "width": 8,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        158,
+        159,
+        0,
+        0,
+        0,
+        59,
+        60,
+        55,
+        58,
+        58,
+        55,
+        59,
+        60,
+        91,
+        92,
+        57,
+        56,
+        57,
+        56,
+        91,
+        92,
+        91,
+        92,
+        250,
+        27,
+        28,
+        251,
+        91,
+        92
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 136,
+      "id": "LARGE_ROCK",
+      "object": "LARGE_ROCK",
+      "size": {
+        "width": 7,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        10,
+        11,
+        12,
+        0,
+        0,
+        0,
+        10,
+        11,
+        34,
+        9,
+        12,
+        0,
+        10,
+        11,
+        34,
+        34,
+        34,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 137,
+      "id": "CHAIN_2",
+      "object": "CHAIN_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        241,
+        0,
+        0,
+        241
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 138,
+      "id": "CHAIN_2_2",
+      "object": "CHAIN_2_2",
+      "size": {
+        "width": 1,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        241,
+        241
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_02",
+        "CITY_03",
+        "CITY_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 139,
+      "id": "CHAIN_3",
+      "object": "CHAIN_3",
+      "size": {
+        "width": 1,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        113,
+        113
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 16,
+      "screens_used_in": [
+        "CITY_02",
+        "VILLAGE_03",
+        "VILLAGE_04",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 140,
+      "id": "CLAW",
+      "object": "CLAW",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        206
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 142,
+      "id": "FENCE_1",
+      "object": "FENCE_1",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        21,
+        21
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 147,
+      "id": "HOUSE_BIGGER",
+      "object": "HOUSE_BIGGER",
+      "size": {
+        "width": 5,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        163,
+        164,
+        34,
+        163,
+        164,
+        35,
+        36,
+        193,
+        194,
+        34
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_05",
+        "CITY_06",
+        "CITY_07",
+        "VILLAGE_04",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 148,
+      "id": "HOUSE_BIGGER_2",
+      "object": "HOUSE_BIGGER_2",
+      "size": {
+        "width": 5,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        96,
+        3,
+        2,
+        3,
+        97,
+        250,
+        163,
+        164,
+        34,
+        251,
+        250,
+        34,
+        193,
+        194,
+        251,
+        116,
+        116,
+        116,
+        116,
+        116
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_07",
+        "VILLAGE_03",
+        "VILLAGE_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 149,
+      "id": "HOUSE_BIG_2",
+      "object": "HOUSE_BIG_2",
+      "size": {
+        "width": 5,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        3,
+        2,
+        3,
+        4,
+        161,
+        161,
+        161,
+        161,
+        33,
+        193,
+        194,
+        33,
+        33,
+        33,
+        116,
+        116,
+        116,
+        116,
+        116
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_03",
+        "CITY_06",
+        "CITY_07",
+        "VILLAGE_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 150,
+      "id": "HOUSE_TALL",
+      "object": "HOUSE_TALL",
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        1,
+        2,
+        3,
+        4,
+        34,
+        35,
+        36,
+        34,
+        65,
+        66,
+        34,
+        67
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_02",
+        "CITY_07",
+        "VILLAGE_03",
+        "VILLAGE_04",
+        "VILLAGE_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 151,
+      "id": "OUTHOUSE_2",
+      "object": "OUTHOUSE_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        96,
+        97,
+        65,
+        66
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 5,
+      "screens_used_in": [
+        "CITY_05",
+        "TOLEM_05",
+        "TOLEM_06",
+        "TOLEM_07",
+        "VILLAGE_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 152,
+      "id": "PALM_TREE_DOWN",
+      "object": "PALM_TREE_DOWN",
+      "size": {
+        "width": 2,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        79,
+        114,
+        110,
+        111
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 11,
+      "screens_used_in": [
+        "TOLEM_01",
+        "TOLEM_02",
+        "TOLEM_03",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 153,
+      "id": "PORTAL_2",
+      "object": "PORTAL_2",
+      "size": {
+        "width": 7,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        13,
+        14,
+        15,
+        0,
+        0,
+        0,
+        13,
+        14,
+        74,
+        74,
+        15,
+        0,
+        13,
+        14,
+        74,
+        155,
+        156,
+        74,
+        15
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "FOREST_02",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 154,
+      "id": "PYRAMID_BIG",
+      "object": "PYRAMID_BIG",
+      "size": {
+        "width": 10,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        232,
+        233,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        232,
+        231,
+        227,
+        34,
+        234,
+        233,
+        0,
+        0,
+        232,
+        231,
+        227,
+        227,
+        155,
+        156,
+        34,
+        34,
+        234,
+        233
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "TOLEM_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 155,
+      "id": "PYRAMID_MEDIUM",
+      "object": "PYRAMID_MEDIUM",
+      "size": {
+        "width": 6,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        232,
+        233,
+        0,
+        0,
+        232,
+        231,
+        227,
+        34,
+        234,
+        233
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "TOLEM_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 156,
+      "id": "PYRAMID_SMALL",
+      "object": "PYRAMID_SMALL",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        232,
+        233
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_02"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 157,
+      "id": "RIVER_BL",
+      "object": "RIVER_BL",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        208,
+        153,
+        210,
+        0,
+        208,
+        153,
+        249,
+        230,
+        208,
+        243,
+        243,
+        243,
+        237,
+        229,
+        229,
+        229
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 158,
+      "id": "RIVER_BOTTOM_END",
+      "object": "RIVER_BOTTOM_END",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        208,
+        153,
+        153,
+        210,
+        237,
+        229,
+        229,
+        235
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 159,
+      "id": "RIVER_BR",
+      "object": "RIVER_BR",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        208,
+        153,
+        210,
+        230,
+        247,
+        153,
+        210,
+        243,
+        243,
+        243,
+        210,
+        229,
+        229,
+        229,
+        235
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 160,
+      "id": "RIVER_TL",
+      "object": "RIVER_TL",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        236,
+        230,
+        230,
+        230,
+        208,
+        243,
+        243,
+        243,
+        208,
+        153,
+        246,
+        229,
+        208,
+        153,
+        210,
+        0
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 161,
+      "id": "RIVER_TOP_END",
+      "object": "RIVER_TOP_END",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        236,
+        230,
+        230,
+        148,
+        208,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 162,
+      "id": "RIVER_TR",
+      "object": "RIVER_TR",
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        230,
+        230,
+        230,
+        148,
+        243,
+        243,
+        243,
+        210,
+        229,
+        248,
+        153,
+        210,
+        0,
+        208,
+        153,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 163,
+      "id": "ROCK_2_DOWN",
+      "object": "ROCK_2_DOWN",
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        10,
+        11,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 164,
+      "id": "SECRET2",
+      "object": "SECRET2",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": true
+      },
+      "tiles": [
+        201
+      ],
+      "tags": [
+        "sekret"
+      ],
+      "instances_count": 54,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_03",
+        "CITY_04",
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_05",
+        "TOLEM_02",
+        "TOLEM_03",
+        "TOLEM_04",
+        "TOLEM_05",
+        "TOLEM_06",
+        "VILLAGE_01",
+        "VILLAGE_02",
+        "VILLAGE_03",
+        "VILLAGE_04",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 165,
+      "id": "STONE_HUGE",
+      "object": "STONE_HUGE",
+      "size": {
+        "width": 7,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        10,
+        11,
+        12,
+        0,
+        0,
+        0,
+        10,
+        11,
+        34,
+        9,
+        12,
+        0,
+        10,
+        11,
+        34,
+        34,
+        9,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "FOREST_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 166,
+      "id": "STONE_BIG",
+      "object": "STONE_BIG",
+      "size": {
+        "width": 4,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        10,
+        11,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 12,
+      "screens_used_in": [
+        "CITY_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 167,
+      "id": "TOWER",
+      "object": "TOWER",
+      "size": {
+        "width": 2,
+        "height": 6
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        224,
+        225,
+        33,
+        34,
+        34,
+        33,
+        33,
+        34,
+        34,
+        33,
+        27,
+        28
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_05",
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 168,
+      "id": "WATER",
+      "object": "WATER",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        202
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 169,
+      "id": "WATER_2",
+      "object": "WATER_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        202,
+        202,
+        202,
+        202
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 170,
+      "id": "WATER_INNER_BL",
+      "object": "WATER_INNER_BL",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        247
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 171,
+      "id": "WATER_INNER_TR",
+      "object": "WATER_INNER_TR",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        249
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 172,
+      "id": "WATER_UP_2",
+      "object": "WATER_UP_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        160,
+        160
+      ],
+      "tags": [
+        "tło"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_07",
+        "FOREST_06",
+        "TOLEM_01"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 173,
+      "id": "WAVES",
+      "object": "WAVES",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        133,
+        133,
+        133,
+        133
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 174,
+      "id": "WAVES_1_2",
+      "object": "WAVES_1_2",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        133,
+        133
+      ],
+      "tags": [
+        "woda",
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 175,
+      "id": "WAVES_LEFT",
+      "object": "WAVES_LEFT",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        208,
+        0,
+        208
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 176,
+      "id": "WAVES_RIGHT",
+      "object": "WAVES_RIGHT",
+      "size": {
+        "width": 1,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        210,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 177,
+      "id": "TREE_4",
+      "object": "TREE_4",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        64,
+        117,
+        39,
+        40
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 32,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_01",
+        "TOLEM_04",
+        "TOLEM_06",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_02",
+        "VILLAGE_04",
+        "VILLAGE_06"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 178,
+      "id": "TREE_4_DOWN",
+      "object": "TREE_4_DOWN",
+      "size": {
+        "width": 2,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        64,
+        117,
+        39,
+        40
+      ],
+      "tags": [
+        "drzewo"
+      ],
+      "instances_count": 42,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_03",
+        "CITY_04",
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_01",
+        "TOLEM_04",
+        "TOLEM_08",
+        "VILLAGE_01",
+        "VILLAGE_02",
+        "VILLAGE_03",
+        "VILLAGE_05",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 180,
+      "id": "CHAIN_2_3",
+      "object": "CHAIN_2_3",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        241,
+        241,
+        241,
+        241
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 181,
+      "id": "CHAIN_2_3_3",
+      "object": "CHAIN_2_3_3",
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        241,
+        241,
+        0,
+        241,
+        241,
+        0,
+        241,
+        241
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 182,
+      "id": "BUSH_1",
+      "object": "BUSH_1",
+      "size": {
+        "width": 1,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        68
+      ],
+      "tags": [
+        "drzewo",
+        "tło"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 183,
+      "id": "ROCK_2x4",
+      "object": "ROCK_2x4",
+      "size": {
+        "width": 4,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        10,
+        12,
+        0,
+        10,
+        11,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 184,
+      "id": "PORT_MIKRO",
+      "object": "PORT_MIKRO",
+      "size": {
+        "width": 10,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        96,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        97,
+        250,
+        33,
+        163,
+        164,
+        27,
+        28,
+        163,
+        164,
+        33,
+        251
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_03",
+        "CITY_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 185,
+      "id": "CAVE_PORTAL_2",
+      "object": "CAVE_PORTAL_2",
+      "size": {
+        "width": 6,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        10,
+        11,
+        34,
+        12,
+        0,
+        10,
+        11,
+        27,
+        28,
+        9,
+        12
+      ],
+      "tags": [
+        "dom",
+        "skała"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 186,
+      "id": "FORGERY",
+      "object": "FORGERY",
+      "size": {
+        "width": 8,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        232,
+        55,
+        55,
+        30,
+        31,
+        55,
+        55,
+        233,
+        122,
+        33,
+        33,
+        34,
+        195,
+        34,
+        195,
+        123,
+        122,
+        27,
+        28,
+        157,
+        98,
+        98,
+        157,
+        123
+      ],
+      "tags": [
+        "dom"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_03",
+        "VILLAGE_01"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 187,
+      "id": "ROCK_1_DOWN",
+      "object": "ROCK_1_DOWN",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        10,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 11,
+      "screens_used_in": [
+        "FOREST_05",
+        "FOREST_09",
+        "TOLEM_02",
+        "TOLEM_04",
+        "VILLAGE_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 188,
+      "id": "STONE_HUGE_DOWN",
+      "object": "STONE_HUGE_DOWN",
+      "size": {
+        "width": 7,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        11,
+        12,
+        0,
+        0,
+        0,
+        10,
+        11,
+        34,
+        9,
+        12,
+        0,
+        10,
+        11,
+        34,
+        34,
+        9,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 189,
+      "id": "WATERFALL_0_DOWN",
+      "object": "WATERFALL_0_DOWN",
+      "size": {
+        "width": 6,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        230,
+        230,
+        12,
+        0,
+        10,
+        11,
+        153,
+        153,
+        9,
+        12
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "FOREST_09"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 190,
+      "id": "WATERFALL_GREEN_DOWN",
+      "object": "WATERFALL_GREEN_DOWN",
+      "size": {
+        "width": 6,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        13,
+        230,
+        230,
+        15,
+        0,
+        13,
+        14,
+        153,
+        153,
+        121,
+        15
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 191,
+      "id": "ROCK_GREEN_LARGE_DOWN",
+      "object": "ROCK_GREEN_LARGE_DOWN",
+      "size": {
+        "width": 7,
+        "height": 4
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        13,
+        14,
+        15,
+        0,
+        0,
+        0,
+        13,
+        14,
+        74,
+        74,
+        15,
+        0,
+        13,
+        14,
+        74,
+        74,
+        74,
+        74,
+        15
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 192,
+      "id": "WATERFALL_2",
+      "object": "WATERFALL_2",
+      "size": {
+        "width": 8,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        13,
+        230,
+        230,
+        15,
+        0,
+        0,
+        0,
+        13,
+        14,
+        153,
+        153,
+        121,
+        15,
+        0,
+        13,
+        14,
+        74,
+        153,
+        153,
+        74,
+        121,
+        15
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_08",
+        "TOLEM_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 193,
+      "id": "ROCK_2x4_DOWN",
+      "object": "ROCK_2x4_DOWN",
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        12,
+        0,
+        10,
+        11,
+        9,
+        12
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "FOREST_07",
+        "FOREST_08",
+        "TOLEM_03",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 194,
+      "id": "ROCK_BIG_2",
+      "object": "ROCK_BIG_2",
+      "size": {
+        "width": 7,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        138,
+        139,
+        140,
+        0,
+        0,
+        0,
+        138,
+        139,
+        34,
+        9,
+        140,
+        0,
+        138,
+        139,
+        34,
+        34,
+        34,
+        9,
+        140
+      ],
+      "tags": [
+        "skała"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_08",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_09"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 197,
+      "id": "PEASANT_ARMED",
+      "object": "PEASANT_ARMED",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": true,
+        "secret": false
+      },
+      "tiles": [
+        37,
+        38
+      ],
+      "tags": [
+        "interakcja"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_01",
+        "FOREST_09",
+        "VILLAGE_04"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 198,
+      "id": "PEASANT",
+      "object": "PEASANT",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": true,
+        "secret": false
+      },
+      "tiles": [
+        16,
+        17
+      ],
+      "tags": [
+        "interakcja"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 199,
+      "id": "KNIGHT",
+      "object": "KNIGHT",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": true,
+        "secret": false
+      },
+      "tiles": [
+        18,
+        19
+      ],
+      "tags": [
+        "interakcja"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_01"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 200,
+      "id": "CAVE_PORTAL_DOWN",
+      "object": "CAVE_PORTAL_DOWN",
+      "size": {
+        "width": 6,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        11,
+        34,
+        12,
+        0,
+        10,
+        11,
+        27,
+        28,
+        9,
+        12
+      ],
+      "tags": [
+        "dom",
+        "skała"
+      ],
+      "instances_count": 3,
+      "screens_used_in": [
+        "CITY_08",
+        "FOREST_05",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 201,
+      "id": "SKARB_1",
+      "object": "SKARB_1",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": true,
+        "secret": true
+      },
+      "tiles": [
+        96,
+        97,
+        48,
+        49
+      ],
+      "tags": [
+        "skarb"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 202,
+      "id": "SKARB_2",
+      "object": "SKARB_2",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": true,
+        "secret": true
+      },
+      "tiles": [
+        224,
+        225,
+        176,
+        177
+      ],
+      "tags": [
+        "skarb"
+      ],
+      "instances_count": 9,
+      "screens_used_in": [
+        "CITY_03",
+        "FOREST_04",
+        "TOLEM_06",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_01",
+        "VILLAGE_02",
+        "VILLAGE_06"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 203,
+      "id": "WATERFALL_0_3",
+      "object": "WATERFALL_0_3",
+      "size": {
+        "width": 6,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        10,
+        230,
+        230,
+        12,
+        0,
+        10,
+        11,
+        153,
+        153,
+        9,
+        12,
+        208,
+        243,
+        243,
+        243,
+        243,
+        210
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "FOREST_05",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 204,
+      "id": "WATERFALL_GREEN_3",
+      "object": "WATERFALL_GREEN_3",
+      "size": {
+        "width": 6,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        13,
+        230,
+        230,
+        15,
+        0,
+        13,
+        14,
+        153,
+        153,
+        121,
+        15,
+        208,
+        243,
+        153,
+        153,
+        243,
+        210
+      ],
+      "tags": [
+        "woda",
+        "skała"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 205,
+      "id": "CHAIN_3_2_R",
+      "object": "CHAIN_3_2_R",
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        0,
+        113,
+        0,
+        113
+      ],
+      "tags": [
+        "animacja"
+      ],
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_08",
+        "VILLAGE_01",
+        "VILLAGE_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 206,
+      "id": "RIVER_VERTICAL_3",
+      "object": "RIVER_VERTICAL_3",
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        208,
+        153,
+        153,
+        210,
+        208,
+        153,
+        153,
+        210,
+        208,
+        153,
+        153,
+        210
+      ],
+      "tags": [
+        "woda"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 207,
+      "id": "BRICKS_1",
+      "object": "BRICKS_1",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        95,
+        95
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 4,
+      "screens_used_in": [
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 208,
+      "id": "BRICK_WALL_1",
+      "object": "BRICK_WALL_1",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        29,
+        29
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 2,
+      "screens_used_in": [
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 209,
+      "id": "BRICKS_2_33",
+      "object": "BRICKS_2_33",
+      "size": {
+        "width": 2,
+        "height": 3
+      },
+      "flags": {
+        "blocking": true,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        95,
+        95,
+        95,
+        95,
+        95,
+        95
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
+    },
+    {
+      "code": 210,
+      "id": "BRICKS_1_D",
+      "object": "BRICKS_1_D",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        222,
+        222
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    },
+    {
+      "code": 211,
+      "id": "BRICK_WALL_1_D",
+      "object": "BRICK_WALL_1_D",
+      "size": {
+        "width": 2,
+        "height": 1
+      },
+      "flags": {
+        "blocking": false,
+        "interactive": false,
+        "secret": false
+      },
+      "tiles": [
+        45,
+        45
+      ],
+      "tags": [
+        "infrastruktura"
+      ],
+      "instances_count": 0,
+      "screens_used_in": [],
+      "is_used_in_world": false
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const milestones = [
+  {
+    date: '2026-11-02',
+    title: 'Column 7 Secret Collision & Debounce Grace Fix',
+    tag: 'Engine & Physics',
+    details: 'Extended pickup detection to column 7 (blocking_col7, fc_dx7) to eliminate false obstacle crashes during rapid flight with HSCROL > 0. Fixed Carry flag contract in check_dragon_secret_collision.',
+  },
+  {
+    date: '2026-11-02',
+    title: 'Architectural SSOT Harmonization & py65 Integration',
+    tag: 'Tooling & Rules',
+    details: 'Unified project rules with Single Source of Truth files (world/*.yaml, chars/*.json, sprites/*.json, texts/*.txt), eliminating stale equates and reinforcing py65 MPU harnesses.',
+  },
+  {
+    date: '2026-11-02',
+    title: 'Playfield Collision Overhaul & Crash Sequence',
+    tag: 'Engine & Map',
+    details: 'Automated cleanup of decorative non-blocking objects across all 35 screens. Playfield obstacle impacts transition directly into start_dragon_crash after a 5-frame debounce filter.',
+  },
+  {
+    date: '2026-10-18',
+    title: 'Sprite Studio Raster Image Import & Fitting Modes',
+    tag: 'PySide6 Studio',
+    details: 'Added modular raster image import to sprite_studio with luminance thresholding, aspect ratio letterboxing, and stretch-fit frame slicing.',
+  },
+  {
+    date: '2026-09-30',
+    title: 'Mirror Ring Buffer & Per-Row LMS High-Speed Scroll',
+    tag: 'Rendering Engine',
+    details: 'Replaced whole-screen VRAM blitting with an 11-row × 96-byte mirror ring buffer ($6000–$641F) driven by per-row LMS pointers and deferred column baking, locking PAL 50 FPS.',
+  },
+  {
+    date: '2026-09-29',
+    title: 'Relocated CMC Player & POKEY SFX Coexistence',
+    tag: 'Audio Subsystem',
+    details: 'Integrated relocated Chaos Music Composer driver ($9A00) and music data ($9000), implementing channel priority arbitration for procedural POKEY sound effects.',
+  },
+  {
+    date: '2026-09-24',
+    title: 'Smooth Title Slide-Up Transition',
+    tag: 'Scenes & DLI',
+    details: 'Engineered smooth raster slide-up transition from the intro poem into the ANTIC Mode F title bitmap screen, with instant Fire skip support.',
+  },
+  {
+    date: '2026-09-20',
+    title: 'Brillig Village Expansion & Energy Bonus Countdown',
+    tag: 'Levels & Scoring',
+    details: 'Introduced Level 2 (Brillig Village), tuned object placements, and added dynamic energy-to-score bonus conversion with rhythmic POKEY clicks upon labyrinth clearance.',
+  },
+  {
+    date: '2026-09-18',
+    title: 'Initial Release & Conventional Commits Pipeline',
+    tag: 'CI & Genesis',
+    details: 'First release v0.1.0 published with automated semver determination, MADS compilation, memory validation, and GitHub Actions release automation.',
+  },
+];
+---
+
+<Layout title="Development History & Architecture — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>History</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Project Evolution & Architecture
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        Chronological development history, architectural refactors, and custom desktop tooling built for the Jabberwocky project. 
+        Tracked in <code class="text-fantasy-gold">HISTORY.md</code> and verified against py65 unit test suites.
+      </p>
+    </div>
+
+    <!-- Desktop Tooling Showcase -->
+    <section class="space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-3">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Custom PySide6 Tooling Ecosystem</h2>
+        <p class="text-xs text-fantasy-muted mt-1">
+          Jabberwocky ships three standalone desktop applications that directly edit the project's Single Source of Truth (SSOT).
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white font-cinzel text-base">Labirynt Studio</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono text-[10px]">world/project.yaml</span>
+          </div>
+          <p class="text-xs text-fantasy-muted leading-relaxed">
+            Full-featured visual screen and labyrinth layout editor. Enables drag-and-drop placement, 
+            overlap detection, packed-coordinate validation, and real-time ANTIC 5 palette preview.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white font-cinzel text-base">Object Studio</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-phosphor font-mono text-[10px]">world/objects.yaml</span>
+          </div>
+          <p class="text-xs text-fantasy-muted leading-relaxed">
+            Entity and obstacle catalog manager. Configures tile grids, collision masks (solid, secret, interactive), 
+            and semantic tagging across 168 game objects.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white font-cinzel text-base">Sprite Studio</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-flame font-mono text-[10px]">sprites/jabberwocky.json</span>
+          </div>
+          <p class="text-xs text-fantasy-muted leading-relaxed">
+            Hardware Player-Missile sprite editor with frame timeline animation, raster image import, 
+            luminance slicing, and MOS 6502 MADS Structure-of-Arrays code generation.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Engineering Methodology & Verification -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-4">
+      <h3 class="text-lg font-bold font-cinzel text-white">Verification & Testing Standards</h3>
+      <p class="text-xs sm:text-sm text-fantasy-muted leading-relaxed">
+        Every engine change in Jabberwocky undergoes strict verification using a dual-phase test pipeline:
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-xs font-mono">
+        <div class="p-4 rounded bg-fantasy-surfaceLight border border-fantasy-border space-y-2">
+          <div class="text-fantasy-gold font-bold">1. MADS Build & Memory Check:</div>
+          <p class="text-fantasy-text text-[11px]">
+            <code class="text-fantasy-phosphor">make all</code> compiles all assets and runs <code class="text-fantasy-gold">scripts/generate_memory_map.py</code>, 
+            asserting zero segment overlap and validating OS Zero Page integrity.
+          </p>
+        </div>
+
+        <div class="p-4 rounded bg-fantasy-surfaceLight border border-fantasy-border space-y-2">
+          <div class="text-fantasy-gold font-bold">2. py65 Emulated Subroutine Tests:</div>
+          <p class="text-fantasy-text text-[11px]">
+            <code class="text-fantasy-phosphor">make test</code> runs 213 unit and integration tests, booting 
+            the assembled binary in an emulated 6502 core to assert physics, collisions, and state transitions.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Timeline Milestones -->
+    <section class="space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-3">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Chronological Timeline</h2>
+        <p class="text-xs text-fantasy-muted mt-1">Major architectural milestones extracted from project changelogs.</p>
+      </div>
+
+      <div class="relative border-l-2 border-fantasy-border/80 ml-4 space-y-8 pl-6">
+        {milestones.map((item) => (
+          <div class="relative group">
+            <!-- Dot -->
+            <div class="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-fantasy-surface border-2 border-fantasy-gold group-hover:border-fantasy-flame transition-colors"></div>
+            
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-mono text-fantasy-gold font-bold">{item.date}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-fantasy-surfaceLight text-fantasy-phosphor border border-fantasy-border">
+                  {item.tag}
+                </span>
+              </div>
+
+              <h3 class="text-base sm:text-lg font-bold font-cinzel text-white group-hover:text-fantasy-gold transition-colors">
+                {item.title}
+              </h3>
+
+              <p class="text-xs sm:text-sm text-fantasy-muted leading-relaxed">
+                {item.details}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+  </div>
+</Layout>
+

@@ -1,0 +1,256 @@
+---
+import Layout from '../layouts/Layout.astro';
+import memoryData from '../data/memory.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const summary = memoryData.space_summary;
+---
+
+<Layout title="Memory Architecture & Map — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Memory Architecture</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Memory Map & Banking
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        Complete analysis of Jabberwocky's 64 KB address space: Zero Page allocations, MADS segments, 
+        runtime-reserved buffers (PMG & HSCROL ring buffer), ROM banking via PORTB, and binary provenance.
+      </p>
+    </div>
+
+    <!-- Space Summary KPI Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="p-5 rounded-xl bg-fantasy-surface border border-fantasy-border">
+        <span class="block text-[11px] uppercase tracking-wider text-fantasy-muted">Total XEX Allocated</span>
+        <div class="text-2xl sm:text-3xl font-black font-cinzel text-fantasy-gold mt-1">
+          {(summary.total_allocated_by_xex_bytes / 1024).toFixed(1)} KB
+        </div>
+        <span class="text-[11px] text-fantasy-muted font-mono">{summary.total_allocated_by_xex_bytes} bytes in segments</span>
+      </div>
+
+      <div class="p-5 rounded-xl bg-fantasy-surface border border-fantasy-border">
+        <span class="block text-[11px] uppercase tracking-wider text-fantasy-muted">Runtime Reserved</span>
+        <div class="text-2xl sm:text-3xl font-black font-cinzel text-fantasy-flame mt-1">
+          {(summary.total_runtime_reserved_bytes / 1024).toFixed(1)} KB
+        </div>
+        <span class="text-[11px] text-fantasy-muted font-mono">PMG + HSCROL Ring Buffer</span>
+      </div>
+
+      <div class="p-5 rounded-xl bg-fantasy-surface border border-fantasy-border">
+        <span class="block text-[11px] uppercase tracking-wider text-fantasy-muted">Net Usable Free RAM</span>
+        <div class="text-2xl sm:text-3xl font-black font-cinzel text-fantasy-phosphor mt-1">
+          {(summary.net_usable_free_bytes / 1024).toFixed(1)} KB
+        </div>
+        <span class="text-[11px] text-fantasy-muted font-mono">Safe headroom up to $BFFF</span>
+      </div>
+
+      <div class="p-5 rounded-xl bg-fantasy-surface border border-fantasy-border">
+        <span class="block text-[11px] uppercase tracking-wider text-fantasy-muted">RAM Utilization</span>
+        <div class="text-2xl sm:text-3xl font-black font-cinzel text-yellow-400 mt-1">
+          {summary.effective_utilization_percent}%
+        </div>
+        <span class="text-[11px] text-fantasy-muted font-mono">Of 48 KB unlocked RAM</span>
+      </div>
+    </section>
+
+    <!-- Visual Memory Bar ($0000 - $FFFF) -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-fantasy-border/60 pb-3">
+        <h2 class="text-xl font-bold font-cinzel text-white">Interactive 64 KB Address Space Bar</h2>
+        <div class="flex flex-wrap items-center gap-4 text-xs font-mono">
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-blue-600 rounded-sm"></span><span>Code</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-amber-600 rounded-sm"></span><span>Data / VRAM</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-purple-600 rounded-sm"></span><span>Font / Audio</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-emerald-700 rounded-sm"></span><span>Free Gaps</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-red-900 rounded-sm"></span><span>OS / HW ROM</span></span>
+        </div>
+      </div>
+
+      <!-- Linear memory strip -->
+      <div class="relative w-full h-12 bg-black rounded-lg overflow-hidden border border-fantasy-border flex">
+        {memoryData.segments.map((seg) => {
+          const widthPct = Math.max(0.5, (seg.size / 65536) * 100);
+          let bg = 'bg-emerald-800';
+          if (seg.type === 'code') bg = 'bg-blue-600';
+          else if (seg.type === 'data') bg = 'bg-amber-600';
+          else if (seg.type === 'display_list') bg = 'bg-purple-600';
+          else if (seg.type === 'vector') bg = 'bg-yellow-400';
+          return (
+            <div
+              class={`h-full ${bg} hover:brightness-125 transition-all cursor-pointer border-r border-black/40`}
+              style={`width: ${widthPct}%;`}
+              title={`${seg.name}: ${seg.start_address}–${seg.end_address} (${seg.size} B)`}
+            />
+          );
+        })}
+        <!-- $C000-$FFFF OS ROM block -->
+        <div class="h-full bg-red-900/90 w-[25%] flex items-center justify-center text-[10px] text-white/70 font-mono tracking-widest uppercase" title="OS Kernel ROM & Hardware Registers ($C000–$FFFF)">
+          OS ROM / HW REGISTERS ($C000–$FFFF)
+        </div>
+      </div>
+
+      <div class="flex justify-between text-xs font-mono text-fantasy-muted pt-1">
+        <span>$0000 (RAM Base)</span>
+        <span>$4000 (VRAM)</span>
+        <span>$8000 (World Data)</span>
+        <span>$9000 (Music)</span>
+        <span>$A000 (Basic Disabled)</span>
+        <span>$C000 (OS ROM)</span>
+        <span>$FFFF (Vectors)</span>
+      </div>
+    </section>
+
+    <!-- Allocated Segments Table -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-4">
+      <div class="border-b border-fantasy-border/60 pb-3 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold font-cinzel text-white">Allocated Memory Segments</h2>
+          <p class="text-xs text-fantasy-muted">Extracted directly from <code class="text-fantasy-gold">docs/memory_map.json</code>.</p>
+        </div>
+        <span class="text-xs font-mono text-fantasy-gold font-bold">{memoryData.segments.length} Segments & Gaps</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-fantasy-surfaceLight text-fantasy-gold uppercase border-b border-fantasy-border">
+            <tr>
+              <th class="py-2.5 px-3">Segment Name</th>
+              <th class="py-2.5 px-3">Type</th>
+              <th class="py-2.5 px-3">Start Address</th>
+              <th class="py-2.5 px-3">End Address</th>
+              <th class="py-2.5 px-3 text-right">Size (Bytes)</th>
+              <th class="py-2.5 px-3 text-right">Size (KB)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-fantasy-border/40 text-fantasy-text">
+            {memoryData.segments.map((seg) => (
+              <tr class={`hover:bg-fantasy-surfaceLight/60 transition-colors ${seg.type === 'free' ? 'text-fantasy-muted italic' : ''}`}>
+                <td class="py-2 px-3 font-bold">
+                  {seg.name}
+                </td>
+                <td class="py-2 px-3">
+                  <span class={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                    seg.type === 'code' ? 'bg-blue-950 text-blue-300' :
+                    seg.type === 'data' ? 'bg-amber-950 text-amber-300' :
+                    seg.type === 'free' ? 'bg-emerald-950 text-emerald-300' :
+                    seg.type === 'display_list' ? 'bg-purple-950 text-purple-300' :
+                    'bg-fantasy-surfaceLight text-fantasy-text'
+                  }`}>
+                    {seg.type}
+                  </span>
+                </td>
+                <td class="py-2 px-3 text-fantasy-gold">{seg.start_address}</td>
+                <td class="py-2 px-3 text-fantasy-gold">{seg.end_address}</td>
+                <td class="py-2 px-3 text-right">{seg.size.toLocaleString()}</td>
+                <td class="py-2 px-3 text-right">{(seg.size / 1024).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Runtime-Reserved & Zero Page -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Runtime-Reserved Box -->
+      <div class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-4">
+        <div class="border-b border-fantasy-border/60 pb-3">
+          <div class="flex items-center space-x-2 text-fantasy-flame">
+            <span class="w-2.5 h-2.5 rounded-full bg-fantasy-flame"></span>
+            <h2 class="text-xl font-bold font-cinzel text-white">Runtime-Reserved RAM</h2>
+          </div>
+          <p class="text-xs text-fantasy-muted mt-1">
+            Invisible to basic segment checkers (equates only, no <code class="text-fantasy-gold">org</code>).
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          {memoryData.runtime_reserved.map((r) => (
+            <div class="p-3.5 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-1 text-xs">
+              <div class="flex items-center justify-between font-mono">
+                <span class="font-bold text-fantasy-gold">{r.name}</span>
+                <span class="text-fantasy-phosphor">{r.start_address}–{r.end_address} ({r.size} B)</span>
+              </div>
+              <p class="text-[11px] text-fantasy-muted">{r.purpose}</p>
+            </div>
+          ))}
+        </div>
+
+        <p class="text-xs text-fantasy-muted leading-relaxed pt-2">
+          <strong>Architectural Note:</strong> These regions are dynamically populated at runtime. 
+          The portal memory exporter explicitly subtracts them from free space gaps to prevent false reporting of usable memory.
+        </p>
+      </div>
+
+      <!-- Zero Page Variables -->
+      <div class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-4">
+        <div class="border-b border-fantasy-border/60 pb-3">
+          <div class="flex items-center space-x-2 text-fantasy-gold">
+            <span class="w-2.5 h-2.5 rounded-full bg-fantasy-gold"></span>
+            <h2 class="text-xl font-bold font-cinzel text-white">Zero Page Allocation ($80–$FF)</h2>
+          </div>
+          <p class="text-xs text-fantasy-muted mt-1">
+            Engine variables from <code class="text-fantasy-gold">zeropage.asm</code>. Atari OS shadow area ($00–$7F) preserved.
+          </p>
+        </div>
+
+        <div class="divide-y divide-fantasy-border/60">
+          {memoryData.zero_page_vars.map((v) => (
+            <div class="py-2.5 flex items-center justify-between text-xs font-mono">
+              <div>
+                <span class="font-bold text-fantasy-gold">{v.symbol}</span>
+                <span class="text-fantasy-muted ml-2">({v.size} bytes)</span>
+                <div class="text-[11px] text-fantasy-text/80">{v.description}</div>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-phosphor font-bold border border-fantasy-border">
+                {v.address}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border text-xs text-fantasy-muted">
+          <span class="text-fantasy-phosphor font-bold">User ZP Headroom:</span> $8A–$FF (118 bytes free for future routines).
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Provenance Box -->
+    <section class="bg-fantasy-surface p-6 rounded-xl border border-fantasy-border space-y-3">
+      <h3 class="text-sm font-bold font-cinzel uppercase text-fantasy-gold tracking-wider">
+        Binary Provenance & Checksums
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono text-fantasy-muted">
+        <div>
+          <span class="block text-[10px] text-fantasy-gold uppercase">Source Git Commit</span>
+          <span class="text-fantasy-text">{memoryData.provenance.commit_sha.slice(0, 10)}...</span>
+        </div>
+        <div>
+          <span class="block text-[10px] text-fantasy-gold uppercase">Binary SHA-256</span>
+          <span class="text-fantasy-text truncate block" title={memoryData.provenance.binary_sha256}>
+            {memoryData.provenance.binary_sha256 ? `${memoryData.provenance.binary_sha256.slice(0, 16)}...` : 'N/A'}
+          </span>
+        </div>
+        <div>
+          <span class="block text-[10px] text-fantasy-gold uppercase">XEX File Size</span>
+          <span class="text-fantasy-text">{memoryData.provenance.binary_size_bytes.toLocaleString()} bytes</span>
+        </div>
+        <div>
+          <span class="block text-[10px] text-fantasy-gold uppercase">Build Origin</span>
+          <span class="text-fantasy-phosphor">{memoryData.provenance.binary_origin}</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</Layout>
+

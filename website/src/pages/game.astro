@@ -1,0 +1,181 @@
+---
+import Layout from '../layouts/Layout.astro';
+import gameData from '../data/game.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Game Mechanics & Controls — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Gameplay</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Game Mechanics & Controls
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        A deep technical breakdown of the Jabberwock dragon flight physics, 5th-player composite flame breath, 
+        energy dynamics, debounced collision system, and Atari joystick controls.
+      </p>
+    </div>
+
+    <!-- Controls Section -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-5 bg-fantasy-surface p-6 rounded-xl border border-fantasy-border space-y-4">
+        <div class="flex items-center space-x-2 text-fantasy-flame">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+          <h2 class="text-xl font-bold font-cinzel text-white">Joystick 0 Mapping</h2>
+        </div>
+        <p class="text-xs text-fantasy-muted">
+          Read every vertical blank frame via hardware register <code class="text-fantasy-gold">PORTA</code> ($D300) 
+          and trigger button <code class="text-fantasy-gold">STRIG0</code> ($0284 shadow / $D010).
+        </p>
+
+        <div class="divide-y divide-fantasy-border/60">
+          {gameData.controls.map((ctrl) => (
+            <div class="py-2.5 flex items-center justify-between text-xs">
+              <span class="px-2 py-1 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono font-bold border border-fantasy-border">
+                {ctrl.key}
+              </span>
+              <span class="text-fantasy-text text-right max-w-[240px]">
+                {ctrl.action}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Controls Guidance / Tips -->
+      <div class="lg:col-span-7 space-y-6">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Mastering the Dragon Flight</h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-2">
+            <h3 class="text-sm font-bold text-fantasy-gold font-cinzel flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-fantasy-flame"></span>
+              <span>Tap vs Hold Fire</span>
+            </h3>
+            <p class="text-xs text-fantasy-muted leading-relaxed">
+              <strong>Tap</strong> to quickly skip title animations or start from the main menu. 
+              <strong>Hold</strong> during gameplay to breathe continuous flame. Note that flame breathing consumes energy!
+            </p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-2">
+            <h3 class="text-sm font-bold text-fantasy-gold font-cinzel flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-fantasy-phosphor"></span>
+              <span>Horizontal Window Drift</span>
+            </h3>
+            <p class="text-xs text-fantasy-muted leading-relaxed">
+              Steering left decelerates your relative forward thrust, allowing precision navigation through tight stone corridors. 
+              Steering right charges ahead.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-2">
+            <h3 class="text-sm font-bold text-fantasy-gold font-cinzel flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+              <span>Secret Item Recovery</span>
+            </h3>
+            <p class="text-xs text-fantasy-muted leading-relaxed">
+              Mystical artifacts emit arpeggiated chimes and instantly replenish chunks of depleted dragon energy. 
+              Seek them in secluded dead-ends.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-fantasy-surface border border-fantasy-border space-y-2">
+            <h3 class="text-sm font-bold text-fantasy-gold font-cinzel flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-fantasy-vorpal"></span>
+              <span>Energy Bonus Tally</span>
+            </h3>
+            <p class="text-xs text-fantasy-muted leading-relaxed">
+              Upon passing the final screen of each labyrinth, all remaining energy points are converted to bonus score 
+              with rapid POKEY clicks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detailed Mechanics Cards -->
+    <section class="space-y-6">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-2xl sm:text-3xl font-bold font-cinzel text-white">Engine Physics & Mechanics</h2>
+        <p class="text-xs sm:text-sm text-fantasy-muted mt-2">
+          Mathematical implementation in MOS 6502 assembly (<code class="text-fantasy-gold">scenes/game.asm</code> and <code class="text-fantasy-gold">engine/flame_collision.asm</code>).
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {gameData.mechanics.map((mech, idx) => (
+          <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border hover:border-fantasy-gold/50 transition-colors space-y-3">
+            <div class="text-xs font-mono text-fantasy-gold">0{idx + 1} // MECHANIC</div>
+            <h3 class="text-lg font-bold font-cinzel text-white">{mech.name}</h3>
+            <p class="text-xs text-fantasy-muted leading-relaxed">
+              {mech.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Screen Flow & State Machine -->
+    <section class="bg-fantasy-surface p-8 rounded-xl border border-fantasy-border space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-4">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Game Loop & Scene State Machine</h2>
+        <p class="text-xs text-fantasy-muted mt-1">
+          State dispatch table (<code class="text-fantasy-gold">main.asm: scene_init_tbl / scene_run_tbl</code>) synchronized to 50 Hz PAL vertical blank ticks.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-center">
+        
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-xs font-mono text-fantasy-gold">STATE 00</div>
+          <div class="font-bold text-sm text-white mt-1">Intro Poem</div>
+          <div class="text-[11px] text-fantasy-muted mt-1">DLI color fade on Lewis Carroll text</div>
+        </div>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-xs font-mono text-fantasy-gold">STATE 01</div>
+          <div class="font-bold text-sm text-white mt-1">Title Slide-Up</div>
+          <div class="text-[11px] text-fantasy-muted mt-1">Smooth vertical raster slide from intro</div>
+        </div>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-xs font-mono text-fantasy-gold">STATE 02</div>
+          <div class="font-bold text-sm text-white mt-1">Level Banner</div>
+          <div class="text-[11px] text-fantasy-muted mt-1">Shows labyrinth name before flight</div>
+        </div>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border border-fantasy-flame/50 shadow-fantasy-flame">
+          <div class="text-xs font-mono text-fantasy-flame">STATE 03</div>
+          <div class="font-bold text-sm text-white mt-1">Action Flight</div>
+          <div class="text-[11px] text-fantasy-muted mt-1">50 FPS HSCROL mirror ring buffer</div>
+        </div>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-xs font-mono text-fantasy-gold">STATE 04</div>
+          <div class="font-bold text-sm text-white mt-1">Top Scores</div>
+          <div class="text-[11px] text-fantasy-muted mt-1">Joystick 3-letter initials name entry</div>
+        </div>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border">
+          <div class="text-xs font-mono text-fantasy-gold">STATE 05</div>
+          <div class="font-bold text-sm text-white mt-1">Game Over</div>
+          <div class="text-[11px] text-fantasy-muted mt-1">Defeat vs Victory poem ending</div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</Layout>
+

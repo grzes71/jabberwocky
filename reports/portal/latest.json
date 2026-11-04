@@ -1,0 +1,19 @@
+{
+  "version": "0.10.0",
+  "tag_name": "v0.10.0",
+  "release_date": "2026-11-02",
+  "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.10.0/jabberwocky.xex",
+  "binary_size": 35352,
+  "binary_sha256": "4b97356ce63c4650e251b8826e2e5eac50fa9716a06326a85a2d31af86864d8a",
+  "stats": {
+    "labyrinths": 5,
+    "screens": 35,
+    "catalog_objects": 168,
+    "total_placed_objects": 889,
+    "total_secrets": 140,
+    "sprite_frames": 8,
+    "subsongs": 3,
+    "allocated_memory_bytes": 35302,
+    "net_free_ram_bytes": 8622
+  }
+}

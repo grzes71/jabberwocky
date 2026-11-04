@@ -1,0 +1,275 @@
+{
+  "segments": [
+    {
+      "name": "INITAD",
+      "start_address": "$02E2",
+      "end_address": "$02E3",
+      "start_int": 738,
+      "end_int": 739,
+      "size": 2,
+      "type": "vector"
+    },
+    {
+      "name": "RUNAD",
+      "start_address": "$02E0",
+      "end_address": "$02E1",
+      "start_int": 736,
+      "end_int": 737,
+      "size": 2,
+      "type": "vector"
+    },
+    {
+      "name": "CODE",
+      "start_address": "$0800",
+      "end_address": "$080A",
+      "start_int": 2048,
+      "end_int": 2058,
+      "size": 11,
+      "type": "code"
+    },
+    {
+      "name": "ENGINE",
+      "start_address": "$080B",
+      "end_address": "$1F28",
+      "start_int": 2059,
+      "end_int": 7976,
+      "size": 5918,
+      "type": "code"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$1F29",
+      "end_address": "$27FF",
+      "start_int": 7977,
+      "end_int": 10239,
+      "size": 2263,
+      "type": "free"
+    },
+    {
+      "name": "CODE",
+      "start_address": "$2800",
+      "end_address": "$3BFF",
+      "start_int": 10240,
+      "end_int": 15359,
+      "size": 5120,
+      "type": "code"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$3C00",
+      "end_address": "$3FFF",
+      "start_int": 15360,
+      "end_int": 16383,
+      "size": 1024,
+      "type": "free"
+    },
+    {
+      "name": "VRAM",
+      "start_address": "$4000",
+      "end_address": "$5B67",
+      "start_int": 16384,
+      "end_int": 23399,
+      "size": 7016,
+      "type": "data"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$5B68",
+      "end_address": "$5BFF",
+      "start_int": 23400,
+      "end_int": 23551,
+      "size": 152,
+      "type": "free"
+    },
+    {
+      "name": "FONT",
+      "start_address": "$5C00",
+      "end_address": "$5FFF",
+      "start_int": 23552,
+      "end_int": 24575,
+      "size": 1024,
+      "type": "data"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$6000",
+      "end_address": "$660F",
+      "start_int": 24576,
+      "end_int": 26127,
+      "size": 1552,
+      "type": "free"
+    },
+    {
+      "name": "DLIST",
+      "start_address": "$6610",
+      "end_address": "$6781",
+      "start_int": 26128,
+      "end_int": 26497,
+      "size": 370,
+      "type": "display_list"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$6782",
+      "end_address": "$67FF",
+      "start_int": 26498,
+      "end_int": 26623,
+      "size": 126,
+      "type": "free"
+    },
+    {
+      "name": "FONT",
+      "start_address": "$6800",
+      "end_address": "$86B0",
+      "start_int": 26624,
+      "end_int": 34480,
+      "size": 7857,
+      "type": "data"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$86B1",
+      "end_address": "$8FFF",
+      "start_int": 34481,
+      "end_int": 36863,
+      "size": 2383,
+      "type": "free"
+    },
+    {
+      "name": "MUSIC_DATA_ADDR",
+      "start_address": "$9000",
+      "end_address": "$9921",
+      "start_int": 36864,
+      "end_int": 39201,
+      "size": 2338,
+      "type": "code"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$9922",
+      "end_address": "$99FF",
+      "start_int": 39202,
+      "end_int": 39423,
+      "size": 222,
+      "type": "free"
+    },
+    {
+      "name": "CMC_PLAYER_ADDR",
+      "start_address": "$9A00",
+      "end_address": "$A155",
+      "start_int": 39424,
+      "end_int": 41301,
+      "size": 1878,
+      "type": "code"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$A156",
+      "end_address": "$AFFF",
+      "start_int": 41302,
+      "end_int": 45055,
+      "size": 3754,
+      "type": "free"
+    },
+    {
+      "name": "VRAM",
+      "start_address": "$B000",
+      "end_address": "$BEB5",
+      "start_int": 45056,
+      "end_int": 48821,
+      "size": 3766,
+      "type": "data"
+    },
+    {
+      "name": "FREE_SPACE",
+      "start_address": "$BEB6",
+      "end_address": "$BFFF",
+      "start_int": 48822,
+      "end_int": 49151,
+      "size": 330,
+      "type": "free"
+    }
+  ],
+  "runtime_reserved": [
+    {
+      "name": "PMG Buffer",
+      "start_address": "$2000",
+      "end_address": "$27FF",
+      "size": 2048,
+      "purpose": "Player-Missile Graphics buffer (Player 0 dragon sprite & 5th player flame)"
+    },
+    {
+      "name": "HSCROL Ring Buffer",
+      "start_address": "$6000",
+      "end_address": "$641F",
+      "size": 1056,
+      "purpose": "Action playfield mirror ring buffer (11 rows × 96 bytes) for fine-scrolling"
+    },
+    {
+      "name": "Status Bar VRAM",
+      "start_address": "$6420",
+      "end_address": "$646F",
+      "size": 80,
+      "purpose": "ANTIC 2 status bar screen memory (2 lines × 40 bytes)"
+    }
+  ],
+  "zero_page_vars": [
+    {
+      "symbol": "PTR_SRC",
+      "address": "$80",
+      "size": 2,
+      "description": "16-bit source address pointer (texts, data streams)"
+    },
+    {
+      "symbol": "PTR_DST",
+      "address": "$82",
+      "size": 2,
+      "description": "16-bit destination address pointer (VRAM, buffers)"
+    },
+    {
+      "symbol": "ZP_TMP",
+      "address": "$84",
+      "size": 2,
+      "description": "8-bit scratchpad register / temporary variables"
+    },
+    {
+      "symbol": "PTR_BLK",
+      "address": "$86",
+      "size": 2,
+      "description": "16-bit blocking grid address pointer (BLOCKING_VRAM)"
+    },
+    {
+      "symbol": "PTR_COLL",
+      "address": "$88",
+      "size": 2,
+      "description": "16-bit object collision tiles lookup pointer"
+    }
+  ],
+  "os_zero_page": {
+    "range": "$0000–$007F (128 bytes)",
+    "role": "Atari OS shadow registers, timers (RTCLOK), interrupt flags, and hardware shadows. Untouched by game code to preserve OS VBLANK."
+  },
+  "rom_banking": {
+    "basic_rom": "$A000–$BFFF (8 KB): Disabled at boot via PORTB bit 1 ($D301) to unlock user RAM for CMC Player and Text VRAM.",
+    "os_kernel_rom": "$C000–$CFFF and $E000–$FFFF (14 KB): Kept enabled; game utilizes OS VBLANK and system vectors.",
+    "hardware_registers": "$D000–$DFFF (4 KB): Memory-mapped I/O (ANTIC, GTIA, POKEY, PIA). Never mapped to RAM."
+  },
+  "space_summary": {
+    "total_system_ram_bytes": 65536,
+    "ram_ceiling_address": "$BFFF",
+    "usable_ram_ceiling_bytes": 49152,
+    "total_allocated_by_xex_bytes": 35302,
+    "total_runtime_reserved_bytes": 3184,
+    "raw_free_gap_bytes": 11806,
+    "net_usable_free_bytes": 8622,
+    "effective_utilization_percent": 78.3
+  },
+  "provenance": {
+    "commit_sha": "471e15c793173e7bd8a37609b0443e29c63c44ff",
+    "commit_date": "2026-11-02T20:36:20Z",
+    "binary_present": true,
+    "binary_sha256": "4b97356ce63c4650e251b8826e2e5eac50fa9716a06326a85a2d31af86864d8a",
+    "binary_size_bytes": 35352,
+    "binary_origin": "local build"
+  }
+}

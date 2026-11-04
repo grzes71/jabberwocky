@@ -1,0 +1,353 @@
+---
+import Layout from '../layouts/Layout.astro';
+import spritesData from '../data/sprites.json';
+import assetsData from '../data/assets.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Gallery & Pixel Art — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Gallery & Sprites</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        Sprites & Visual Artwork
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        High-fidelity visual gallery of Jabberwocky's graphical assets: interactive 8-frame dragon PMG sprite player, 
+        ANTIC Mode F 320×175 title screen, animated charset frames, and typography fonts.
+      </p>
+    </div>
+
+    <!-- Section 1: Interactive Dragon Sprite Animator -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-8">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-fantasy-border/60 pb-4">
+        <div>
+          <span class="text-xs font-mono text-fantasy-gold uppercase font-bold tracking-wider">PMG Hardware Sprite</span>
+          <h2 class="text-2xl font-bold font-cinzel text-white">The Jabberwock Dragon (8 Frames)</h2>
+        </div>
+        <div class="flex items-center space-x-2 text-xs font-mono text-fantasy-muted">
+          <span class="px-2 py-1 rounded bg-fantasy-surfaceLight text-fantasy-phosphor border border-fantasy-border">
+            {spritesData.width}×{spritesData.height} px
+          </span>
+          <span class="px-2 py-1 rounded bg-fantasy-surfaceLight text-fantasy-gold border border-fantasy-border">
+            {spritesData.total_frames} Frames
+          </span>
+          <span class="px-2 py-1 rounded bg-fantasy-surfaceLight text-fantasy-flame border border-fantasy-border">
+            PMG Single-Line ($2000)
+          </span>
+        </div>
+      </div>
+
+      <!-- Animator Stage -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Big Preview & Controls -->
+        <div class="lg:col-span-5 flex flex-col items-center bg-black/60 p-6 rounded-xl border border-fantasy-border space-y-6">
+          <div class="text-xs font-mono text-fantasy-muted text-center">
+            Frame <span id="current-frame-number" class="text-fantasy-gold font-bold">1</span> of {spritesData.total_frames}
+          </div>
+
+          <!-- Scaled Pixel Canvas -->
+          <div class="relative p-6 rounded-lg bg-fantasy-dark border-2 border-fantasy-gold/50 shadow-fantasy-gold flex items-center justify-center min-h-[260px] min-w-[160px]">
+            <canvas id="sprite-canvas" width="64" height="208" class="image-rendering-pixelated w-32 h-auto"></canvas>
+          </div>
+
+          <!-- Playback Controls -->
+          <div class="w-full space-y-4">
+            <div class="flex items-center justify-center space-x-3">
+              <button
+                id="btn-prev-frame"
+                type="button"
+                class="px-3 py-1.5 rounded bg-fantasy-surfaceLight text-fantasy-gold border border-fantasy-border hover:bg-fantasy-gold/20 text-xs font-mono font-bold"
+              >
+                &larr; Prev
+              </button>
+              <button
+                id="btn-play-pause"
+                type="button"
+                class="px-5 py-2 rounded bg-fantasy-flame text-black font-bold text-xs uppercase tracking-wider hover:bg-yellow-400 transition-colors shadow-fantasy-flame"
+              >
+                Pause
+              </button>
+              <button
+                id="btn-next-frame"
+                type="button"
+                class="px-3 py-1.5 rounded bg-fantasy-surfaceLight text-fantasy-gold border border-fantasy-border hover:bg-fantasy-gold/20 text-xs font-mono font-bold"
+              >
+                Next &rarr;
+              </button>
+            </div>
+
+            <!-- Frame Scrubber -->
+            <div class="flex items-center space-x-3 text-xs font-mono text-fantasy-muted">
+              <span>0</span>
+              <input
+                id="frame-scrubber"
+                type="range"
+                min="0"
+                max={spritesData.total_frames - 1}
+                value="0"
+                class="w-full accent-fantasy-flame bg-fantasy-surfaceLight cursor-pointer"
+              />
+              <span>{spritesData.total_frames - 1}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frame Filmstrip (All 8 frames) -->
+        <div class="lg:col-span-7 space-y-4">
+          <h3 class="text-sm font-bold font-cinzel uppercase text-fantasy-gold tracking-wider">
+            Animation Filmstrip
+          </h3>
+          <div class="grid grid-cols-4 sm:grid-cols-8 gap-3">
+            {spritesData.frames.map((frame, idx) => (
+              <button
+                type="button"
+                data-frame-index={idx}
+                class={`frame-thumb p-2 rounded-lg bg-black border transition-all flex flex-col items-center space-y-2 hover:border-fantasy-gold ${
+                  idx === 0 ? 'border-fantasy-gold bg-fantasy-gold/10' : 'border-fantasy-border'
+                }`}
+              >
+                <div class="text-[10px] font-mono text-fantasy-muted">F{idx}</div>
+                <!-- Pixel dot preview -->
+                <div class="w-8 h-26 bg-black flex flex-col justify-between overflow-hidden">
+                  {frame.pixels.map((row) => (
+                    <div class="flex justify-between w-full h-[1px]">
+                      {row.split('').map((pixel) => (
+                        <div class={`w-[1px] h-full ${pixel === '1' ? 'bg-fantasy-flame' : 'bg-transparent'}`} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div class="p-4 rounded-lg bg-fantasy-surfaceLight border border-fantasy-border space-y-2 text-xs text-fantasy-muted">
+            <div class="text-fantasy-gold font-bold font-cinzel">PMG Specification:</div>
+            <p>
+              The Jabberwock sprite is 8 pixels wide and 26 scanlines tall, occupying 26 contiguous bytes in 
+              Player 0 RAM buffer at <code class="text-fantasy-gold">$2000–$27FF</code>. 
+              The player hardware position register <code class="text-fantasy-gold">HPOSP0</code> ($D000) controls horizontal placement, 
+              while the vertical raster coordinates are drawn into the PMG memory bank during vertical blanking.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 2: Title Artwork & Cover -->
+    <section class="space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-3">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Artwork & Presentation Graphics</h2>
+        <p class="text-xs text-fantasy-muted mt-1">High-resolution artwork rendered into native Atari ANTIC graphics modes.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Title Screen Card -->
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-4">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white font-cinzel">Title Screen Splash</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono">ANTIC Mode F (320×175)</span>
+          </div>
+          <div class="rounded-lg overflow-hidden border border-fantasy-border bg-black">
+            <img
+              src={`${base}/img/title.png`}
+              alt="Jabberwocky Title Screen (ANTIC Mode F)"
+              class="w-full h-auto object-cover"
+            />
+          </div>
+          <p class="text-xs text-fantasy-muted leading-relaxed">
+            Compiled from <code class="text-fantasy-gold">img/title.png</code> by <code class="text-fantasy-gold">scripts/convert_image.py</code> into <code class="text-fantasy-gold">gen/title.bin</code> (7,000 bytes). 
+            ANTIC Mode F provides 320 horizontal pixels across 175 scanlines at 1 bit per pixel.
+          </p>
+        </div>
+
+        <!-- Cover Art Card -->
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-4">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white font-cinzel">Official Cover Artwork</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-phosphor font-mono">Box Art / Poster</span>
+          </div>
+          <div class="rounded-lg overflow-hidden border border-fantasy-border bg-black max-h-[300px] flex items-center justify-center">
+            <img
+              src={`${base}/cover.png`}
+              alt="Jabberwocky Box Cover Art"
+              class="w-full h-auto object-cover max-h-[300px]"
+            />
+          </div>
+          <p class="text-xs text-fantasy-muted leading-relaxed">
+            Original gothic fantasy cover art for Jabberwocky depicting the dragon soaring above the mist-covered labyrinth.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 3: Animated & Rotated Charsets -->
+    <section class="space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-3">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Dynamic Animated & Rotated Tiles</h2>
+        <p class="text-xs text-fantasy-muted mt-1">
+          Dynamic tile manipulation directly inside ANTIC 5 character memory (<code class="text-fantasy-gold">chars/animated.json</code> and <code class="text-fantasy-gold">chars/rotated.json</code>).
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Animated Chars -->
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-4">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white font-cinzel">Animated Charset Tiles</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono">{assetsData.animated_characters.length} Dynamic Glyphs</span>
+          </div>
+          <p class="text-xs text-fantasy-muted">
+            Animated characters are updated by <code class="text-fantasy-gold">engine/charset_anim.asm</code> during vertical blank intervals, creating living water waves, rustling vegetation, and shimmering barriers.
+          </p>
+          <div class="grid grid-cols-3 gap-3 pt-2">
+            {assetsData.animated_characters.map((ac) => (
+              <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border text-center space-y-1">
+                <div class="text-xs font-mono font-bold text-fantasy-gold">Glyph #{ac.index}</div>
+                <div class="text-[10px] text-fantasy-muted">{ac.total_frames} Frames</div>
+                <div class="text-[10px] text-fantasy-phosphor">{ac.frame_duration} ticks/frame</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Rotated Chars -->
+        <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border space-y-4">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-white font-cinzel">Rotated Charset Tiles</span>
+            <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-mono">{assetsData.rotated_characters.length} Rotated Glyphs</span>
+          </div>
+          <p class="text-xs text-fantasy-muted">
+            Rotated tiles use bitwise pixel shifting tables generated by <code class="text-fantasy-gold">scripts/gen_rotated_charset.py</code>, enabling multi-directional obstacle layouts without font duplication.
+          </p>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            {assetsData.rotated_characters.map((rc) => (
+              <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border text-center space-y-1">
+                <div class="text-xs font-mono font-bold text-fantasy-gold">Glyph #{rc.index}</div>
+                <div class="text-[10px] text-fantasy-muted">Duration: {rc.duration} ticks</div>
+                <div class="text-[10px] text-fantasy-phosphor font-mono">gen/rotated_chars_*.asm</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</Layout>
+
+<script define:vars={{ spritesData }}>
+  const frames = spritesData.frames;
+  let currentFrame = 0;
+  let isPlaying = true;
+  let animTimer = null;
+
+  const canvas = document.getElementById('sprite-canvas');
+  const ctx = canvas.getContext('2d');
+  const frameDisplay = document.getElementById('current-frame-number');
+  const btnPlayPause = document.getElementById('btn-play-pause');
+  const btnPrev = document.getElementById('btn-prev-frame');
+  const btnNext = document.getElementById('btn-next-frame');
+  const scrubber = document.getElementById('frame-scrubber');
+  const thumbs = document.querySelectorAll('.frame-thumb');
+
+  function renderFrame(frameIdx) {
+    currentFrame = frameIdx;
+    const f = frames[frameIdx];
+    if (!f) return;
+
+    frameDisplay.textContent = (frameIdx + 1).toString();
+    scrubber.value = frameIdx.toString();
+
+    // Update filmstrip highlight
+    thumbs.forEach((th, idx) => {
+      if (idx === frameIdx) {
+        th.className = 'frame-thumb p-2 rounded-lg bg-fantasy-gold/20 border border-fantasy-gold transition-all flex flex-col items-center space-y-2';
+      } else {
+        th.className = 'frame-thumb p-2 rounded-lg bg-black border border-fantasy-border transition-all flex flex-col items-center space-y-2 hover:border-fantasy-gold';
+      }
+    });
+
+    // Draw on canvas: 8 cols x 26 rows, each pixel 8x8 on 64x208 canvas
+    ctx.fillStyle = '#070a08';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#ff7700'; // Dragon flame orange
+    f.pixels.forEach((row, y) => {
+      for (let x = 0; x < 8; x++) {
+        if (row[x] === '1') {
+          ctx.fillRect(x * 8, y * 8, 8, 8);
+        }
+      }
+    });
+  }
+
+  function startAnimation() {
+    isPlaying = true;
+    btnPlayPause.textContent = 'Pause';
+    btnPlayPause.className = 'px-5 py-2 rounded bg-fantasy-flame text-black font-bold text-xs uppercase tracking-wider hover:bg-yellow-400 transition-colors shadow-fantasy-flame';
+    if (animTimer) clearInterval(animTimer);
+    animTimer = setInterval(() => {
+      currentFrame = (currentFrame + 1) % frames.length;
+      renderFrame(currentFrame);
+    }, 120); // ~8 FPS animation rate
+  }
+
+  function pauseAnimation() {
+    isPlaying = false;
+    btnPlayPause.textContent = 'Play';
+    btnPlayPause.className = 'px-5 py-2 rounded bg-fantasy-surfaceLight text-fantasy-gold border border-fantasy-gold font-bold text-xs uppercase tracking-wider hover:bg-fantasy-gold/20 transition-colors';
+    if (animTimer) {
+      clearInterval(animTimer);
+      animTimer = null;
+    }
+  }
+
+  btnPlayPause.addEventListener('click', () => {
+    if (isPlaying) pauseAnimation();
+    else startAnimation();
+  });
+
+  btnPrev.addEventListener('click', () => {
+    pauseAnimation();
+    const prev = (currentFrame - 1 + frames.length) % frames.length;
+    renderFrame(prev);
+  });
+
+  btnNext.addEventListener('click', () => {
+    pauseAnimation();
+    const nxt = (currentFrame + 1) % frames.length;
+    renderFrame(nxt);
+  });
+
+  scrubber.addEventListener('input', (e) => {
+    pauseAnimation();
+    renderFrame(parseInt(e.target.value, 10));
+  });
+
+  thumbs.forEach((th) => {
+    th.addEventListener('click', () => {
+      pauseAnimation();
+      renderFrame(parseInt(th.dataset.frameIndex, 10));
+    });
+  });
+
+  // Start initial animation
+  renderFrame(0);
+  startAnimation();
+</script>
+

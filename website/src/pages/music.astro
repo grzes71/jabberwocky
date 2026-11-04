@@ -1,0 +1,161 @@
+---
+import Layout from '../layouts/Layout.astro';
+import musicData from '../data/music.json';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Music & Sound Architecture — Jabberwocky">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    
+    <!-- Page Header -->
+    <div class="border-b border-fantasy-border pb-8">
+      <div class="flex items-center space-x-2 text-xs uppercase tracking-wider text-fantasy-gold mb-2">
+        <a href={`${base}/`} class="hover:underline">Home</a>
+        <span>&rsaquo;</span>
+        <span>Audio Architecture</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black font-cinzel text-white">
+        POKEY Audio & CMC Soundtrack
+      </h1>
+      <p class="text-fantasy-muted text-sm sm:text-base mt-3 max-w-3xl">
+        In-depth technical architecture of Jabberwocky's sound system: relocated Chaos Music Composer (CMC) engine, 
+        original compositions by Andrzej "Andy" Kidaj (2003), and dynamic POKEY procedural sound effects.
+      </p>
+    </div>
+
+    <!-- Album / SAP Metadata Header Card -->
+    <section class="bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div class="lg:col-span-4 flex flex-col items-center justify-center p-6 bg-black/60 rounded-xl border border-fantasy-border text-center space-y-3">
+        <div class="w-20 h-20 rounded-full bg-fantasy-surfaceLight border-2 border-fantasy-gold/50 flex items-center justify-center text-fantasy-gold shadow-fantasy-gold">
+          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="font-cinzel text-xl font-bold text-white">{musicData.sap_metadata.name}</div>
+          <div class="text-xs text-fantasy-gold font-serif italic mt-0.5">by {musicData.sap_metadata.author}</div>
+        </div>
+        <div class="text-[11px] text-fantasy-muted font-mono">
+          Composed in {musicData.sap_metadata.year} • {musicData.sap_metadata.total_songs} Subsongs
+        </div>
+      </div>
+
+      <div class="lg:col-span-8 space-y-4">
+        <div class="flex flex-wrap gap-2 text-xs font-mono">
+          <span class="px-2.5 py-1 rounded bg-fantasy-surfaceLight text-fantasy-gold border border-fantasy-border">
+            Container: SAP Type {musicData.sap_metadata.type}
+          </span>
+          <span class="px-2.5 py-1 rounded bg-fantasy-surfaceLight text-fantasy-phosphor border border-fantasy-border">
+            Relocated: $9000–$9921
+          </span>
+          <span class="px-2.5 py-1 rounded bg-fantasy-surfaceLight text-fantasy-flame border border-fantasy-border">
+            Player: $9A00–$A155
+          </span>
+          <span class="px-2.5 py-1 rounded bg-fantasy-surfaceLight text-fantasy-text border border-fantasy-border">
+            File Size: {musicData.sap_metadata.file_size_bytes} B
+          </span>
+        </div>
+
+        <h3 class="text-xl font-bold font-cinzel text-white">Relocated CMC Playback Pipeline</h3>
+        <p class="text-xs sm:text-sm text-fantasy-muted leading-relaxed">
+          The music is stored in <code class="text-fantasy-gold">music/music.sap</code>. During the build pipeline, 
+          <code class="text-fantasy-gold">scripts/extract_sap.py</code> parses the SAP container, extracts the CMC music segment, 
+          and relocates its internal 16-bit pattern and instrument pointer tables to target address <code class="text-fantasy-gold">$9000</code>. 
+          The CMC playback driver is relocated to <code class="text-fantasy-gold">$9A00</code>, unlocking full compatibility with the action playfield buffer.
+        </p>
+      </div>
+    </section>
+
+    <!-- Subsongs Tracklist -->
+    <section class="space-y-6">
+      <div class="border-b border-fantasy-border/60 pb-3">
+        <h2 class="text-2xl font-bold font-cinzel text-white">Soundtrack Subsongs</h2>
+        <p class="text-xs text-fantasy-muted mt-1">
+          Referenced directly in <code class="text-fantasy-gold">engine/music.asm</code> and initialized with <code class="text-fantasy-gold">Music_PlaySong</code>.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {musicData.subsongs.map((song) => (
+          <div class="p-6 rounded-xl bg-fantasy-surface border border-fantasy-border hover:border-fantasy-gold/50 transition-colors space-y-4">
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="px-2 py-0.5 rounded bg-fantasy-surfaceLight text-fantasy-gold font-bold">
+                SUBSONG #{song.id}
+              </span>
+              <span class="text-fantasy-phosphor font-bold">{song.duration}</span>
+            </div>
+
+            <div>
+              <h3 class="font-cinzel text-lg font-bold text-white">{song.name}</h3>
+              <div class="text-xs font-mono text-fantasy-muted mt-0.5">{song.symbol}</div>
+            </div>
+
+            <p class="text-xs text-fantasy-muted leading-relaxed">
+              {song.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- POKEY SFX State Machine & Arbitration -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- SFX Catalog -->
+      <div class="lg:col-span-7 bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-6">
+        <div class="border-b border-fantasy-border/60 pb-3">
+          <h2 class="text-2xl font-bold font-cinzel text-white">Procedural Sound Effects</h2>
+          <p class="text-xs text-fantasy-muted mt-1">
+            Engineered in <code class="text-fantasy-gold">engine/sound.asm</code>, driven directly by POKEY hardware registers ($D200–$D208).
+          </p>
+        </div>
+
+        <div class="divide-y divide-fantasy-border/60">
+          {musicData.sfx_catalog.map((sfx) => (
+            <div class="py-3 flex items-start justify-between gap-4 text-xs">
+              <div class="space-y-1">
+                <span class="font-mono font-bold text-fantasy-gold">{sfx.symbol}</span>
+                <p class="text-fantasy-text/80">{sfx.description}</p>
+              </div>
+              <span class="px-2 py-1 rounded bg-fantasy-surfaceLight text-fantasy-phosphor font-mono text-[10px] whitespace-nowrap border border-fantasy-border">
+                {sfx.channel}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Coexistence & Priority Arbitration Box -->
+      <div class="lg:col-span-5 bg-fantasy-surface p-6 sm:p-8 rounded-xl border border-fantasy-border space-y-4">
+        <h3 class="text-lg font-bold font-cinzel text-white flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-fantasy-flame"></span>
+          <span>Audio Coexistence Pipeline</span>
+        </h3>
+        
+        <p class="text-xs text-fantasy-muted leading-relaxed">
+          Atari's POKEY sound chip features 4 audio channels. When a sound effect triggers 
+          (such as dragon flame breath or secret collection), the sound engine temporarily commandeers 
+          POKEY Channel 3 or 4:
+        </p>
+
+        <div class="p-3 rounded bg-fantasy-surfaceLight border border-fantasy-border space-y-2 text-xs font-mono">
+          <div class="text-fantasy-gold font-bold">Priority Arbitration Steps:</div>
+          <ol class="list-decimal list-inside space-y-1 text-fantasy-text text-[11px]">
+            <li>SFX flag raised in mailbox register</li>
+            <li>CMC driver skips writing to target POKEY channel</li>
+            <li>SFX routine steps frequency & distortion tables</li>
+            <li>Upon SFX completion, control returns to CMC player</li>
+          </ol>
+        </div>
+
+        <p class="text-xs text-fantasy-muted leading-relaxed">
+          This eliminates audio glitches or harsh tone cutoffs while keeping the driving soundtrack fully intact.
+        </p>
+      </div>
+
+    </section>
+
+  </div>
+</Layout>
+
