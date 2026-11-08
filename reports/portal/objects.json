@@ -1,6 +1,6 @@
 {
   "total_count": 168,
-  "used_count": 93,
+  "used_count": 125,
   "all_tags": [
     "animacja",
     "dom",
@@ -36,9 +36,11 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_02"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 4,
@@ -107,9 +109,12 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 5,
+      "screens_used_in": [
+        "CITY_08",
+        "FOREST_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 6,
@@ -218,9 +223,27 @@
         "drzewo",
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 38,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_03",
+        "CITY_04",
+        "CITY_07",
+        "FOREST_02",
+        "FOREST_05",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_05",
+        "TOLEM_06",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_03",
+        "VILLAGE_06",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 9,
@@ -319,9 +342,22 @@
         "drzewo",
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 26,
+      "screens_used_in": [
+        "CITY_04",
+        "CITY_07",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_07",
+        "FOREST_08",
+        "TOLEM_04",
+        "TOLEM_05",
+        "TOLEM_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 14,
@@ -346,9 +382,16 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 8,
+      "screens_used_in": [
+        "CITY_07",
+        "CITY_08",
+        "FOREST_02",
+        "FOREST_03",
+        "TOLEM_03",
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 15,
@@ -373,9 +416,19 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 14,
+      "screens_used_in": [
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_05",
+        "TOLEM_02",
+        "TOLEM_03",
+        "TOLEM_08"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 17,
@@ -403,9 +456,13 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 9,
+      "screens_used_in": [
+        "TOLEM_04",
+        "TOLEM_08",
+        "VILLAGE_04"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 18,
@@ -457,9 +514,15 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 14,
+      "screens_used_in": [
+        "CITY_07",
+        "FOREST_03",
+        "FOREST_05",
+        "TOLEM_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 20,
@@ -481,9 +544,15 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 12,
+      "screens_used_in": [
+        "CITY_08",
+        "FOREST_02",
+        "FOREST_06",
+        "FOREST_07",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 21,
@@ -505,9 +574,15 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 7,
+      "screens_used_in": [
+        "CITY_04",
+        "CITY_06",
+        "CITY_08",
+        "FOREST_06",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 22,
@@ -529,9 +604,17 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 11,
+      "screens_used_in": [
+        "FOREST_01",
+        "FOREST_03",
+        "FOREST_05",
+        "FOREST_06",
+        "FOREST_07",
+        "FOREST_09",
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 23,
@@ -555,9 +638,17 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 9,
+      "screens_used_in": [
+        "CITY_06",
+        "CITY_07",
+        "FOREST_04",
+        "FOREST_07",
+        "FOREST_09",
+        "TOLEM_03",
+        "TOLEM_06"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 24,
@@ -579,9 +670,21 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 22,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_04",
+        "CITY_07",
+        "FOREST_02",
+        "FOREST_04",
+        "FOREST_06",
+        "TOLEM_01",
+        "TOLEM_02",
+        "TOLEM_03",
+        "TOLEM_06",
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 25,
@@ -626,9 +729,11 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 2,
+      "screens_used_in": [
+        "FOREST_05"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 29,
@@ -653,9 +758,16 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 12,
+      "screens_used_in": [
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_05",
+        "TOLEM_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 31,
@@ -740,9 +852,12 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 38,
@@ -832,9 +947,11 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 46,
@@ -900,9 +1017,11 @@
       "tags": [
         "infrastruktura"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 48,
@@ -925,9 +1044,35 @@
         "drzewo",
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 84,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_03",
+        "CITY_04",
+        "CITY_05",
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_04",
+        "FOREST_07",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_01",
+        "TOLEM_04",
+        "TOLEM_06",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_01",
+        "VILLAGE_03",
+        "VILLAGE_04",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_07",
+        "VILLAGE_08"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 49,
@@ -1244,9 +1389,11 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 1,
+      "screens_used_in": [
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 62,
@@ -1351,9 +1498,12 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_08",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 67,
@@ -1377,9 +1527,12 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_08",
+        "TOLEM_05"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 69,
@@ -1639,9 +1792,11 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_02"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 81,
@@ -1666,9 +1821,12 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 5,
+      "screens_used_in": [
+        "CITY_02",
+        "TOLEM_03"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 82,
@@ -1721,9 +1879,15 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 6,
+      "screens_used_in": [
+        "CITY_06",
+        "FOREST_06",
+        "TOLEM_01",
+        "TOLEM_02",
+        "TOLEM_06"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 85,
@@ -2182,9 +2346,11 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 1,
+      "screens_used_in": [
+        "CITY_02"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 98,
@@ -3000,9 +3166,13 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 4,
+      "screens_used_in": [
+        "CITY_06",
+        "CITY_08",
+        "TOLEM_02"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 121,
@@ -4195,9 +4365,12 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 2,
+      "screens_used_in": [
+        "CITY_04",
+        "TOLEM_04"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 159,
@@ -4932,9 +5105,33 @@
         "drzewo",
         "tło"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 63,
+      "screens_used_in": [
+        "CITY_01",
+        "CITY_02",
+        "CITY_03",
+        "CITY_06",
+        "CITY_07",
+        "CITY_08",
+        "FOREST_01",
+        "FOREST_02",
+        "FOREST_03",
+        "FOREST_04",
+        "FOREST_05",
+        "FOREST_08",
+        "FOREST_09",
+        "TOLEM_01",
+        "TOLEM_03",
+        "TOLEM_04",
+        "TOLEM_07",
+        "TOLEM_08",
+        "VILLAGE_02",
+        "VILLAGE_03",
+        "VILLAGE_05",
+        "VILLAGE_06",
+        "VILLAGE_07"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 183,
@@ -5785,9 +5982,12 @@
       "tags": [
         "woda"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 2,
+      "screens_used_in": [
+        "TOLEM_08",
+        "VILLAGE_04"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 207,
@@ -5891,9 +6091,12 @@
       "tags": [
         "infrastruktura"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 9,
+      "screens_used_in": [
+        "CITY_03",
+        "TOLEM_02"
+      ],
+      "is_used_in_world": true
     },
     {
       "code": 211,
@@ -5915,9 +6118,14 @@
       "tags": [
         "infrastruktura"
       ],
-      "instances_count": 0,
-      "screens_used_in": [],
-      "is_used_in_world": false
+      "instances_count": 19,
+      "screens_used_in": [
+        "CITY_03",
+        "TOLEM_02",
+        "TOLEM_06",
+        "TOLEM_07"
+      ],
+      "is_used_in_world": true
     }
   ]
 }

@@ -1,6 +1,18 @@
 {
-  "total_releases": 10,
+  "total_releases": 11,
   "releases": [
+    {
+      "version": "0.11.0",
+      "tag_name": "v0.11.0",
+      "name": "Jabberwocky v0.11.0",
+      "published_at": "2026-11-04T05:10:22Z",
+      "changelog": "### 🚀 Nowości (Features)\r\n- Add GH Pages support\r\n\r\n\r\n*Pull Request: [#23](https://github.com/grzes71/jabberwocky/pull/23) przez @grzes71*",
+      "download_url": "https://github.com/grzes71/jabberwocky/releases/download/v0.11.0/jabberwocky.xex",
+      "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.11.0",
+      "asset_name": "jabberwocky.xex",
+      "asset_size": 35352,
+      "is_latest": true
+    },
     {
       "version": "0.10.0",
       "tag_name": "v0.10.0",
@@ -11,7 +23,7 @@
       "html_url": "https://github.com/grzes71/jabberwocky/releases/tag/v0.10.0",
       "asset_name": "jabberwocky.xex",
       "asset_size": 35352,
-      "is_latest": true
+      "is_latest": false
     },
     {
       "version": "0.9.0",

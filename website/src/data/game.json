@@ -6,7 +6,7 @@
     "platform": "Atari 800XL / 65XE / 130XE (64 KB RAM)",
     "media": "Atari Executable (XEX)",
     "tv_system": "PAL 50 Hz (recommended) / NTSC 60 Hz",
-    "current_version": "0.10.0",
+    "current_version": "0.11.0",
     "repository": "https://github.com/grzes71/jabberwocky",
     "author": "Grzegorz 'grzes71' Kraszewski",
     "music_author": "Andrzej 'Andy' Kidaj"
@@ -14,7 +14,7 @@
   "lore": {
     "inspiration": "Inspired by Lewis Carroll's timeless nonsense poem 'Jabberwocky' from Through the Looking-Glass (1871).",
     "prologue": "'Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe;\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.",
-    "scroll_banner": "JABBERWOCKY - ATARI 8-bit GAME - https://github.com/grzes71/jabberwocky - version 0.10.0 - MUSIC BY Andrzej \"Andy\" Kidaj - PRESS FIRE TO START...",
+    "scroll_banner": "JABBERWOCKY - ATARI 8-bit GAME - https://github.com/grzes71/jabberwocky - version 0.11.0 - MUSIC BY Andrzej \"Andy\" Kidaj - PRESS FIRE TO START...",
     "defeat_poem": "Twas brillig, the beast fell,\nThe vorpal blade bit deep,\nNo more the flames swell,\nThe Jabberwock shall sleep.",
     "victory_poem": "The vorpal blade shatters,\nThe frabjous sun sets red,\nThe foe lies in tatters,\nThe Jabberwock is spread!",
     "narrative": "Take flight as the mythical Jabberwock through eerie ancient realms. Guide the dragon through the twisted Tulgey Wood, past the stone huts of Brillig Village, across the haunted Borogove Vale and mysterious Wabe, toward The Frabjous End. Avoid lethal monolithic obstacles, breathe incinerating flames, collect arcane secrets, and escape the vorpal blade that seeks to lay you low."

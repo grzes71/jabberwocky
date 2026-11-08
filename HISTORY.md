@@ -2,6 +2,23 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-11-08] - Przywrócenie obiektów nieblokujących oraz selektywnej detekcji kolizji z przeszkodami
+
+- **Świat i dane gry**:
+  - [world/project.yaml](world/project.yaml): Przywrócono 400 dekoracyjnych obiektów nieblokujących (`flags.blocking: false`) na 35 planszach gry usuniętych pierwotnie w commit de5a444 (PR #22).
+  - Usunięto skrypt tymczasowy [scripts/remove_non_blocking_objects.py](scripts/remove_non_blocking_objects.py).
+- **Silnik gry i mechanika kolizji**:
+  - [scenes/game.asm](scenes/game.asm): Przywrócono wywołanie `jsr check_dragon_blocking_collision` oraz odgałęzienie `bcc @check_pf3` w etykiecie `@check_blocking_obstacle`, umożliwiając bezkolizyjny przelot smoka przez obiekty nieblokujące przy jednoczesnym zachowaniu bezpiecznego zbierania sekretów (`check_dragon_secret_collision`).
+- **Testy automatyczne**:
+  - [tests/test_flame_collision.py](tests/test_flame_collision.py): Przywrócono test `test_dragon_no_crash_on_non_blocking_object` potwierdzający brak kolizji ze strefami nieblokującymi.
+- **Portal i raporty**:
+  - Zaktualizowano raporty JSON w [reports/portal/](reports/portal/) oraz [website/src/data/](website/src/data/) uwzględniające pełną mapę obiektów ze świata gry.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` (36 152 B) i aktualizacja mapy pamięci w [docs/memory_map.txt](docs/memory_map.txt).
+  - `make test`: 222/222 testów zakończonych sukcesem (100% passed).
+  - Portal Astro: pomyślna kompilacja 10 stron w `website/dist/`.
+
+
 ## [2026-11-04] - Implementacja oficjalnego portalu gry Jabberwocky (Astro, Tailwind CSS, pipeline JSON i GitHub Pages)
 - **Eksporter danych i potok raportów**:
   - [scripts/export_portal_data.py](scripts/export_portal_data.py): Utworzono modułowy eksporter danych portalu z kompletną walidacją modeli Pydantic v2, generujący 9 ustrukturyzowanych raportów JSON w [reports/portal/](reports/portal/) oraz [website/src/data/](website/src/data/):

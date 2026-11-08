@@ -157,7 +157,7 @@
   ],
   "story_texts": {
     "title": "'Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe;\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.",
-    "scroll": "JABBERWOCKY - ATARI 8-bit GAME - https://github.com/grzes71/jabberwocky - version 0.10.0 - MUSIC BY Andrzej \"Andy\" Kidaj - PRESS FIRE TO START...",
+    "scroll": "JABBERWOCKY - ATARI 8-bit GAME - https://github.com/grzes71/jabberwocky - version 0.11.0 - MUSIC BY Andrzej \"Andy\" Kidaj - PRESS FIRE TO START...",
     "game_over_fail": "Twas brillig, the beast fell,\nThe vorpal blade bit deep,\nNo more the flames swell,\nThe Jabberwock shall sleep.",
     "game_over_success": "The vorpal blade shatters,\nThe frabjous sun sets red,\nThe foe lies in tatters,\nThe Jabberwock is spread!"
   }
