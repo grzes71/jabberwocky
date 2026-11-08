@@ -1530,12 +1530,11 @@ update_energy_bar
     bcc @check_pf3
 
 @check_blocking_obstacle
-    ; If dragon is breathing fire (fire_state != 0), dragon is invincible to obstacle collision
-    lda fire_state
-    bne @check_pf3
+    ; Only crash if collision was with an active BLOCKING object (blocking == true)
+    jsr check_dragon_blocking_collision
+    bcc @check_pf3              ; Non-blocking object (or clear air) -> do not crash!
 
-    ; Object/wall collision confirmed on 5th consecutive frame: crash sound and death!
-    ; All objects are now blocking obstacles; collision with any object ends in catastrophe.
+    ; Wall/obstacle collision confirmed on 5th consecutive frame: crash sound and death!
     lda #0
     sta dragon_hit_pending
     sta dragon_recharging
