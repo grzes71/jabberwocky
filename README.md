@@ -1,8 +1,10 @@
 # Jabberwocky — Atari 8-bit (XL/XE)
 
-Gra na komputery **Atari 800XL / 65XE** (procesor 6502, układy ANTIC, GTIA, POKEY) inspirowany poematem Lewisa Carrolla *"Jabberwocky"* (w polskim przekładzie Stanisława Barańczaka jako *"Żabrołak"*).
+Gra na komputery **Atari 800XL / 65XE** (procesor 6502, układy ANTIC, GTIA, POKEY) inspirowana poematem Lewisa Carrolla *"Jabberwocky"* (w polskim przekładzie Stanisława Barańczaka jako *"Żabrołak"*).
 
-Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym zautomatyzowanym potokiem budowania (Python 3, Pydantic, PySide6, pytest, py65) oraz zintegrowanym środowiskiem edytorów GUI do tworzenia sprajtów, obiektów gry i labiryntów.
+Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym zautomatyzowanym potokiem budowania (Python 3, Pydantic, PySide6, pytest, py65), zintegrowanym środowiskiem edytorów GUI do tworzenia sprajtów, obiektów gry i labiryntów oraz oficjalnym statycznym portalem internetowym.
+
+🌐 **Oficjalny portal gry:** [https://grzes71.github.io/jabberwocky/](https://grzes71.github.io/jabberwocky/)
 
 ![Game cover](/cover.png)
 
@@ -22,6 +24,9 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
   - [Labirynt Builder (Kompilator świata)](#labirynt-builder-kompilator-świata)
   - [Charset Anim & Rotate Generators](#charset-anim--rotate-generators)
   - [Text Compiler](#text-compiler)
+  - [SAP Music Extractor & Relocator](#sap-music-extractor--relocator)
+  - [Portal Data Exporter](#portal-data-exporter)
+  - [Oficjalny portal WWW i potok GitHub Pages](#oficjalny-portal-www-i-potok-github-pages)
   - [Memory Map Generator & Validator](#memory-map-generator--validator)
   - [Image Converter](#image-converter)
   - [Release Helper & CI/CD Pipeline](#release-helper--cicd-pipeline)
@@ -45,7 +50,7 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
   - **Tryb ANTIC 2** (40×24 znakowy) w scenie Intro z przerwaniami **DLI (Display List Interrupt)** dynamicznie modyfikującymi rejestry koloru tekstu w locie linii rastra.
   - **Hybrydowy Display List** w grze: 1 linia ANTIC 2 (pasek energii) + 11 linii w podwójnie wysokim trybie **ANTIC 5** (pole akcji) + 1 linia ANTIC 2 (dolny pasek: LEVEL, SCORE, LIVES, SHOTS).
   - **Sprzętowe płynne przewijanie (ANTIC HSCROL)**: Płynny sub-pixelowy fine scroll co 1 zegar koloru z rejestrem `HSCROL` ($D404) oraz 48-bajtową geometrią wierszy (4 kolumny marginesu lewego, 40 kolumn widocznych, 4 kolumny bufora wyprzedzającego).
-  - **Podwójne buforowanie VRAM (Double Buffering)**: Dwa niezależne bufory akcji (`GAME_ACTION_VRAM` $6000 oraz `GAME_ACTION_VRAM_B` $6400). Przełączanie wskaźnika LMS Display Listy (`dlist_game_action_lms + 2`) odbywa się bezpiecznie w NMI VBLANK, gwarantując brak tearingu i zacięć obrazu.
+  - **Bufor kołowy akcji z per-row LMS (Mirror Ring Buffer)**: Bufor akcji 11 wierszy × 96 bajtów ($6000–$641F) z niezależnymi wskaźnikami LMS dla każdego wiersza w Display Liście oraz sprzętowym przesunięciem fine-scroll `HSCROL` ($D404). Zapewnia stabilne 50 FPS bez tearingu i bez konieczności kopiowania całego ekranu VRAM.
 - **Płynność i strumieniowanie świata**:
   - **Odroczone wypiekanie ekranu (Deferred Screen Baking)**: Wypiekanie nowych kolumn i obiektów (`bake_pending`, `execute_pending_bake`) rozłożone w czasie poza krytycznymi klatkami przesunięcia zgrubnego (coarse scroll), gwarantując stabilne 50/60 FPS bez szarpnięć.
   - Płynne wstrzykiwanie kolejnych ekranów zdefiniowanych w labiryncie kolumna po kolumnie.
@@ -57,15 +62,19 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
   - Pasek energii smoka ze stałoprzecinkowym przelicznikiem Bresenhama, automatyczną detekcją PAL/NTSC i zabezpieczeniem przed wyczerpaniem tuż po respawnie.
   - Dwufazowa sekwencja śmierci smoka (zanik luminancji + przesunięcie w lewo, eksplozja POKEY).
 - **Interakcja ze światem i detekcja kolizji**:
-  - Szybka detekcja kolizji blokujących $O(1)$ smoka z terenem w oparciu o siatkę `BLOCKING_VRAM` ($6350).
-  - Niszczenie kruchych przeszkód zianiem ognia (`check_flame_object_collision`) z aktualizacją kafli w VRAM i siatce blokowania oraz punktacją.
-  - Zbieranie sekretów i znajdziek (`check_dragon_secret_collision`) ze śledzeniem zebranych obiektów w maskach bitowych (`screen_obj_destroyed`) dla każdego ekranu oraz sygnałem dźwiękowym POKEY.
-- **Dynamiczne zestawy znaków i audio**:
-  - Animowane kafle otoczenia (woda/lawa) przełączane w locie rastra z generatora JSON (`chars/animated.json`).
-  - Podsystem audio POKEY (`engine/sound.asm`): efekty ziania ogniem, trzepotu skrzydeł, uderzenia w przeszkodę, wybuchu i zebrania sekretu.
+  - **Detekcja kolizji i 1-klatkowa łaskawość (grace debounce)**: Szybka detekcja kolizji blokujących smoka z przeszkodami i ścianami terenu z 1-klatkowym filtrem łagodzącym (debounce), eliminującym fałszywe kraksy przy ocieraniu się o przeszkody podczas szybkiego lotu.
+  - Rozszerzona detekcja znajdziek i sekretów (w tym kolumna 7) zapewniająca bezbłędne zbieranie przy dynamicznym przewijaniu ekranu ze śledzeniem zebranych obiektów w maskach bitowych (`screen_obj_destroyed`).
+  - Niszczenie kruchych przeszkód zianiem ognia (`check_flame_object_collision`) z aktualizacją kafli w VRAM i punktacją.
+- **Pełna ścieżka dźwiękowa CMC i efekty POKEY**:
+  - Zintegrowany, zrelokowany odtwarzacz muzyczny CMC (`engine/cmc_player_reloc.asm` w `$9A00`, dane w `$9000`) ze ścieżką dźwiękową skomponowaną przez Andrzeja „Andy” Kidaja (2003, 3 podutwory: Intro/Title, Gameplay, Game Over).
+  - Proceduralne efekty dźwiękowe POKEY (`engine/sound.asm`: ogień, kraksa, sekrety, odliczanie energii po ukończeniu poziomu) z automatycznym arbitrażem kanałów 3 i 4.
+  - Dynamiczne zestawy znaków: animowane kafle otoczenia (woda/lawa) przełączane w locie rastra z generatora JSON (`chars/animated.json`).
 - **Automatyczny Single Source of Truth (SSOT)**:
   - Definicje poziomów (`world/project.yaml`), obiektów (`world/objects.yaml`) i palet (`world/colors.yaml`) kompilowane skryptem Pythona do struktur asemblerowych SoA (Structure-of-Arrays).
   - Weryfikator pamięci sprawdzający kolizje segmentów i granice Zero Page w trakcie każdego `make`.
+- **Oficjalny portal gry i telemetria WWW**:
+  - Nowoczesny portal statyczny w technologii Astro, TypeScript i Tailwind CSS dostępny pod adresem [https://grzes71.github.io/jabberwocky/](https://grzes71.github.io/jabberwocky/).
+  - Zasilany automatycznym potokiem eksportera JSON (`scripts/export_portal_data.py`) z interaktywnym World Explorerem (35 ekranów, 5 labiryntów), katalogiem 168 obiektów, odtwarzaczem animacji sprajtów, mapą pamięci 64 KB i archiwum wydań.
 
 ---
 
@@ -86,10 +95,11 @@ Projekt łączy tradycyjne programowanie w asemblerze 6502 (MADS) z nowoczesnym 
 ```
 
 Główna pętla gry działa w sposób deterministyczny w oparciu o synchronizację pionową (`RTCLOK`):
-1. **Input Poll** (`update_input`): Odczyt joysticka/przycisku Fire z detekcją zbocza opadającego.
-2. **State Dispatcher** (`dispatch_state`): Obsługa przejść stanów (`*_init`) oraz klatki logiki (`*_run`: fizyka smoka, zianie ogniem, odroczone wypiekanie kafelków `execute_pending_bake`).
-3. **Detekcja kolizji i zbieranie**: Obsługa kolizji z terenem (`check_dragon_blocking_collision`), niszczenia obiektów ogniem (`check_flame_object_collision`) i sekretów (`check_dragon_secret_collision`).
-4. **VBLANK NMI** (`vblank_game`): Atomowa aktualizacja wskaźników per-row LMS bufora kołowego z lustrzanym powieleniem (`update_ring_dlist_lms`), synchronizacja sprzętowego rejestru `HSCROL`, obsługa dźwięku i paska energii.
+1. **Audio Update** (`Audio_Update`): Aktualizacja stanu odtwarzacza muzyki CMC oraz procedur efektów dźwiękowych POKEY.
+2. **Input Poll** (`update_input`): Odczyt joysticka/przycisku Fire z detekcją zbocza opadającego.
+3. **State Dispatcher** (`dispatch_state`): Obsługa przejść stanów (`*_init`) oraz klatki logiki (`*_run`: fizyka smoka, zianie ogniem, odroczone wypiekanie kafelków `execute_pending_bake`).
+4. **Detekcja kolizji i zbieranie**: Obsługa kolizji z terenem z filtrem debounce, niszczenia obiektów ogniem (`check_flame_object_collision`) i zbierania sekretów (`check_dragon_secret_collision`).
+5. **VBLANK NMI** (`vblank_game`): Atomowa aktualizacja wskaźników per-row LMS bufora kołowego z lustrzanym powieleniem (`update_ring_dlist_lms`), synchronizacja sprzętowego rejestru `HSCROL` oraz obsługa paska energii.
 
 ---
 
@@ -107,7 +117,9 @@ jabberwocky/
 │   ├── flame_collision.asm  # Detekcja kolizji ognia i smoka (przeszkody, sekrety)
 │   ├── level_name.asm       # Nakładka graficzna nazwy poziomu
 │   ├── charset_anim.asm     # Silnik animacji zestawu znaków w VRAM
-│   └── sound.asm            # Generator efektów dźwiękowych POKEY
+│   ├── sound.asm            # Generator efektów dźwiękowych POKEY
+│   ├── music.asm            # Wrapper odtwarzacza CMC i obsługa podutworów
+│   └── cmc_player_reloc.asm # Zrelokowany sterownik odtwarzacza CMC ($9A00)
 │
 ├── scenes/                  # Moduły poszczególnych scen (6502 ASM)
 │   ├── title.asm            # Ekran tytułowy
@@ -135,10 +147,13 @@ jabberwocky/
 │   ├── compile_sprites.py   # Kompilator definicji JSON sprajtów do MADS ASM
 │   ├── compile_texts.py     # Kompilator tekstów narracyjnych
 │   ├── convert_image.py     # Konwerter grafik (ANTIC Mode F)
+│   ├── extract_sap.py       # Ekstraktor i relokator muzyki CMC z kontenera SAP
+│   ├── export_portal_data.py # Generator zwalidowanych raportów JSON portalu WWW
 │   ├── gen_animated_charset.py # Generator tablic animacji zestawu znaków
 │   ├── gen_rotated_charset.py  # Generator wariantów obróconych znaków
 │   ├── generate_memory_map.py  # Analizator symboli MADS i walidator pamięci
-│   └── release_helper.py    # Narzędzie CI/CD: semver, changelog i automatyzacja wydań
+│   ├── release_helper.py    # Narzędzie CI/CD: semver, changelog i automatyzacja wydań
+│   └── remove_non_blocking_objects.py # Narzędzie optymalizacji obiektów tła w project.yaml
 │
 ├── sprites/                 # Źródłowe definicje sprajtów (JSON)
 ├── fonts/                   # Zestawy czcionek Atari (1024 bajty)
@@ -150,10 +165,14 @@ jabberwocky/
 │   ├── game_over_fail.txt   # Tekst poetycki porażki
 │   └── game_over_success.txt # Tekst poetycki zwycięstwa
 ├── img/                     # Źródłowe pliki graficzne
+├── music/                   # Źródłowe pliki muzyczne
+│   └── music.sap            # Kontener SAP z muzyką CMC (Andrzej Kidaj, 2003)
+├── website/                 # Oficjalny portal gry (Astro, TypeScript, Tailwind CSS)
+├── reports/                 # Generowane raporty JSON portalu (reports/portal/)
 ├── docs/                    # Dokumentacja i generowane raporty pamięci
 │   ├── memory_map.txt       # Czytelne podsumowanie mapy pamięci i wolnej przestrzeni
 │   └── memory_map.json      # Maszynowy model alokacji segmentów
-├── tests/                   # Zestaw 166 testów jednostkowych i emulacyjnych py65 (pytest)
+├── tests/                   # Zestaw testów jednostkowych i emulacyjnych py65 (pytest)
 └── gen/                     # Pliki generowane automatycznie (nie edytować!)
 ```
 
@@ -167,6 +186,7 @@ Do zbudowania projektu i uruchomienia narzędzi potrzebne są:
 2. **Emulator Atari**: [Altirra](https://www.virtualdub.org/altirra.html) (lub inny emulator Atari 8-bit obsługujący pliki `.xex`).
 3. **Python**: Wersja 3.10 lub nowsza.
 4. **GNU Make**: W środowisku Windows (np. z Git Bash, MSYS2 lub MinGW) lub Linux/macOS.
+5. **Node.js**: Wersja 20 lub nowsza (wymagana do lokalnego budowania portalu `website/`).
 
 ---
 
@@ -179,7 +199,7 @@ Do zbudowania projektu i uruchomienia narzędzi potrzebne są:
 python -m venv .venv
 
 # Aktywacja środowiska (Windows PowerShell)
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 
 # Aktywacja środowiska (Linux/macOS)
 source .venv/bin/activate
@@ -202,10 +222,11 @@ Możesz je dostosować w pliku `Makefile` lub przekazać jako zmienne środowisk
 | Polecenie | Opis |
 | :--- | :--- |
 | `make` / `make all` | Buduje zasoby, kompiluje świat gry, asembluje `jabberwocky.xex` oraz weryfikuje mapę pamięci (`check_memory`) |
-| `make assets` | Konwertuje grafiki, sprajty i teksty (`img/`, `sprites/`, `texts/`) |
+| `make assets` | Konwertuje grafiki, sprajty, teksty oraz ekstraktuje muzykę CMC (`img/`, `sprites/`, `texts/`, `music/`) |
 | `make data` | Kompiluje `world/project.yaml`, `world/objects.yaml`, `world/colors.yaml` oraz generuje obrócone i animowane znaki |
 | `make xex` | Buduje sam plik binarny `jabberwocky.xex` |
 | `make check_memory` | Generuje raport pamięci `docs/memory_map.txt` oraz `docs/memory_map.json` |
+| `make portal_data` | Generuje i waliduje raporty JSON portalu (`reports/portal/` oraz `website/src/data/`) |
 | `make test` | Uruchamia pełny zestaw testów `pytest` (w tym emulację py65) |
 | `make run` | Buduje projekt i uruchamia go w emulatorze Altirra |
 | `make clean` | Usuwa pliki binarne oraz katalog `gen/` |
@@ -243,6 +264,7 @@ python -m object_studio.main
 Aplikacja desktopowa w PySide6 do projektowania wieloklatkowych sprajtów PMG Atari:
 - Siatka edycyjna z podglądem pikseli PMG (pojedyncza i podwójna szerokość).
 - Obsługa wielu klatek animacji z kontrolą czasu trwania i podglądem na żywo.
+- Import obrazów rastrowych z dopasowaniem luminancji, kadrowaniem i skalowaniem proporcji.
 - Eksport do formatu JSON kompilowanego przez `scripts/compile_sprites.py`.
 
 Uruchomienie:
@@ -268,6 +290,29 @@ Skrypt `scripts/compile_texts.py` kompiluje teksty narracyjne UTF-8 do wewnętrz
 - Obsługuje polskie znaki diakrytyczne (mapowane na znaki w zestawie czcionki `fonts/text.fnt`).
 - Generuje dyrektywy MADS dla wiersza intro (`texts/title.txt`), scroll-tickera (`texts/scroll.txt`) oraz poetyckich ekranów zakończenia (`texts/game_over_fail.txt`, `texts/game_over_success.txt`).
 - Automatycznie eksportuje etykiety linii tekstu oraz wspiera dynamiczne centrowanie tekstu w scenach gry.
+
+### SAP Music Extractor & Relocator
+Skrypt `scripts/extract_sap.py` wywoływany automatycznie przez `make assets`:
+- Parsuje nagłówek i strumień binarny kontenera SAP (Type C).
+- Wyodrębnia moduł muzyczny Chaos Music Composer (CMC).
+- Relokuje wewnętrzną tablicę 16-bitowych wskaźników instrumentów i wzorców do docelowego adresu w pamięci RAM Atari (`$9000`), zapisując gotowy blok do `gen/music.cmc`.
+
+### Portal Data Exporter
+Skrypt `scripts/export_portal_data.py` wywoływany przez `make portal_data`:
+- Eksportuje kompletne, zwalidowane za pomocą modeli **Pydantic v2** raporty JSON do `reports/portal/` oraz `website/src/data/`:
+  - `game.json`: metadane, poetycka fabuła, mechanika gry i sterowanie.
+  - `world.json`: dane 5 labiryntów i 35 plansz z wypieczoną pamięcią VRAM i siatkami kolizji.
+  - `objects.json`: katalog 168 obiektów z tagami, flagami i kafelkami.
+  - `sprites.json`: klatki i wiersze pikseli sprajta smoka.
+  - `assets.json`: metadane fontów, grafik i animowanych znaków.
+  - `music.json`: metadane SAP, podutwory CMC i katalog efektów POKEY.
+  - `memory.json`: alokacje segmentów, bufor kołowy, bufor PMG, Zero Page i suma kontrolna SHA-256.
+  - `releases.json` i `latest.json`: archiwum wydań i najnowsza binarka.
+
+### Oficjalny portal WWW i potok GitHub Pages
+Katalog `website/` zawiera kompletną aplikację internetową zbudowaną w oparciu o **Astro 4**, **TypeScript** i **Tailwind CSS**:
+- 10 podstron: Strona główna, Gra i sterowanie, World Explorer (z interaktywną siatką planszy), Katalog obiektów, Galeria sprajtów (z animowanym odtwarzaczem klatek), Muzyka i dźwięk, Mapa pamięci 64 KB, Architektura techniczna, Wydania oraz Historia projektu.
+- Dedykowany workflow GitHub Actions (`.github/workflows/portal-deploy.yml`) automatycznie buduje binarkę, generuje telemetrię i publikuje stronę na GitHub Pages pod adresem `https://grzes71.github.io/jabberwocky/`.
 
 ### Memory Map Generator & Validator
 Skrypt `scripts/generate_memory_map.py` integruje się bezpośrednio z procesem asemblacji:
@@ -306,23 +351,24 @@ Pełny raport (segmenty, luki i pozostały headroom) generuje `scripts/generate_
 ## Testy
 
 Projekt posiada rozbudowany zestaw testów automatycznych (aktualną liczbę zwraca `pytest --collect-only -q`) weryfikujących poprawność narzędzi oraz kod 6502 za pomocą emulacji py65:
-- Testy kompilatora sprajtów, tekstów, obracania i animacji znaków oraz labiryntów (`compile_sprites`, `compile_texts`, `labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
+- Testy kompilatorów zasobów: sprajtów, tekstów, obracania i animacji znaków, ekstraktora muzyki CMC oraz kompilatora labiryntów (`compile_sprites`, `compile_texts`, `extract_sap`, `labirynt_builder`, `gen_animated_charset`, `gen_rotated_charset`).
+- Testy eksportera telemetrii portalu i walidacji schematów Pydantic (`export_portal_data`, `tests/test_portal_data.py`).
 - Testy asystenta wydań i reguł semver (`scripts/release_helper.py`).
 - Testy spójności modeli danych, kolorów, walidatorów `world/` oraz edytorów GUI (Studio).
 - Testy emulacyjne 6502 (py65) weryfikujące:
   - Przejścia scen (`scenes/intro.asm`, `scenes/title.asm`, `scenes/game.asm`, `scenes/gameover.asm`, `scenes/top_scores.asm`), w tym natychmiastowe wygaszanie po FIRE oraz 2-sekundowy limit czasu na ekranie Intro.
-  - Sprzętowe płynne przewijanie ekranu (`HSCROL` $D404, cykl `3 -> 2 -> 1 -> 0 -> 3`) z podwójnym buforowaniem (`GAME_ACTION_VRAM` / `GAME_ACTION_VRAM_B`) i synchronizacją VBLANK.
+  - Sprzętowe płynne przewijanie ekranu (`HSCROL` $D404, cykl `3 -> 2 -> 1 -> 0 -> 3`) z buforem kołowym akcji (Mirror Ring Buffer `$6000–$641F`), wskaźnikami per-row LMS i synchronizacją VBLANK.
   - Odroczone wypiekanie ekranu (`deferred screen baking`) zapobiegające spadkom klatek podczas przewijania.
   - Przesuwanie bufora VRAM i wstrzykiwanie kolumn ze strumienia świata.
   - Wyliczanie czasu energii smoka, ubytek energii, zapobieganie natychmiastowej śmierci po respawnie oraz restart poziomu.
-  - Detekcję kolizji smoka z przeszkodami w siatce blokującej (`BLOCKING_VRAM`).
+  - Detekcję kolizji smoka z przeszkodami oraz filtrowanie debounce zapobiegające przypadkowym zderzeniom.
   - Niszczenie przeszkód przez ogień smoka (`check_flame_object_collision`) i dynamiczną aktualizację kafli VRAM.
   - Zbieranie sekretów i obiektów interaktywnych (`check_dragon_secret_collision`) ze śledzeniem zebranych obiektów w masce bitowej (`screen_obj_destroyed`) dla każdego ekranu.
   - Animację zestawów znaków w locie rastra (`charset_anim.asm`).
   - Rysowanie i dynamiczne odświeżanie dolnego paska stanu (`LEVEL:01 SCORE:0000 LIVES:03 SHOTS:01`) z kolorowaniem za pomocą sprajtów i missila PMG (x4 width).
   - Wyświetlanie nakładki nazwy poziomu (`level_name.asm`).
   - Przejście do stanu zakończenia gry z powodem VICTORY (`REASON_SUCCESS`) lub DEFEAT z dopasowaniem kolorów tła i ramki.
-  - Tabela 10 najlepszych wyników (`TOP SCORES`), sortowanie, przesuwanie w dół (shift-down) oraz wprowadzanie 5-znakowego imienia joystickiem (`ENTER NAME`).
+  - Tabelę 10 najlepszych wyników (`TOP SCORES`), sortowanie, przesuwanie w dół (shift-down) oraz wprowadzanie 5-znakowego imienia joystickiem (`ENTER NAME`).
 - Testy negatywne wykrywające próby kolizji i przekroczenia granic pamięci.
 
 Uruchomienie:

@@ -2,6 +2,22 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-11-08] - Aktualizacja i synchronizacja dokumentacji projektu (README.md) z bieżącą architekturą
+
+- **Dokumentacja projektu**:
+  - [README.md](README.md): Zaktualizowano i zsynchronizowano pełną dokumentację techniczną z aktualnym stanem architektury silnika i narzędzi:
+    - Zastąpiono nieaktualne wzmianki o podwójnym buforowaniu VRAM (`GAME_ACTION_VRAM` / `GAME_ACTION_VRAM_B`) opisem bufora kołowego akcji 11×96 B (Mirror Ring Buffer `$6000–$641F`) ze sprzętowym `HSCROL` ($D404) oraz niezależnymi wskaźnikami LMS dla każdego wiersza w Display Liście.
+    - Zastąpiono przestarzałą siatkę `BLOCKING_VRAM ($6350)` opisem mechanizmu filtrowania kolizji (debounce 1-klatkowej karencji) oraz detekcji obiektów interaktywnych w 7. kolumnie.
+    - Uzupełniono specyfikację podsystemu audio POKEY o odtwarzacz CMC (relokowany do `$9A00`) oraz ekstrakcję kontenera SAP Andrzeja Kidaja (`$9000`).
+    - Dodano link i opis oficjalnego portalu gry: `https://grzes71.github.io/jabberwocky/` (Astro 4, Tailwind CSS, potok GitHub Pages).
+    - Rozszerzono strukturę drzewa katalogów o `music/`, `reports/`, `website/` oraz nowe narzędzia: [scripts/extract_sap.py](scripts/extract_sap.py) i [scripts/export_portal_data.py](scripts/export_portal_data.py).
+    - Zaktualizowano tabelę celów Makefile o `make portal_data`.
+    - Uaktualniono opis testów automatycznych, odzwierciedlając testy ekstraktora SAP i telemetrii portalu.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` (36 152 B) i walidacja mapy pamięci w [docs/memory_map.txt](docs/memory_map.txt).
+  - `make test`: 222/222 testów zakończonych sukcesem (100% passed).
+
+
 ## [2026-11-08] - Przywrócenie obiektów nieblokujących oraz selektywnej detekcji kolizji z przeszkodami
 
 - **Świat i dane gry**:
