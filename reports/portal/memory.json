@@ -120,19 +120,19 @@
     {
       "name": "FONT",
       "start_address": "$6800",
-      "end_address": "$89D0",
+      "end_address": "$89CC",
       "start_int": 26624,
-      "end_int": 35280,
-      "size": 8657,
+      "end_int": 35276,
+      "size": 8653,
       "type": "data"
     },
     {
       "name": "FREE_SPACE",
-      "start_address": "$89D1",
+      "start_address": "$89CD",
       "end_address": "$8FFF",
-      "start_int": 35281,
+      "start_int": 35277,
       "end_int": 36863,
-      "size": 1583,
+      "size": 1587,
       "type": "free"
     },
     {
@@ -258,18 +258,18 @@
     "total_system_ram_bytes": 65536,
     "ram_ceiling_address": "$BFFF",
     "usable_ram_ceiling_bytes": 49152,
-    "total_allocated_by_xex_bytes": 36102,
+    "total_allocated_by_xex_bytes": 36098,
     "total_runtime_reserved_bytes": 3184,
-    "raw_free_gap_bytes": 11006,
-    "net_usable_free_bytes": 7822,
+    "raw_free_gap_bytes": 11010,
+    "net_usable_free_bytes": 7826,
     "effective_utilization_percent": 79.9
   },
   "provenance": {
-    "commit_sha": "ef39044f76b3494acc66ae148c6a35b7eedc01b7",
-    "commit_date": "2026-11-04T05:10:17Z",
+    "commit_sha": "62650b9c743427a971e42fcffd18c37aab42d1f6",
+    "commit_date": "2026-11-08T11:24:07+01:00",
     "binary_present": true,
-    "binary_sha256": "3dfcc1a45d497f1c5eba06da4745417ec102b3828fdc364b6572cd0b17981524",
-    "binary_size_bytes": 36152,
+    "binary_sha256": "5ef5bfce1380d6ae7a31f1d50746c6e790fdbf1c3f68a6353b09812c4fcf94aa",
+    "binary_size_bytes": 36148,
     "binary_origin": "local build"
   }
 }

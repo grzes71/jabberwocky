@@ -2,6 +2,18 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-11-08] - Aktualizacja rozmieszczenia obiektów w świecie gry
+
+- **Świat i poziomy gry**:
+  - [world/project.yaml](world/project.yaml): Zaktualizowano pozycje obiektów na ekranach leśnych (m.in. FOREST_02, FOREST_03, FOREST_05, FOREST_06, FOREST_07, FOREST_11, FOREST_12, FOREST_14), poprawiając balans przeszkód i płynność przelotu smoka.
+- **Portal i raporty**:
+  - Zaktualizowano raporty JSON w [reports/portal/](reports/portal/) oraz dane portalu w [website/src/data/](website/src/data/) dla zsynchronizowania wizualizacji World Explorer.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` (36 152 B) i aktualizacja mapy pamięci w [docs/memory_map.txt](docs/memory_map.txt).
+  - `make test`: 222/222 testów zakończonych sukcesem (100% passed).
+  - `make portal_data`: pomyślne wygenerowanie 9 zwalidowanych raportów JSON.
+
+
 ## [2026-11-08] - Zwiększenie odporności potoków CI/CD i uniezależnienie instalacji zależności od GitHub Releases
 
 - **Zależności projektu**:
