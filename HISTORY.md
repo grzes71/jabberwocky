@@ -2,6 +2,25 @@
 
 <!-- AGENT INSTRUCTIONS: Always prepend new entries directly below this comment block. Always use relative paths (relative to project root, e.g., scenes/game.asm), never absolute file:/// URIs. Use the exact format: `## [YYYY-MM-DD] - Feature/Fix Title` -->
 
+## [2026-11-08] - Zwiększenie odporności potoków CI/CD i uniezależnienie instalacji zależności od GitHub Releases
+
+- **Zależności projektu**:
+  - [requirements.txt](requirements.txt): Zmieniono źródło `atari-image-converter` z bezpośredniego linku do pliku `.whl` w wydaniach GitHub na instalację z repozytorium Git (`git+https://github.com/grzes71/py-image-converter.git@v0.3.0`), eliminując podatność na błędy HTTP 504 Gateway Time-out podczas globalnych awarii proxy GitHub Releases.
+- **Potoki CI/CD i automatyzacja wydań**:
+  - [.github/workflows/release.yml](.github/workflows/release.yml):
+    - Wdrożono pętlę ponawiania w PowerShell (3 próby, 10s odstępu) dla kroku `Install Python dependencies` (`pip install`).
+    - Dodano mechanizm retry dla instalacji GNU Make przez Chocolatey.
+    - Dodano flagi `--retry 3 --retry-delay 5` do pobierania `mads.exe` przez `curl.exe`.
+    - Dodano pętlę retry z automatycznym `git pull --rebase` dla kroku `Commit & Push updated scroll.txt to main`.
+  - [.github/workflows/portal-deploy.yml](.github/workflows/portal-deploy.yml):
+    - Wdrożono pętle ponawiania w PowerShell dla kroków instalacji zależności Pythona, instalacji GNU Make przez Chocolatey oraz instalacji zależności Node (`npm ci`).
+    - Dodano flagi `--retry 3 --retry-delay 5` do pobierania `mads.exe`.
+- **Weryfikacja**:
+  - `make all`: pomyślna asemblacja `jabberwocky.xex` i weryfikacja mapy pamięci w [docs/memory_map.txt](docs/memory_map.txt).
+  - `make test`: 222/222 testów zakończonych sukcesem (100% passed).
+  - `pip install --dry-run -r requirements.txt`: pomyślna walidacja pobierania pakietu `atari-image-converter` przez Git/HTTPS.
+
+
 ## [2026-11-08] - Aktualizacja i synchronizacja dokumentacji projektu (README.md) z bieżącą architekturą
 
 - **Dokumentacja projektu**:

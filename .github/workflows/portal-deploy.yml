@@ -43,17 +43,57 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          $maxRetries = 3
+          $delay = 10
+          $success = $false
+          for ($i = 1; $i -le $maxRetries; $i++) {
+            Write-Host "Installing Python dependencies (attempt $i of $maxRetries)..."
+            python -m pip install --upgrade pip
+            if ($LASTEXITCODE -eq 0) {
+              pip install -r requirements.txt
+              if ($LASTEXITCODE -eq 0) {
+                $success = $true
+                Write-Host "Python dependencies installed successfully."
+                break
+              }
+            }
+            if ($i -lt $maxRetries) {
+              Write-Warning "Attempt $i failed. Retrying in $delay seconds..."
+              Start-Sleep -Seconds $delay
+            }
+          }
+          if (-not $success) {
+            Write-Error "Failed to install Python dependencies after $maxRetries attempts."
+            exit 1
+          }
 
       - name: Install GNU Make
-        run: choco install make -y
+        run: |
+          $maxRetries = 3
+          $delay = 10
+          $success = $false
+          for ($i = 1; $i -le $maxRetries; $i++) {
+            Write-Host "Installing GNU Make via Chocolatey (attempt $i of $maxRetries)..."
+            choco install make -y
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              break
+            }
+            if ($i -lt $maxRetries) {
+              Write-Warning "Attempt $i to install make failed. Retrying in $delay seconds..."
+              Start-Sleep -Seconds $delay
+            }
+          }
+          if (-not $success) {
+            Write-Error "Failed to install GNU Make after $maxRetries attempts."
+            exit 1
+          }
 
       - name: Install Mad-Assembler (MADS)
         run: |
           $madsDir = "C:\Apps\Mad-Assembler-2.1.6\bin\windows_x86_64"
           New-Item -ItemType Directory -Force -Path $madsDir | Out-Null
-          curl.exe -L -f -s -S "https://raw.githubusercontent.com/tebe6502/Mad-Assembler/2.1.6/bin/windows_x86_64/mads.exe" -o "$madsDir\mads.exe"
+          curl.exe --retry 3 --retry-delay 5 -L -f -s -S "https://raw.githubusercontent.com/tebe6502/Mad-Assembler/2.1.6/bin/windows_x86_64/mads.exe" -o "$madsDir\mads.exe"
           if (!(Test-Path "$madsDir\mads.exe")) { throw "MADS download failed" }
 
       - name: Build Atari XEX & Memory Map
@@ -79,7 +119,27 @@ jobs:
 
       - name: Install Node dependencies
         working-directory: website
-        run: npm ci
+        run: |
+          $maxRetries = 3
+          $delay = 10
+          $success = $false
+          for ($i = 1; $i -le $maxRetries; $i++) {
+            Write-Host "Installing Node dependencies via npm ci (attempt $i of $maxRetries)..."
+            npm ci
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              Write-Host "Node dependencies installed successfully."
+              break
+            }
+            if ($i -lt $maxRetries) {
+              Write-Warning "npm ci failed (attempt $i). Retrying in $delay seconds..."
+              Start-Sleep -Seconds $delay
+            }
+          }
+          if (-not $success) {
+            Write-Error "Failed to install Node dependencies after $maxRetries attempts."
+            exit 1
+          }
 
       - name: Run Astro Type Diagnostics
         working-directory: website

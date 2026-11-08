@@ -1,5 +1,5 @@
 annotated-types==0.7.0
-atari-image-converter @ https://github.com/grzes71/py-image-converter/releases/download/v0.3.0/atari_image_converter-0.3.0-py3-none-any.whl
+atari-image-converter @ git+https://github.com/grzes71/py-image-converter.git@v0.3.0
 iniconfig==2.3.0
 numpy==2.5.1
 packaging==26.2
