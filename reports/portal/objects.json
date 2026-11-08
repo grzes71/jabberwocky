@@ -574,12 +574,11 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 7,
+      "instances_count": 6,
       "screens_used_in": [
         "CITY_04",
         "CITY_06",
         "CITY_08",
-        "FOREST_06",
         "TOLEM_03"
       ],
       "is_used_in_world": true
@@ -758,12 +757,13 @@
         "woda",
         "animacja"
       ],
-      "instances_count": 12,
+      "instances_count": 13,
       "screens_used_in": [
         "CITY_06",
         "CITY_07",
         "CITY_08",
         "FOREST_05",
+        "FOREST_06",
         "TOLEM_02",
         "TOLEM_03"
       ],
@@ -4822,10 +4822,9 @@
       "tags": [
         "tło"
       ],
-      "instances_count": 4,
+      "instances_count": 3,
       "screens_used_in": [
         "CITY_07",
-        "FOREST_06",
         "TOLEM_01"
       ],
       "is_used_in_world": true
@@ -4999,7 +4998,7 @@
       "tags": [
         "drzewo"
       ],
-      "instances_count": 42,
+      "instances_count": 41,
       "screens_used_in": [
         "CITY_01",
         "CITY_03",

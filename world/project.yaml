@@ -186,7 +186,7 @@ screens:
   - code: 117
     packed_xy: 8
   - code: 51
-    packed_xy: 70
+    packed_xy: 6
   - code: 9
     packed_xy: 50
   - code: 95
@@ -210,7 +210,7 @@ screens:
   - code: 51
     packed_xy: 104
   - code: 9
-    packed_xy: 77
+    packed_xy: 109
   - code: 9
     packed_xy: 7
   - code: 95
@@ -272,7 +272,7 @@ screens:
   - code: 95
     packed_xy: 9
   - code: 178
-    packed_xy: 83
+    packed_xy: 115
   - code: 23
     packed_xy: 16
   - code: 24
@@ -322,7 +322,7 @@ screens:
   - code: 26
     packed_xy: 106
   - code: 65
-    packed_xy: 47
+    packed_xy: 15
   - code: 203
     packed_xy: 139
   - code: 200
@@ -352,7 +352,7 @@ screens:
   - code: 4
     packed_xy: 10
   - code: 4
-    packed_xy: 16
+    packed_xy: 48
   - code: 95
     packed_xy: 17
   - code: 95
@@ -378,7 +378,7 @@ screens:
   - code: 51
     packed_xy: 137
   - code: 51
-    packed_xy: 142
+    packed_xy: 111
   - code: 51
     packed_xy: 99
   - code: 65
@@ -394,15 +394,13 @@ screens:
   - code: 7
     packed_xy: 1
   - code: 9
-    packed_xy: 112
+    packed_xy: 15
   - code: 83
-    packed_xy: 40
+    packed_xy: 8
   - code: 83
     packed_xy: 4
   - code: 20
     packed_xy: 11
-  - code: 172
-    packed_xy: 13
   - code: 20
     packed_xy: 12
   - code: 22
@@ -424,19 +422,17 @@ screens:
   - code: 9
     packed_xy: 108
   - code: 51
-    packed_xy: 42
+    packed_xy: 74
   - code: 117
     packed_xy: 65
   - code: 24
-    packed_xy: 173
+    packed_xy: 174
   - code: 24
     packed_xy: 163
-  - code: 21
-    packed_xy: 14
-  - code: 178
-    packed_xy: 46
   - code: 178
     packed_xy: 146
+  - code: 29
+    packed_xy: 13
 - id: FOREST_07
   objects:
   - code: 56
@@ -450,9 +446,9 @@ screens:
   - code: 7
     packed_xy: 67
   - code: 7
-    packed_xy: 72
+    packed_xy: 104
   - code: 7
-    packed_xy: 76
+    packed_xy: 43
   - code: 7
     packed_xy: 81
   - code: 7
@@ -550,13 +546,13 @@ screens:
   - code: 95
     packed_xy: 46
   - code: 178
-    packed_xy: 82
+    packed_xy: 143
   - code: 177
-    packed_xy: 75
+    packed_xy: 106
   - code: 182
     packed_xy: 19
   - code: 182
-    packed_xy: 8
+    packed_xy: 134
   - code: 182
     packed_xy: 131
   - code: 118
@@ -594,7 +590,7 @@ screens:
   - code: 9
     packed_xy: 102
   - code: 9
-    packed_xy: 80
+    packed_xy: 112
   - code: 7
     packed_xy: 10
   - code: 7
@@ -616,7 +612,7 @@ screens:
   - code: 8
     packed_xy: 9
   - code: 8
-    packed_xy: 17
+    packed_xy: 48
   - code: 118
     packed_xy: 83
   - code: 22
@@ -658,7 +654,7 @@ screens:
   - code: 48
     packed_xy: 34
   - code: 178
-    packed_xy: 75
+    packed_xy: 107
 - id: TOLEM_01
   objects:
   - code: 177
